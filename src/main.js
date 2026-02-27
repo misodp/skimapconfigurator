@@ -4,6 +4,11 @@
  * Config is stored as JSON with normalized coordinates (0–1) relative to image dimensions.
  */
 
+import buttonIconUrl from '../assets/images/button.png';
+import tBarIconUrl from '../assets/images/t-bar.png';
+import oneSeaterIconUrl from '../assets/images/1-seater.png';
+import twoSeaterIconUrl from '../assets/images/2-seater.png';
+
 const state = {
   mode: 'lift', // 'lift' | 'slope'
   difficulty: 'blue',
@@ -38,6 +43,16 @@ const DOM = {
   liftHint: null,
   slopeHint: null,
 };
+
+/** Lift type -> image URL (from Vite import). */
+const LIFT_ICON_URLS = {
+  button: buttonIconUrl,
+  tbar: tBarIconUrl,
+  '1seater': oneSeaterIconUrl,
+  '2seater': twoSeaterIconUrl,
+};
+
+const liftIcons = {}; // type -> HTMLImageElement (loaded async)
 
 function init() {
   DOM.mountainImage = document.getElementById('mountainImage');
@@ -81,9 +96,41 @@ function init() {
   document.getElementById('cancelSlopeBtn').addEventListener('click', cancelSlope);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelSlope(); });
 
+  const liftDialog = document.getElementById('liftDialog');
+  const liftNameInput = document.getElementById('liftNameInput');
+  document.querySelectorAll('.lift-type-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.lift-type-btn').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+  document.getElementById('liftDialogCancel').addEventListener('click', () => {
+    liftDialog.close();
+    state.liftBottom = null;
+    state.liftTop = null;
+    draw();
+  });
+  document.getElementById('liftDialogConfirm').addEventListener('click', confirmLiftDialog);
+  liftDialog.addEventListener('cancel', (e) => {
+    e.preventDefault();
+    state.liftBottom = null;
+    state.liftTop = null;
+    draw();
+  });
+
+  loadLiftIcons();
   setMode('lift');
   setDifficulty('blue');
   renderLists();
+}
+
+function loadLiftIcons() {
+  Object.entries(LIFT_ICON_URLS).forEach(([type, url]) => {
+    if (!url) return;
+    const img = new Image();
+    img.onload = () => { liftIcons[type] = img; draw(); };
+    img.src = url;
+  });
 }
 
 function setMode(mode) {
@@ -129,6 +176,37 @@ function cancelSlope() {
   state.slopeDrawing = false;
   const btn = document.getElementById('cancelSlopeBtn');
   if (btn) btn.classList.add('hidden');
+  draw();
+}
+
+const LIFT_TYPES = ['button', 'tbar', '1seater', '2seater'];
+
+function openLiftDialog() {
+  const dialog = document.getElementById('liftDialog');
+  const nameInput = document.getElementById('liftNameInput');
+  const nextNum = state.lifts.length + 1;
+  nameInput.value = `Lift ${nextNum}`;
+  const activeType = document.querySelector('.lift-type-btn.active');
+  if (!activeType) document.querySelector('[data-lift-type="2seater"]').classList.add('active');
+  dialog.showModal();
+  nameInput.focus();
+}
+
+function confirmLiftDialog() {
+  const nameInput = document.getElementById('liftNameInput');
+  const activeTypeBtn = document.querySelector('.lift-type-btn.active');
+  const type = (activeTypeBtn && activeTypeBtn.dataset.liftType) || '2seater';
+  const name = (nameInput.value || `Lift ${state.lifts.length + 1}`).trim() || `Lift ${state.lifts.length + 1}`;
+  state.lifts.push({
+    bottomStation: state.liftBottom.norm,
+    topStation: state.liftTop.norm,
+    type,
+    name,
+  });
+  state.liftBottom = null;
+  state.liftTop = null;
+  document.getElementById('liftDialog').close();
+  renderLists();
   draw();
 }
 
@@ -318,13 +396,8 @@ function onCanvasClick(e) {
       state.liftBottom = { x: pt.x, y: pt.y, norm };
     } else if (!state.liftTop) {
       state.liftTop = { x: pt.x, y: pt.y, norm };
-      state.lifts.push({
-        bottomStation: state.liftBottom.norm,
-        topStation: state.liftTop.norm,
-      });
-      state.liftBottom = null;
-      state.liftTop = null;
-      renderLists();
+      openLiftDialog();
+      return;
     }
   } else if (state.mode === 'slope' && state.slopeDrawMode === 'points') {
     const pt = canvasToImage(x, y);
@@ -395,6 +468,73 @@ function draw() {
     ctx.fill();
   }
 
+  /** Return angle in (-π/2, π/2] so rotated content (icon/text) is never upside down. */
+  function normalizeAngleForDisplay(angle) {
+    let a = angle;
+    while (a > Math.PI / 2) a -= Math.PI;
+    while (a <= -Math.PI / 2) a += Math.PI;
+    return a;
+  }
+
+  /** Draw lift type icon. Positioned towards upper station (70% from bottom) so it doesn't overlap the name. */
+  const LIFT_ICON_TOWARDS_TOP = 0.7; // 0 = at bottom, 1 = at top
+  const LIFT_ICON_SIZE = 24; // pixels on canvas
+
+  function drawLiftIcon(ax, ay, bx, by, angle, type) {
+    const sx = (x) => x * scaleX;
+    const sy = (y) => y * scaleY;
+    const cx = ax + (bx - ax) * LIFT_ICON_TOWARDS_TOP;
+    const cy = ay + (by - ay) * LIFT_ICON_TOWARDS_TOP;
+    const img = liftIcons[type];
+    if (img && img.complete && img.naturalWidth) {
+      ctx.save();
+      ctx.translate(sx(cx), sy(cy));
+      const w = LIFT_ICON_SIZE;
+      const h = (img.naturalHeight / img.naturalWidth) * w;
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.translate(sx(cx), sy(cy));
+      ctx.strokeStyle = liftColor;
+      ctx.fillStyle = liftColor;
+      ctx.lineWidth = 2;
+      const r = 6;
+      if (type === 'button') {
+        ctx.beginPath();
+        ctx.arc(0, 0, r, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+      } else {
+        ctx.strokeRect(-r, -r * 0.6, r * 2, r * 1.2);
+      }
+      ctx.restore();
+    }
+  }
+
+  /** Draw lift name parallel to the line, offset to the right of the direction. Never upside down. */
+  function drawLiftLabel(name, ax, ay, bx, by) {
+    if (!name) return;
+    const midX = (ax + bx) / 2;
+    const midY = (ay + by) / 2;
+    const angle = Math.atan2(by - ay, bx - ax);
+    const drawAngle = normalizeAngleForDisplay(angle);
+    const offset = 22;
+    const perpX = -Math.sin(angle) * offset;
+    const perpY = Math.cos(angle) * offset;
+    const tx = midX + perpX;
+    const ty = midY + perpY;
+    ctx.save();
+    ctx.translate(tx * scaleX, ty * scaleY);
+    ctx.rotate(drawAngle);
+    ctx.fillStyle = liftColor;
+    ctx.font = 'bold 12px "DM Sans", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(name, 0, 0);
+    ctx.restore();
+  }
+
   /** Draw a smooth curve through all points (Catmull-Rom style with cubic Bezier). */
   function drawSmoothCurve(points, color, lineWidth = SLOPE_LINE_WIDTH) {
     if (points.length < 2) return;
@@ -445,14 +585,18 @@ function draw() {
     }
   }
 
-  // Draw saved lifts (black line + dots at bottom and top station) - ABOVE slopes
+  // Draw saved lifts (black line + dots + type icon + name) - ABOVE slopes
   const liftColor = '#1a1a1a';
-  state.lifts.forEach((lift) => {
+  state.lifts.forEach((lift, i) => {
     const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
     const b = fromNormalized(lift.topStation.x, lift.topStation.y);
     drawLine(a.x, a.y, b.x, b.y, liftColor);
     drawLiftStationDot(a.x, a.y);
     drawLiftStationDot(b.x, b.y);
+    const type = lift.type || '2seater';
+    const angle = Math.atan2(b.y - a.y, b.x - a.x);
+    drawLiftIcon(a.x, a.y, b.x, b.y, angle, type);
+    drawLiftLabel(lift.name || `Lift ${i + 1}`, a.x, a.y, b.x, b.y);
   });
 
   // Draw current lift in progress
@@ -469,8 +613,12 @@ function draw() {
 function renderLists() {
   DOM.liftList.innerHTML = state.lifts
     .map(
-      (_, i) =>
-        `<li>Lift ${i + 1} <button type="button" class="remove-btn" data-type="lift" data-idx="${i}">Remove</button></li>`
+      (lift, i) => {
+        const name = (lift.name || `Lift ${i + 1}`).trim();
+        const type = lift.type || '2seater';
+        const typeLabel = { button: 'Button', tbar: 'T-bar', '1seater': '1-seat', '2seater': '2-seat' }[type] || type;
+        return `<li><span class="lift-list-name" title="${typeLabel}">${escapeHtml(name)}</span> <button type="button" class="remove-btn" data-type="lift" data-idx="${i}">Remove</button></li>`;
+      }
     )
     .join('');
   DOM.slopeList.innerHTML = state.slopes
@@ -501,6 +649,12 @@ function getDiffColor(d) {
   return map[d] || d;
 }
 
+function escapeHtml(s) {
+  const div = document.createElement('div');
+  div.textContent = s;
+  return div.innerHTML;
+}
+
 function exportConfig() {
   const config = {
     imageWidth: state.imageWidth,
@@ -523,7 +677,12 @@ function onConfigImported(e) {
   reader.onload = () => {
     try {
       const config = JSON.parse(reader.result);
-      state.lifts = config.lifts ?? [];
+      state.lifts = (config.lifts ?? []).map((l, i) => ({
+        bottomStation: l.bottomStation,
+        topStation: l.topStation,
+        type: l.type || '2seater',
+        name: l.name || `Lift ${i + 1}`,
+      }));
       state.slopes = config.slopes ?? [];
       if (config.imageWidth) state.imageWidth = config.imageWidth;
       if (config.imageHeight) state.imageHeight = config.imageHeight;

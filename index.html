@@ -75,6 +75,27 @@
           <canvas id="drawCanvas"></canvas>
         </div>
       </main>
+
+      <dialog id="liftDialog" class="lift-dialog">
+        <h2>New lift</h2>
+        <div class="lift-dialog-section">
+          <label>Type</label>
+          <div class="lift-type-buttons">
+            <button type="button" data-lift-type="button" class="lift-type-btn" title="Button lift">Button</button>
+            <button type="button" data-lift-type="tbar" class="lift-type-btn" title="T-bar">T-bar</button>
+            <button type="button" data-lift-type="1seater" class="lift-type-btn" title="1-seater chair">1-seater</button>
+            <button type="button" data-lift-type="2seater" class="lift-type-btn active" title="2-seater chair">2-seater</button>
+          </div>
+        </div>
+        <div class="lift-dialog-section">
+          <label for="liftNameInput">Name</label>
+          <input type="text" id="liftNameInput" class="lift-name-input" placeholder="Lift name" />
+        </div>
+        <div class="lift-dialog-actions">
+          <button type="button" id="liftDialogCancel" class="lift-dialog-btn">Cancel</button>
+          <button type="button" id="liftDialogConfirm" class="lift-dialog-btn primary">Add lift</button>
+        </div>
+      </dialog>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
