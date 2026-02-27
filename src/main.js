@@ -215,6 +215,62 @@ function onCanvasMouseDown(e) {
 
 const PEN_MIN_DIST_SQ = 16; // min distance squared (image px) between pen points
 
+// How close (image pixels) a slope start/end must be to snap to an existing line.
+const SNAP_DIST_SQ = 50 * 50;
+
+function closestPointOnSegment(px, py, ax, ay, bx, by) {
+  const vx = bx - ax;
+  const vy = by - ay;
+  const wx = px - ax;
+  const wy = py - ay;
+  const lenSq = vx * vx + vy * vy;
+  if (!lenSq) return { x: ax, y: ay };
+  let t = (vx * wx + vy * wy) / lenSq;
+  if (t < 0) t = 0;
+  else if (t > 1) t = 1;
+  return { x: ax + t * vx, y: ay + t * vy };
+}
+
+/** Find a snap point (image coords) near lifts or slopes; returns null if nothing is close enough. */
+function findSnapPoint(px, py) {
+  let best = null;
+  let bestDistSq = SNAP_DIST_SQ;
+
+  // Check all lift segments (bottom → top)
+  state.lifts.forEach((lift) => {
+    const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+    const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+    const p = closestPointOnSegment(px, py, a.x, a.y, b.x, b.y);
+    const dx = px - p.x;
+    const dy = py - p.y;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestDistSq) {
+      bestDistSq = d2;
+      best = p;
+    }
+  });
+
+  // Check all slope segments
+  state.slopes.forEach((slope) => {
+    for (let i = 0; i < slope.points.length - 1; i++) {
+      const aN = slope.points[i];
+      const bN = slope.points[i + 1];
+      const a = fromNormalized(aN.x, aN.y);
+      const b = fromNormalized(bN.x, bN.y);
+      const p = closestPointOnSegment(px, py, a.x, a.y, b.x, b.y);
+      const dx = px - p.x;
+      const dy = py - p.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < bestDistSq) {
+        bestDistSq = d2;
+        best = p;
+      }
+    }
+  });
+
+  return best;
+}
+
 function onCanvasMouseMove(e) {
   if (!state.penDrawing || !state.image) return;
   const { x, y } = getCanvasPoint(e);
@@ -233,6 +289,13 @@ function onCanvasMouseUp() {
   if (!state.penDrawing || !state.image) return;
   state.penDrawing = false;
   if (state.slopePoints.length >= 2) {
+    // Optionally snap end of pen-drawn slope
+    const last = state.slopePoints[state.slopePoints.length - 1];
+    const snapEnd = findSnapPoint(last.x, last.y);
+    if (snapEnd) {
+      last.x = snapEnd.x;
+      last.y = snapEnd.y;
+    }
     state.slopes.push({
       difficulty: state.difficulty,
       points: state.slopePoints.map((p) => toNormalized(p.x, p.y)),
@@ -277,6 +340,19 @@ function onCanvasDblClick(e) {
   if (state.mode !== 'slope' || state.slopeDrawMode !== 'points' || !state.image) return;
   e.preventDefault();
   if (state.slopePoints.length >= 2) {
+    // Optionally snap start and end of point-drawn slope
+    const first = state.slopePoints[0];
+    const last = state.slopePoints[state.slopePoints.length - 1];
+    const snapStart = findSnapPoint(first.x, first.y);
+    const snapEnd = findSnapPoint(last.x, last.y);
+    if (snapStart) {
+      first.x = snapStart.x;
+      first.y = snapStart.y;
+    }
+    if (snapEnd) {
+      last.x = snapEnd.x;
+      last.y = snapEnd.y;
+    }
     state.slopes.push({
       difficulty: state.difficulty,
       points: state.slopePoints.map((p) => toNormalized(p.x, p.y)),
@@ -300,6 +376,7 @@ function draw() {
 
   const LIFT_LINE_WIDTH = 3;
   const LIFT_DOT_RADIUS = 5; // slightly thicker than the line
+  const SLOPE_LINE_WIDTH = 2; // a bit thinner than lift lines
 
   function drawLine(ax, ay, bx, by, color, lineWidth = LIFT_LINE_WIDTH) {
     ctx.strokeStyle = color;
@@ -319,7 +396,7 @@ function draw() {
   }
 
   /** Draw a smooth curve through all points (Catmull-Rom style with cubic Bezier). */
-  function drawSmoothCurve(points, color, lineWidth = 4) {
+  function drawSmoothCurve(points, color, lineWidth = SLOPE_LINE_WIDTH) {
     if (points.length < 2) return;
     const sx = (x) => x * scaleX;
     const sy = (y) => y * scaleY;
@@ -347,27 +424,7 @@ function draw() {
     ctx.stroke();
   }
 
-  // Draw saved lifts (black line + dots at bottom and top station)
-  const liftColor = '#1a1a1a';
-  state.lifts.forEach((lift) => {
-    const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
-    const b = fromNormalized(lift.topStation.x, lift.topStation.y);
-    drawLine(a.x, a.y, b.x, b.y, liftColor);
-    drawLiftStationDot(a.x, a.y);
-    drawLiftStationDot(b.x, b.y);
-  });
-
-  // Draw current lift in progress
-  if (state.liftBottom) {
-    const a = state.liftBottom;
-    drawLiftStationDot(a.x, a.y);
-    if (state.liftTop) {
-      drawLine(a.x, a.y, state.liftTop.x, state.liftTop.y, liftColor);
-      drawLiftStationDot(state.liftTop.x, state.liftTop.y);
-    }
-  }
-
-  // Draw saved slopes (smooth curves)
+  // Draw saved slopes (smooth curves) - BELOW lifts
   const diffColors = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f' };
   state.slopes.forEach((slope) => {
     const pts = slope.points.map((p) => fromNormalized(p.x, p.y));
@@ -385,6 +442,26 @@ function draw() {
         ctx.arc(p.x * scaleX, p.y * scaleY, i === 0 ? 6 : 4, 0, Math.PI * 2);
         ctx.fill();
       });
+    }
+  }
+
+  // Draw saved lifts (black line + dots at bottom and top station) - ABOVE slopes
+  const liftColor = '#1a1a1a';
+  state.lifts.forEach((lift) => {
+    const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+    const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+    drawLine(a.x, a.y, b.x, b.y, liftColor);
+    drawLiftStationDot(a.x, a.y);
+    drawLiftStationDot(b.x, b.y);
+  });
+
+  // Draw current lift in progress
+  if (state.liftBottom) {
+    const a = state.liftBottom;
+    drawLiftStationDot(a.x, a.y);
+    if (state.liftTop) {
+      drawLine(a.x, a.y, state.liftTop.x, state.liftTop.y, liftColor);
+      drawLiftStationDot(state.liftTop.x, state.liftTop.y);
     }
   }
 }
