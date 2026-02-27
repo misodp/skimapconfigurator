@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ski Map Configurator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/main.css" />
+  </head>
+  <body>
+    <div id="app">
+      <header class="header">
+        <h1>Ski Map Configurator</h1>
+        <p class="subtitle">Configure lifts and slopes for Ski Resort Tycoon</p>
+      </header>
+
+      <aside class="toolbar">
+        <section class="tool-section">
+          <h2>Mode</h2>
+          <div class="mode-buttons">
+            <button type="button" data-mode="lift" class="mode-btn active">Lift</button>
+            <button type="button" data-mode="slope" class="mode-btn">Slope</button>
+          </div>
+          <p class="hint lift-hint">Click bottom station, then top station.</p>
+          <p class="hint slope-hint hidden">Select difficulty and draw mode, then draw the slope. Press Escape to cancel.</p>
+          <button type="button" id="cancelSlopeBtn" class="cancel-slope-btn hidden">Cancel current slope</button>
+        </section>
+
+        <section class="tool-section slope-options hidden">
+          <h2>Slope draw</h2>
+          <div class="slope-draw-mode">
+            <button type="button" data-slope-mode="points" class="slope-mode-btn active">Points</button>
+            <button type="button" data-slope-mode="pen" class="slope-mode-btn">Pen</button>
+          </div>
+          <p class="hint points-hint">Click points along the slope, double-click to finish.</p>
+          <p class="hint pen-hint hidden">Click and drag to draw; release to finish.</p>
+          <h2>Slope difficulty</h2>
+          <div class="difficulty-buttons">
+            <button type="button" data-difficulty="green" class="diff-btn" title="Beginner">🟢 Green</button>
+            <button type="button" data-difficulty="blue" class="diff-btn" title="Intermediate">🔵 Blue</button>
+            <button type="button" data-difficulty="red" class="diff-btn" title="Advanced">🔴 Red</button>
+            <button type="button" data-difficulty="black" class="diff-btn" title="Expert">⚫ Black</button>
+          </div>
+        </section>
+
+        <section class="tool-section">
+          <h2>Mountain image</h2>
+          <input type="file" id="imageInput" accept="image/*" />
+          <p class="hint small">Upload your mountain image to draw on.</p>
+        </section>
+
+        <section class="tool-section">
+          <h2>Config</h2>
+          <button type="button" id="exportBtn">Export config JSON</button>
+          <button type="button" id="importBtn">Import config</button>
+          <input type="file" id="importInput" accept=".json" hidden />
+        </section>
+
+        <section class="tool-section">
+          <h2>Lifts</h2>
+          <ul id="liftList" class="item-list"></ul>
+        </section>
+
+        <section class="tool-section">
+          <h2>Slopes</h2>
+          <ul id="slopeList" class="item-list"></ul>
+        </section>
+      </aside>
+
+      <main class="canvas-area">
+        <div class="canvas-wrapper">
+          <img id="mountainImage" src="" alt="Mountain" class="mountain-img" />
+          <canvas id="drawCanvas"></canvas>
+        </div>
+      </main>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
