@@ -566,9 +566,64 @@ function draw() {
 
   // Draw saved slopes (smooth curves) - BELOW lifts
   const diffColors = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f' };
-  state.slopes.forEach((slope) => {
+  const SLOPE_NUMBER_RADIUS = 10;
+
+  /** Get point at a fraction (0–1) along the polyline by path length. */
+  function getPointAtPathFraction(pts, fraction) {
+    if (pts.length === 0) return null;
+    if (pts.length === 1) return pts[0];
+    let totalLen = 0;
+    const segLengths = [];
+    for (let i = 0; i < pts.length - 1; i++) {
+      const dx = pts[i + 1].x - pts[i].x;
+      const dy = pts[i + 1].y - pts[i].y;
+      const len = Math.sqrt(dx * dx + dy * dy);
+      segLengths.push(len);
+      totalLen += len;
+    }
+    if (totalLen === 0) return pts[0];
+    const targetLen = totalLen * fraction;
+    let acc = 0;
+    for (let i = 0; i < segLengths.length; i++) {
+      if (acc + segLengths[i] >= targetLen) {
+        const t = segLengths[i] === 0 ? 0 : (targetLen - acc) / segLengths[i];
+        return {
+          x: pts[i].x + t * (pts[i + 1].x - pts[i].x),
+          y: pts[i].y + t * (pts[i + 1].y - pts[i].y),
+        };
+      }
+      acc += segLengths[i];
+    }
+    return pts[pts.length - 1];
+  }
+
+  function drawSlopeNumber(pts, color, number) {
+    if (pts.length === 0) return;
+    const mid = getPointAtPathFraction(pts, 0.5);
+    if (!mid) return;
+    const cx = mid.x * scaleX;
+    const cy = mid.y * scaleY;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(cx, cy, SLOPE_NUMBER_RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#fff';
+    ctx.font = 'bold 11px "DM Sans", system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(String(number), cx, cy);
+    ctx.restore();
+  }
+
+  state.slopes.forEach((slope, i) => {
     const pts = slope.points.map((p) => fromNormalized(p.x, p.y));
-    drawSmoothCurve(pts, diffColors[slope.difficulty] || slope.difficulty);
+    const color = diffColors[slope.difficulty] || slope.difficulty;
+    drawSmoothCurve(pts, color);
+    drawSlopeNumber(pts, color, i + 1);
   });
 
   // Draw current slope in progress
