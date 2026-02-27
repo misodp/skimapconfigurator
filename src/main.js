@@ -4,6 +4,7 @@
  * Config is stored as JSON with normalized coordinates (0–1) relative to image dimensions.
  */
 
+import defaultMountainUrl from '../assets/images/mountain1.png';
 import buttonIconUrl from '../assets/images/button.png';
 import tBarIconUrl from '../assets/images/t-bar.png';
 import oneSeaterIconUrl from '../assets/images/1-seater.png';
@@ -122,6 +123,15 @@ function init() {
   setMode('lift');
   setDifficulty('blue');
   renderLists();
+
+  // Load default mountain image from assets on startup
+  DOM.mountainImage.onload = () => {
+    state.image = DOM.mountainImage;
+    syncCanvasSize();
+    draw();
+  };
+  DOM.mountainImage.src = defaultMountainUrl;
+  DOM.canvas.classList.remove('no-image');
 }
 
 function loadLiftIcons() {
@@ -281,6 +291,47 @@ function getCanvasPoint(e) {
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
 }
 
+/** Resample polyline to numSamples points evenly spaced by path length. Smooths jagged pen input. */
+function resamplePolylineByPathLength(points, numSamples) {
+  if (points.length < 2) return points;
+  if (points.length === 2) return points;
+  let totalLen = 0;
+  const segLengths = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const dx = points[i + 1].x - points[i].x;
+    const dy = points[i + 1].y - points[i].y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    segLengths.push(len);
+    totalLen += len;
+  }
+  if (totalLen === 0) return points;
+  const result = [];
+  for (let k = 0; k < numSamples; k++) {
+    if (k === numSamples - 1) {
+      result.push({ x: points[points.length - 1].x, y: points[points.length - 1].y });
+      break;
+    }
+    const frac = k / (numSamples - 1);
+    const targetLen = totalLen * frac;
+    let acc = 0;
+    for (let i = 0; i < segLengths.length; i++) {
+      if (acc + segLengths[i] >= targetLen || i === segLengths.length - 1) {
+        const t = segLengths[i] === 0 ? 0 : Math.min(1, (targetLen - acc) / segLengths[i]);
+        result.push({
+          x: points[i].x + t * (points[i + 1].x - points[i].x),
+          y: points[i].y + t * (points[i + 1].y - points[i].y),
+        });
+        break;
+      }
+      acc += segLengths[i];
+    }
+  }
+  if (result.length === 0) return points;
+  return result;
+}
+
+const PEN_SMOOTH_SAMPLES = 24; // number of points after resampling pen-drawn slopes
+
 function onCanvasMouseDown(e) {
   if (!state.image || state.mode !== 'slope' || state.slopeDrawMode !== 'pen') return;
   const { x, y } = getCanvasPoint(e);
@@ -367,16 +418,23 @@ function onCanvasMouseUp() {
   if (!state.penDrawing || !state.image) return;
   state.penDrawing = false;
   if (state.slopePoints.length >= 2) {
-    // Optionally snap end of pen-drawn slope
-    const last = state.slopePoints[state.slopePoints.length - 1];
+    let pts = state.slopePoints;
+    pts = resamplePolylineByPathLength(pts, PEN_SMOOTH_SAMPLES);
+    const first = pts[0];
+    const last = pts[pts.length - 1];
+    const snapStart = findSnapPoint(first.x, first.y);
     const snapEnd = findSnapPoint(last.x, last.y);
+    if (snapStart) {
+      first.x = snapStart.x;
+      first.y = snapStart.y;
+    }
     if (snapEnd) {
       last.x = snapEnd.x;
       last.y = snapEnd.y;
     }
     state.slopes.push({
       difficulty: state.difficulty,
-      points: state.slopePoints.map((p) => toNormalized(p.x, p.y)),
+      points: pts.map((p) => toNormalized(p.x, p.y)),
     });
     renderLists();
   }
