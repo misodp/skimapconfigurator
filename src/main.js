@@ -5,19 +5,21 @@
  */
 
 import defaultMountainUrl from '../assets/images/mountain1.png';
-import buttonIconUrl from '../assets/images/button.png';
-import tBarIconUrl from '../assets/images/t-bar.png';
-import oneSeaterIconUrl from '../assets/images/1-seater.png';
-import twoSeaterIconUrl from '../assets/images/2-seater.png';
+import cottageIconUrl from '../assets/images/cottage.png';
+import spriteSheetUrl from '../assets/images/SpriteSheet.png';
+import techTreeData from '../assets/data/techTree.json';
 
 const state = {
-  mode: 'lift', // 'lift' | 'slope'
+  mode: 'lift', // 'lift' | 'slope' | 'cottage'
+  liftType: null, // lift id from techTree (set after load)
+  liftTypes: [], // [{ id, name, frame, ... }, ...] from techTree.lifts
   difficulty: 'blue',
   image: null,
   imageWidth: 0,
   imageHeight: 0,
   lifts: [],
   slopes: [],
+  cottages: [],
   // Lift placement
   liftBottom: null,
   liftTop: null,
@@ -38,22 +40,17 @@ const DOM = {
   importInput: null,
   liftList: null,
   slopeList: null,
+  cottageList: null,
   modeBtns: null,
   diffBtns: null,
   slopeOptions: null,
   liftHint: null,
   slopeHint: null,
+  cottageHint: null,
 };
 
-/** Lift type -> image URL (from Vite import). */
-const LIFT_ICON_URLS = {
-  button: buttonIconUrl,
-  tbar: tBarIconUrl,
-  '1seater': oneSeaterIconUrl,
-  '2seater': twoSeaterIconUrl,
-};
-
-const liftIcons = {}; // type -> HTMLImageElement (loaded async)
+let spriteSheet = null; // HTMLImageElement (loaded async)
+let cottageIcon = null; // HTMLImageElement
 
 function init() {
   DOM.mountainImage = document.getElementById('mountainImage');
@@ -65,11 +62,14 @@ function init() {
   DOM.importInput = document.getElementById('importInput');
   DOM.liftList = document.getElementById('liftList');
   DOM.slopeList = document.getElementById('slopeList');
+  DOM.cottageList = document.getElementById('cottageList');
   DOM.modeBtns = document.querySelectorAll('.mode-btn');
   DOM.diffBtns = document.querySelectorAll('.diff-btn');
   DOM.slopeOptions = document.querySelector('.slope-options');
+  DOM.liftOptions = document.querySelector('.lift-options');
   DOM.liftHint = document.querySelector('.lift-hint');
   DOM.slopeHint = document.querySelector('.slope-hint');
+  DOM.cottageHint = document.querySelector('.cottage-hint');
 
   DOM.imageInput.addEventListener('change', onImageSelected);
   DOM.exportBtn.addEventListener('click', exportConfig);
@@ -87,6 +87,10 @@ function init() {
     btn.addEventListener('click', () => setSlopeDrawMode(btn.dataset.slopeMode));
   });
 
+  document.querySelectorAll('.lift-type-btn').forEach((btn) => {
+    btn.addEventListener('click', () => setLiftType(btn.dataset.liftType));
+  });
+
   DOM.canvas.addEventListener('click', onCanvasClick);
   DOM.canvas.addEventListener('dblclick', onCanvasDblClick);
   DOM.canvas.addEventListener('mousedown', onCanvasMouseDown);
@@ -97,30 +101,13 @@ function init() {
   document.getElementById('cancelSlopeBtn').addEventListener('click', cancelSlope);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelSlope(); });
 
-  const liftDialog = document.getElementById('liftDialog');
-  const liftNameInput = document.getElementById('liftNameInput');
-  document.querySelectorAll('.lift-type-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.lift-type-btn').forEach((b) => b.classList.remove('active'));
-      btn.classList.add('active');
-    });
-  });
-  document.getElementById('liftDialogCancel').addEventListener('click', () => {
-    liftDialog.close();
-    state.liftBottom = null;
-    state.liftTop = null;
-    draw();
-  });
-  document.getElementById('liftDialogConfirm').addEventListener('click', confirmLiftDialog);
-  liftDialog.addEventListener('cancel', (e) => {
-    e.preventDefault();
-    state.liftBottom = null;
-    state.liftTop = null;
-    draw();
-  });
-
-  loadLiftIcons();
+  state.liftTypes = (techTreeData && techTreeData.lifts) ? [...techTreeData.lifts] : [];
+  state.liftType = state.liftTypes.length > 0 ? state.liftTypes[0].id : null;
+  loadSpriteSheet();
+  loadCottageIcon();
+  renderLiftTypeButtons();
   setMode('lift');
+  if (state.liftType) setLiftType(state.liftType);
   setDifficulty('blue');
   renderLists();
 
@@ -134,13 +121,44 @@ function init() {
   DOM.canvas.classList.remove('no-image');
 }
 
-function loadLiftIcons() {
-  Object.entries(LIFT_ICON_URLS).forEach(([type, url]) => {
-    if (!url) return;
-    const img = new Image();
-    img.onload = () => { liftIcons[type] = img; draw(); };
-    img.src = url;
+function loadSpriteSheet() {
+  if (!spriteSheetUrl) return;
+  const img = new Image();
+  img.onload = () => { spriteSheet = img; renderLiftTypeButtons(); draw(); };
+  img.src = spriteSheetUrl;
+}
+
+/** Build lift type buttons from techTree; each shows sprite frame as icon. */
+function renderLiftTypeButtons() {
+  const container = document.getElementById('liftTypeButtons');
+  if (!container || !state.liftTypes.length) return;
+  // Sprite sheet is 3 columns x 2 rows; frame index is row-major (0,1,2 top row; 3,4,5 bottom row)
+  const COLS = 3;
+  const ROWS = 2;
+  // With background-size 300% 200%, offset % = (container - image) * pct: use col*50%, row*100% so the correct cell is visible
+  container.innerHTML = state.liftTypes
+    .map((lift) => {
+      const isActive = state.liftType === lift.id ? ' active' : '';
+      const col = lift.frame % COLS;
+      const row = Math.floor(lift.frame / COLS);
+      const posX = COLS > 1 ? (col / (COLS - 1)) * 100 : 0;
+      const posY = ROWS > 1 ? (row / (ROWS - 1)) * 100 : 0;
+      return `<button type="button" data-lift-type="${escapeHtml(lift.id)}" class="lift-type-btn${isActive}" title="${escapeHtml(lift.description || lift.name)}">
+        <span class="lift-type-icon" style="background-image:url(${spriteSheetUrl}); background-size:${COLS * 100}% ${ROWS * 100}%; background-position:${posX}% ${posY}%;"></span>
+        <span class="lift-type-label">${escapeHtml(lift.name)}</span>
+      </button>`;
+    })
+    .join('');
+  container.querySelectorAll('.lift-type-btn').forEach((btn) => {
+    btn.addEventListener('click', () => setLiftType(btn.dataset.liftType));
   });
+}
+
+function loadCottageIcon() {
+  if (!cottageIconUrl) return;
+  const img = new Image();
+  img.onload = () => { cottageIcon = img; draw(); };
+  img.src = cottageIconUrl;
 }
 
 function setMode(mode) {
@@ -152,8 +170,10 @@ function setMode(mode) {
 
   DOM.modeBtns.forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
   DOM.slopeOptions.classList.toggle('hidden', mode !== 'slope');
+  if (DOM.liftOptions) DOM.liftOptions.classList.toggle('hidden', mode !== 'lift');
   DOM.liftHint.classList.toggle('hidden', mode !== 'lift');
   DOM.slopeHint.classList.toggle('hidden', mode !== 'slope');
+  if (DOM.cottageHint) DOM.cottageHint.classList.toggle('hidden', mode !== 'cottage');
   const cancelBtn = document.getElementById('cancelSlopeBtn');
   if (cancelBtn) cancelBtn.classList.toggle('hidden', mode !== 'slope');
   state.penDrawing = false;
@@ -189,35 +209,10 @@ function cancelSlope() {
   draw();
 }
 
-const LIFT_TYPES = ['button', 'tbar', '1seater', '2seater'];
-
-function openLiftDialog() {
-  const dialog = document.getElementById('liftDialog');
-  const nameInput = document.getElementById('liftNameInput');
-  const nextNum = state.lifts.length + 1;
-  nameInput.value = `Lift ${nextNum}`;
-  const activeType = document.querySelector('.lift-type-btn.active');
-  if (!activeType) document.querySelector('[data-lift-type="2seater"]').classList.add('active');
-  dialog.showModal();
-  nameInput.focus();
-}
-
-function confirmLiftDialog() {
-  const nameInput = document.getElementById('liftNameInput');
-  const activeTypeBtn = document.querySelector('.lift-type-btn.active');
-  const type = (activeTypeBtn && activeTypeBtn.dataset.liftType) || '2seater';
-  const name = (nameInput.value || `Lift ${state.lifts.length + 1}`).trim() || `Lift ${state.lifts.length + 1}`;
-  state.lifts.push({
-    bottomStation: state.liftBottom.norm,
-    topStation: state.liftTop.norm,
-    type,
-    name,
-  });
-  state.liftBottom = null;
-  state.liftTop = null;
-  document.getElementById('liftDialog').close();
-  renderLists();
-  draw();
+function setLiftType(type) {
+  if (!state.liftTypes.some((l) => l.id === type)) return;
+  state.liftType = type;
+  document.querySelectorAll('.lift-type-btn').forEach((b) => b.classList.toggle('active', b.dataset.liftType === type));
 }
 
 function setDifficulty(d) {
@@ -454,9 +449,25 @@ function onCanvasClick(e) {
       state.liftBottom = { x: pt.x, y: pt.y, norm };
     } else if (!state.liftTop) {
       state.liftTop = { x: pt.x, y: pt.y, norm };
-      openLiftDialog();
-      return;
+      const nextNum = state.lifts.length + 1;
+      const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
+      state.lifts.push({
+        bottomStation: state.liftBottom.norm,
+        topStation: state.liftTop.norm,
+        type: typeId,
+        name: `Lift ${nextNum}`,
+      });
+      state.liftBottom = null;
+      state.liftTop = null;
+      renderLists();
     }
+  } else if (state.mode === 'cottage') {
+    const pt = canvasToImage(x, y);
+    const norm = toNormalized(pt.x, pt.y);
+    const nextNum = state.cottages.length + 1;
+    const name = window.prompt('Cottage name (optional)', `Cottage ${nextNum}`) || `Cottage ${nextNum}`;
+    state.cottages.push({ position: norm, name: name.trim() || `Cottage ${nextNum}` });
+    renderLists();
   } else if (state.mode === 'slope' && state.slopeDrawMode === 'points') {
     const pt = canvasToImage(x, y);
     state.slopePoints.push({ x: pt.x, y: pt.y });
@@ -534,22 +545,32 @@ function draw() {
     return a;
   }
 
-  /** Draw lift type icon. Positioned towards upper station (70% from bottom) so it doesn't overlap the name. */
+  /** Draw lift type icon from sprite sheet. Positioned towards upper station (70% from bottom) so it doesn't overlap the name. */
   const LIFT_ICON_TOWARDS_TOP = 0.7; // 0 = at bottom, 1 = at top
   const LIFT_ICON_SIZE = 24; // pixels on canvas
 
-  function drawLiftIcon(ax, ay, bx, by, angle, type) {
+  function drawLiftIcon(ax, ay, bx, by, typeId) {
     const sx = (x) => x * scaleX;
     const sy = (y) => y * scaleY;
     const cx = ax + (bx - ax) * LIFT_ICON_TOWARDS_TOP;
     const cy = ay + (by - ay) * LIFT_ICON_TOWARDS_TOP;
-    const img = liftIcons[type];
-    if (img && img.complete && img.naturalWidth) {
+    const liftDef = state.liftTypes.find((l) => l.id === typeId);
+    const frame = liftDef ? liftDef.frame : 0;
+    if (spriteSheet && spriteSheet.complete && spriteSheet.naturalWidth) {
+      // Sprite sheet is 3 columns x 2 rows; frame index is row-major
+      const COLS = 3;
+      const ROWS = 2;
+      const fw = spriteSheet.naturalWidth / COLS;
+      const fh = spriteSheet.naturalHeight / ROWS;
+      const col = frame % COLS;
+      const row = Math.floor(frame / COLS);
+      const srcX = col * fw;
+      const srcY = row * fh;
+      const w = LIFT_ICON_SIZE;
+      const h = (fh / fw) * w;
       ctx.save();
       ctx.translate(sx(cx), sy(cy));
-      const w = LIFT_ICON_SIZE;
-      const h = (img.naturalHeight / img.naturalWidth) * w;
-      ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      ctx.drawImage(spriteSheet, srcX, srcY, fw, fh, -w / 2, -h / 2, w, h);
       ctx.restore();
     } else {
       ctx.save();
@@ -557,15 +578,7 @@ function draw() {
       ctx.strokeStyle = liftColor;
       ctx.fillStyle = liftColor;
       ctx.lineWidth = 2;
-      const r = 6;
-      if (type === 'button') {
-        ctx.beginPath();
-        ctx.arc(0, 0, r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.stroke();
-      } else {
-        ctx.strokeRect(-r, -r * 0.6, r * 2, r * 1.2);
-      }
+      ctx.strokeRect(-6, -4, 12, 8);
       ctx.restore();
     }
   }
@@ -593,8 +606,8 @@ function draw() {
     ctx.restore();
   }
 
-  /** Draw a smooth curve through all points (Catmull-Rom style with cubic Bezier). */
-  function drawSmoothCurve(points, color, lineWidth = SLOPE_LINE_WIDTH) {
+  /** Draw a smooth curve through all points (Catmull-Rom style with cubic Bezier). dashed: use dotted line (e.g. for freeride). */
+  function drawSmoothCurve(points, color, lineWidth = SLOPE_LINE_WIDTH, dashed = false) {
     if (points.length < 2) return;
     const sx = (x) => x * scaleX;
     const sy = (y) => y * scaleY;
@@ -602,6 +615,7 @@ function draw() {
     ctx.lineWidth = lineWidth;
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    if (dashed) ctx.setLineDash([4, 4]);
     ctx.beginPath();
     ctx.moveTo(sx(points[0].x), sy(points[0].y));
     if (points.length === 2) {
@@ -620,10 +634,11 @@ function draw() {
       }
     }
     ctx.stroke();
+    if (dashed) ctx.setLineDash([]);
   }
 
   // Draw saved slopes (smooth curves) - BELOW lifts
-  const diffColors = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f' };
+  const diffColors = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f', freeride: '#2d1b4e' };
   const SLOPE_NUMBER_RADIUS = 10;
 
   /** Get point at a fraction (0–1) along the polyline by path length. */
@@ -655,20 +670,38 @@ function draw() {
     return pts[pts.length - 1];
   }
 
-  function drawSlopeNumber(pts, color, number) {
+  /** Draw slope number in a circle or, for freeride, in a black diamond. */
+  function drawSlopeNumber(pts, color, number, difficulty) {
     if (pts.length === 0) return;
     const mid = getPointAtPathFraction(pts, 0.5);
     if (!mid) return;
     const cx = mid.x * scaleX;
     const cy = mid.y * scaleY;
+    const isFreeride = difficulty === 'freeride';
     ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, SLOPE_NUMBER_RADIUS, 0, Math.PI * 2);
-    ctx.fillStyle = color;
-    ctx.fill();
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    if (isFreeride) {
+      // Black diamond (same size as circle: half-width/height = SLOPE_NUMBER_RADIUS)
+      const r = SLOPE_NUMBER_RADIUS;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy - r);
+      ctx.lineTo(cx + r, cy);
+      ctx.lineTo(cx, cy + r);
+      ctx.lineTo(cx - r, cy);
+      ctx.closePath();
+      ctx.fillStyle = '#1a1a1a';
+      ctx.fill();
+      ctx.strokeStyle = '#1a1a1a';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    } else {
+      ctx.beginPath();
+      ctx.arc(cx, cy, SLOPE_NUMBER_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.stroke();
+    }
     ctx.fillStyle = '#fff';
     ctx.font = 'bold 11px "DM Sans", system-ui, sans-serif';
     ctx.textAlign = 'center';
@@ -680,14 +713,16 @@ function draw() {
   state.slopes.forEach((slope, i) => {
     const pts = slope.points.map((p) => fromNormalized(p.x, p.y));
     const color = diffColors[slope.difficulty] || slope.difficulty;
-    drawSmoothCurve(pts, color);
-    drawSlopeNumber(pts, color, i + 1);
+    const isFreeride = slope.difficulty === 'freeride';
+    drawSmoothCurve(pts, color, SLOPE_LINE_WIDTH, isFreeride);
+    drawSlopeNumber(pts, color, i + 1, slope.difficulty);
   });
 
   // Draw current slope in progress
   if (state.slopePoints.length > 0) {
     const c = diffColors[state.difficulty] || state.difficulty;
-    drawSmoothCurve(state.slopePoints, c);
+    const isFreeride = state.difficulty === 'freeride';
+    drawSmoothCurve(state.slopePoints, c, SLOPE_LINE_WIDTH, isFreeride);
     if (state.slopeDrawMode === 'points') {
       state.slopePoints.forEach((p, i) => {
         ctx.fillStyle = c;
@@ -706,9 +741,8 @@ function draw() {
     drawLine(a.x, a.y, b.x, b.y, liftColor);
     drawLiftStationDot(a.x, a.y);
     drawLiftStationDot(b.x, b.y);
-    const type = lift.type || '2seater';
-    const angle = Math.atan2(b.y - a.y, b.x - a.x);
-    drawLiftIcon(a.x, a.y, b.x, b.y, angle, type);
+    const typeId = lift.type || (state.liftTypes[0] && state.liftTypes[0].id);
+    if (typeId) drawLiftIcon(a.x, a.y, b.x, b.y, typeId);
     drawLiftLabel(lift.name || `Lift ${i + 1}`, a.x, a.y, b.x, b.y);
   });
 
@@ -721,6 +755,43 @@ function draw() {
       drawLiftStationDot(state.liftTop.x, state.liftTop.y);
     }
   }
+
+  // Draw cottages (icon at position, above lifts)
+  const COTTAGE_ICON_SIZE = 64;
+  state.cottages.forEach((cottage, i) => {
+    const pos = fromNormalized(cottage.position.x, cottage.position.y);
+    const cx = pos.x * scaleX;
+    const cy = pos.y * scaleY;
+    if (cottageIcon && cottageIcon.complete && cottageIcon.naturalWidth) {
+      ctx.save();
+      ctx.translate(cx, cy);
+      const w = COTTAGE_ICON_SIZE;
+      const h = (cottageIcon.naturalHeight / cottageIcon.naturalWidth) * w;
+      ctx.drawImage(cottageIcon, -w / 2, -h / 2, w, h);
+      ctx.restore();
+    } else {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = '#8B4513';
+      ctx.strokeStyle = '#654321';
+      ctx.lineWidth = 2;
+      ctx.fillRect(-10, -8, 20, 16);
+      ctx.strokeRect(-10, -8, 20, 16);
+      ctx.restore();
+    }
+/*     // Optional: draw cottage name below icon
+    const name = cottage.name || `Cottage ${i + 1}`;
+    if (name) {
+      ctx.save();
+      ctx.translate(cx, cy + COTTAGE_ICON_SIZE / 2 + 10);
+      ctx.fillStyle = liftColor;
+      ctx.font = 'bold 11px "DM Sans", system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(name, 0, 0);
+      ctx.restore();
+    } */
+  });
 }
 
 function renderLists() {
@@ -728,9 +799,9 @@ function renderLists() {
     .map(
       (lift, i) => {
         const name = (lift.name || `Lift ${i + 1}`).trim();
-        const type = lift.type || '2seater';
-        const typeLabel = { button: 'Button', tbar: 'T-bar', '1seater': '1-seat', '2seater': '2-seat' }[type] || type;
-        return `<li><span class="lift-list-name" title="${typeLabel}">${escapeHtml(name)}</span> <button type="button" class="remove-btn" data-type="lift" data-idx="${i}">Remove</button></li>`;
+        const typeId = lift.type || (state.liftTypes[0] && state.liftTypes[0].id);
+        const typeLabel = (state.liftTypes.find((l) => l.id === typeId) || {}).name || typeId || 'Lift';
+        return `<li><span class="lift-list-name editable-lift-name" data-idx="${i}" title="${escapeHtml(typeLabel)} – click to edit name">${escapeHtml(name)}</span> <button type="button" class="remove-btn" data-type="lift" data-idx="${i}">Remove</button></li>`;
       }
     )
     .join('');
@@ -740,7 +811,26 @@ function renderLists() {
         `<li><span class="diff-dot" style="color:${getDiffColor(s.difficulty)}">●</span> ${s.difficulty} ${i + 1} <button type="button" class="remove-btn" data-type="slope" data-idx="${i}">Remove</button></li>`
     )
     .join('');
+  DOM.cottageList.innerHTML = state.cottages
+    .map(
+      (c, i) =>
+        `<li><span class="cottage-list-name" title="${escapeHtml(c.name || '')}">${escapeHtml(c.name || `Cottage ${i + 1}`)}</span> <button type="button" class="remove-btn" data-type="cottage" data-idx="${i}">Remove</button></li>`
+    )
+    .join('');
 
+  DOM.liftList.querySelectorAll('.editable-lift-name').forEach((el) => {
+    el.addEventListener('click', () => {
+      const idx = Number(el.dataset.idx);
+      const lift = state.lifts[idx];
+      const current = (lift && (lift.name || `Lift ${idx + 1}`)) || `Lift ${idx + 1}`;
+      const newName = window.prompt('Lift name', current);
+      if (newName !== null && lift) {
+        lift.name = newName.trim() || `Lift ${idx + 1}`;
+        renderLists();
+        draw();
+      }
+    });
+  });
   DOM.liftList.querySelectorAll('.remove-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       state.lifts.splice(Number(btn.dataset.idx), 1);
@@ -755,10 +845,17 @@ function renderLists() {
       draw();
     });
   });
+  DOM.cottageList.querySelectorAll('.remove-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.cottages.splice(Number(btn.dataset.idx), 1);
+      renderLists();
+      draw();
+    });
+  });
 }
 
 function getDiffColor(d) {
-  const map = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f' };
+  const map = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f', freeride: '#2d1b4e' };
   return map[d] || d;
 }
 
@@ -774,6 +871,7 @@ function exportConfig() {
     imageHeight: state.imageHeight,
     lifts: state.lifts,
     slopes: state.slopes,
+    cottages: state.cottages,
   };
   const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -790,13 +888,18 @@ function onConfigImported(e) {
   reader.onload = () => {
     try {
       const config = JSON.parse(reader.result);
+      const defaultTypeId = state.liftTypes[0] ? state.liftTypes[0].id : null;
       state.lifts = (config.lifts ?? []).map((l, i) => ({
         bottomStation: l.bottomStation,
         topStation: l.topStation,
-        type: l.type || '2seater',
+        type: (state.liftTypes.some((lt) => lt.id === l.type) && l.type) ? l.type : defaultTypeId,
         name: l.name || `Lift ${i + 1}`,
       }));
       state.slopes = config.slopes ?? [];
+      state.cottages = (config.cottages ?? []).map((c, i) => ({
+        position: c.position,
+        name: c.name || `Cottage ${i + 1}`,
+      }));
       if (config.imageWidth) state.imageWidth = config.imageWidth;
       if (config.imageHeight) state.imageHeight = config.imageHeight;
       renderLists();
