@@ -394,6 +394,44 @@ button:hover {
   color: var(--text);
 }
 
+.lift-detail-skidollars {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.lift-detail-skidollars .skidollar-icon {
+  width: 18px;
+  height: 18px;
+  display: block;
+  object-fit: contain;
+}
+
+.lift-detail-description .lift-detail-pros-cons {
+  margin-top: 0.5rem;
+}
+
+.lift-detail-pros-cons {
+  margin: 0;
+  padding-left: 1.1rem;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  list-style: none;
+}
+
+.lift-detail-pros-cons li {
+  margin-bottom: 0.2rem;
+  position: relative;
+}
+
+.lift-detail-pros-cons li.lift-detail-pro {
+  color: var(--green);
+}
+
+.lift-detail-pros-cons li.lift-detail-con {
+  color: var(--red);
+}
+
 .lift-type-btn {
   margin: 0;
   padding: 0.5rem 0.65rem;

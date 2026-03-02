@@ -7,6 +7,7 @@
 import defaultMountainUrl from '../assets/images/mountain1.png';
 import cottageIconUrl from '../assets/images/cottage.png';
 import spriteSheetUrl from '../assets/images/SpriteSheet.png';
+import skidollarUrl from '../assets/images/Skidollar.png';
 import techTreeData from '../assets/data/techTree.json';
 
 const state = {
@@ -158,17 +159,42 @@ function renderLiftTypeDropdown() {
   function fillFloatingDetail(lift) {
     if (!floatingPanel || !lift) return;
     const style = getLiftSpriteStyle(lift);
+    const lifts = state.liftTypes;
+    const costs = lifts.map((l) => (l.base_cost != null ? Number(l.base_cost) : 0));
+    const opCosts = lifts.map((l) => {
+      const v = l.base_operating_cost != null ? l.base_operating_cost : l.base_maintenance;
+      return v != null ? Number(v) : 0;
+    });
+    const minCost = Math.min(...costs);
+    const maxCost = Math.max(...costs);
+    const minOp = Math.min(...opCosts);
+    const maxOp = Math.max(...opCosts);
+    const opCost = lift.base_operating_cost != null ? lift.base_operating_cost : lift.base_maintenance;
+    const costScale = scale1to3(lift.base_cost, minCost, maxCost);
+    const opScale = scale1to3(opCost, minOp, maxOp);
+    const costIcons = skidollarIconsHtml(costScale, skidollarUrl);
+    const opIcons = skidollarIconsHtml(opScale, skidollarUrl);
+    const prosCons = Array.isArray(lift.pros_cons) ? lift.pros_cons : [];
+    const prosConsHtml = prosCons
+      .map((item) => {
+        const s = String(item).trim();
+        const isPro = s.startsWith('+');
+        const cls = isPro ? 'lift-detail-pro' : 'lift-detail-con';
+        return `<li class="${cls}">${escapeHtml(s)}</li>`;
+      })
+      .join('');
     floatingPanel.innerHTML = `
       <button type="button" class="lift-detail-close" title="Close" aria-label="Close">×</button>
       <div class="lift-type-detail-icon" style="${style}"></div>
       <dl class="lift-type-detail-fields">
         <dt>Brand</dt><dd>${escapeHtml(lift.brand || '—')}</dd>
         <dt>Name</dt><dd>${escapeHtml(lift.name || '—')}</dd>
-        <dt>Cost</dt><dd>${formatNumber(lift.base_cost)}</dd>
-        <dt>Maintenance</dt><dd>${formatNumber(lift.base_maintenance)}</dd>
+        <dt>Cost</dt><dd class="lift-detail-skidollars">${costIcons}</dd>
+        <dt>Operating cost</dt><dd class="lift-detail-skidollars">${opIcons}</dd>
+        <dt>Max length</dt><dd>${lift.max_length != null ? formatNumber(lift.max_length) + ' m' : '—'}</dd>
         <dt>Speed</dt><dd>${formatNumber(lift.speed)}</dd>
         <dt>Capacity</dt><dd>${formatNumber(lift.capacity)}</dd>
-        <dt>Description</dt><dd class="lift-detail-description">${escapeHtml(lift.description || '—')}</dd>
+        <dt>Description</dt><dd class="lift-detail-description">${escapeHtml(lift.description || '—')}${prosConsHtml ? `<ul class="lift-detail-pros-cons">${prosConsHtml}</ul>` : ''}</dd>
       </dl>
     `;
     const closeBtn = floatingPanel.querySelector('.lift-detail-close');
@@ -217,6 +243,20 @@ function formatNumber(n) {
   if (n === undefined || n === null) return '—';
   if (Number.isInteger(n)) return String(n);
   return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+}
+
+/** Map value to relative scale 1–3 given min/max (for cost / operating cost display). */
+function scale1to3(value, min, max) {
+  if (value === undefined || value === null || max === min) return 2;
+  const t = (Number(value) - min) / (max - min);
+  return Math.max(1, Math.min(3, Math.round(1 + t * 2)));
+}
+
+/** Render 1–3 Skidollar icons for relative cost display. */
+function skidollarIconsHtml(count, url) {
+  if (!url || count < 1) return '—';
+  const n = Math.max(1, Math.min(3, Math.round(count)));
+  return Array.from({ length: n }, () => `<img src="${url}" alt="" class="skidollar-icon" />`).join('');
 }
 
 function loadCottageIcon() {
