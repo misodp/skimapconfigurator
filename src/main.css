@@ -236,7 +236,7 @@ button:hover {
   display: inline-block;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   border-radius: var(--radius);
-  overflow: hidden;
+  overflow: visible;
 }
 
 .mountain-img {
@@ -292,11 +292,106 @@ button:hover {
   margin-bottom: 0.35rem;
 }
 
-.lift-type-buttons {
+/* Lift type: list in menu; floating detail panel over canvas on hover */
+.lift-type-dropdown {
+  width: 100%;
+}
+
+.lift-type-dropdown .lift-type-buttons {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+/* Floating detail panel over mountain image */
+.lift-detail-floating {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 10;
+  max-width: 220px;
+  padding: 0.75rem;
+  padding-top: 2rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.4);
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.lift-detail-close {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  margin: 0;
+  padding: 0.2rem 0.45rem;
+  font-size: 1.25rem;
+  line-height: 1;
+  border: none;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.lift-detail-close:hover {
+  color: var(--text);
+  background: var(--surface-hover);
+}
+
+.lift-detail-placeholder {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  padding: 0.5rem 0;
+}
+
+.lift-detail-floating .lift-type-detail-icon {
   width: 100%;
+  height: 0;
+  padding-bottom: 100%;
+  background-repeat: no-repeat;
+  background-color: var(--surface-alt, rgba(255,255,255,0.06));
+  border-radius: 6px;
+  background-size: 300% 200%;
+}
+
+.lift-type-detail-icon {
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%;
+  background-repeat: no-repeat;
+  background-color: var(--surface-alt, rgba(255,255,255,0.06));
+  border-radius: 6px;
+  background-size: 300% 200%;
+}
+
+.lift-type-detail-fields {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  font-size: 0.85rem;
+}
+
+.lift-type-detail-fields dt {
+  margin: 0;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.lift-type-detail-fields dd {
+  margin: 0;
+}
+
+.lift-type-detail-fields dd.lift-detail-description {
+  grid-column: 1 / -1;
+  margin-top: 0.25rem;
+  line-height: 1.4;
+  color: var(--text);
 }
 
 .lift-type-btn {
@@ -308,11 +403,23 @@ button:hover {
   gap: 0.5rem;
   width: 100%;
   box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.lift-type-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
 }
 
 .lift-type-icon {
-  width: 56px;
-  height: 56px;
+  width: 48px;
+  height: 48px;
   flex-shrink: 0;
   background-repeat: no-repeat;
   background-color: var(--surface-alt, rgba(255,255,255,0.06));

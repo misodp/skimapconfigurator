@@ -87,10 +87,6 @@ function init() {
     btn.addEventListener('click', () => setSlopeDrawMode(btn.dataset.slopeMode));
   });
 
-  document.querySelectorAll('.lift-type-btn').forEach((btn) => {
-    btn.addEventListener('click', () => setLiftType(btn.dataset.liftType));
-  });
-
   DOM.canvas.addEventListener('click', onCanvasClick);
   DOM.canvas.addEventListener('dblclick', onCanvasDblClick);
   DOM.canvas.addEventListener('mousedown', onCanvasMouseDown);
@@ -105,7 +101,7 @@ function init() {
   state.liftType = state.liftTypes.length > 0 ? state.liftTypes[0].id : null;
   loadSpriteSheet();
   loadCottageIcon();
-  renderLiftTypeButtons();
+  renderLiftTypeDropdown();
   setMode('lift');
   if (state.liftType) setLiftType(state.liftType);
   setDifficulty('blue');
@@ -124,34 +120,99 @@ function init() {
 function loadSpriteSheet() {
   if (!spriteSheetUrl) return;
   const img = new Image();
-  img.onload = () => { spriteSheet = img; renderLiftTypeButtons(); draw(); };
+  img.onload = () => { spriteSheet = img; renderLiftTypeDropdown(); draw(); };
   img.src = spriteSheetUrl;
 }
 
-/** Build lift type buttons from techTree; each shows sprite frame as icon. */
-function renderLiftTypeButtons() {
-  const container = document.getElementById('liftTypeButtons');
+const COLS = 3;
+const ROWS = 2;
+
+function getLiftSpriteStyle(lift) {
+  const col = lift.frame % COLS;
+  const row = Math.floor(lift.frame / COLS);
+  const posX = COLS > 1 ? (col / (COLS - 1)) * 100 : 0;
+  const posY = ROWS > 1 ? (row / (ROWS - 1)) * 100 : 0;
+  return `background-image:url(${spriteSheetUrl}); background-size:${COLS * 100}% ${ROWS * 100}%; background-position:${posX}% ${posY}%;`;
+}
+
+const LIFT_DETAIL_BLANK_HTML = '';
+
+/** Build lift type section: list in menu; floating panel over canvas shows blank until a lift is selected (click), then that lift's details; collapse to blank on close. */
+function renderLiftTypeDropdown() {
+  const container = document.getElementById('liftTypeDropdown');
+  const floatingPanel = document.getElementById('liftDetailFloating');
   if (!container || !state.liftTypes.length) return;
-  // Sprite sheet is 3 columns x 2 rows; frame index is row-major (0,1,2 top row; 3,4,5 bottom row)
-  const COLS = 3;
-  const ROWS = 2;
-  // With background-size 300% 200%, offset % = (container - image) * pct: use col*50%, row*100% so the correct cell is visible
-  container.innerHTML = state.liftTypes
+
+  container.innerHTML = `<div class="lift-type-buttons" data-lift-list></div>`;
+  const listContainer = container.querySelector('[data-lift-list]');
+
+  function setPanelBlank() {
+    if (!floatingPanel) return;
+    floatingPanel.innerHTML = LIFT_DETAIL_BLANK_HTML;
+  }
+
+  function fillFloatingDetail(lift) {
+    if (!floatingPanel || !lift) return;
+    const style = getLiftSpriteStyle(lift);
+    floatingPanel.innerHTML = `
+      <button type="button" class="lift-detail-close" title="Close" aria-label="Close">×</button>
+      <div class="lift-type-detail-icon" style="${style}"></div>
+      <dl class="lift-type-detail-fields">
+        <dt>Brand</dt><dd>${escapeHtml(lift.brand || '—')}</dd>
+        <dt>Name</dt><dd>${escapeHtml(lift.name || '—')}</dd>
+        <dt>Cost</dt><dd>${formatNumber(lift.base_cost)}</dd>
+        <dt>Maintenance</dt><dd>${formatNumber(lift.base_maintenance)}</dd>
+        <dt>Speed</dt><dd>${formatNumber(lift.speed)}</dd>
+        <dt>Capacity</dt><dd>${formatNumber(lift.capacity)}</dd>
+        <dt>Description</dt><dd class="lift-detail-description">${escapeHtml(lift.description || '—')}</dd>
+      </dl>
+    `;
+    const closeBtn = floatingPanel.querySelector('.lift-detail-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => setPanelBlank());
+  }
+
+  function showFloatingPanel(liftId) {
+    const lift = state.liftTypes.find((l) => l.id === liftId) || state.liftTypes[0];
+    fillFloatingDetail(lift);
+    if (floatingPanel) {
+      floatingPanel.hidden = false;
+      floatingPanel.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  listContainer.innerHTML = state.liftTypes
     .map((lift) => {
       const isActive = state.liftType === lift.id ? ' active' : '';
-      const col = lift.frame % COLS;
-      const row = Math.floor(lift.frame / COLS);
-      const posX = COLS > 1 ? (col / (COLS - 1)) * 100 : 0;
-      const posY = ROWS > 1 ? (row / (ROWS - 1)) * 100 : 0;
-      return `<button type="button" data-lift-type="${escapeHtml(lift.id)}" class="lift-type-btn${isActive}" title="${escapeHtml(lift.description || lift.name)}">
-        <span class="lift-type-icon" style="background-image:url(${spriteSheetUrl}); background-size:${COLS * 100}% ${ROWS * 100}%; background-position:${posX}% ${posY}%;"></span>
+      return `<button type="button" data-lift-type="${escapeHtml(lift.id)}" class="lift-type-btn${isActive}">
+        <span class="lift-type-icon" style="${getLiftSpriteStyle(lift)}"></span>
         <span class="lift-type-label">${escapeHtml(lift.name)}</span>
       </button>`;
     })
     .join('');
-  container.querySelectorAll('.lift-type-btn').forEach((btn) => {
-    btn.addEventListener('click', () => setLiftType(btn.dataset.liftType));
+
+  listContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-lift-type]');
+    if (!btn) return;
+    const id = btn.dataset.liftType;
+    setLiftType(id);
+    listContainer.querySelectorAll('.lift-type-btn').forEach((b) => b.classList.toggle('active', b.dataset.liftType === id));
+    showFloatingPanel(id);
   });
+
+  setPanelBlank();
+  if (floatingPanel && state.mode === 'lift') {
+    floatingPanel.hidden = false;
+    floatingPanel.setAttribute('aria-hidden', 'false');
+  }
+
+  window.liftDropdownUpdateTrigger = () => {};
+  window.liftDetailSetBlank = setPanelBlank;
+}
+
+function formatNumber(n) {
+  if (n === undefined || n === null) return '—';
+  if (Number.isInteger(n)) return String(n);
+  return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
 function loadCottageIcon() {
@@ -172,6 +233,17 @@ function setMode(mode) {
   DOM.slopeOptions.classList.toggle('hidden', mode !== 'slope');
   if (DOM.liftOptions) DOM.liftOptions.classList.toggle('hidden', mode !== 'lift');
   DOM.liftHint.classList.toggle('hidden', mode !== 'lift');
+  const floatingPanel = document.getElementById('liftDetailFloating');
+  if (floatingPanel) {
+    if (mode === 'lift') {
+      floatingPanel.hidden = false;
+      floatingPanel.setAttribute('aria-hidden', 'false');
+      if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
+    } else {
+      floatingPanel.hidden = true;
+      floatingPanel.setAttribute('aria-hidden', 'true');
+    }
+  }
   DOM.slopeHint.classList.toggle('hidden', mode !== 'slope');
   if (DOM.cottageHint) DOM.cottageHint.classList.toggle('hidden', mode !== 'cottage');
   const cancelBtn = document.getElementById('cancelSlopeBtn');
@@ -212,7 +284,7 @@ function cancelSlope() {
 function setLiftType(type) {
   if (!state.liftTypes.some((l) => l.id === type)) return;
   state.liftType = type;
-  document.querySelectorAll('.lift-type-btn').forEach((b) => b.classList.toggle('active', b.dataset.liftType === type));
+  if (typeof window.liftDropdownUpdateTrigger === 'function') window.liftDropdownUpdateTrigger();
 }
 
 function setDifficulty(d) {
@@ -460,6 +532,7 @@ function onCanvasClick(e) {
       state.liftBottom = null;
       state.liftTop = null;
       renderLists();
+      if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
     }
   } else if (state.mode === 'cottage') {
     const pt = canvasToImage(x, y);
