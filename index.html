@@ -7,43 +7,64 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/skimapconfigurator/assets/index-yzj4Ogwf.js"></script>
-    <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-B3wqDcvW.css">
+    <script type="module" crossorigin src="/skimapconfigurator/assets/index-hQrpL5qy.js"></script>
+    <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-piHtdX08.css">
   </head>
   <body>
     <div id="app">
       <header class="header">
-        <h1>Ski Map Configurator</h1>
-        <p class="subtitle">Configure lifts and slopes for Ski Resort Tycoon</p>
+        <h1>Retro Ski Resort Tycoon</h1>
+        <p class="subtitle">Build your dream ski resort in the 1960s.</p>
+        <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
+          <img class="budget-icon" id="budgetIcon" src="" alt="" />
+          <span id="budgetAmount">0</span>
+        </div>
       </header>
 
       <aside class="toolbar">
         <section class="tool-section">
-          <h2>Mode</h2>
+          <h2>Build</h2>
           <div class="mode-buttons">
             <button type="button" data-mode="lift" class="mode-btn active">Lift</button>
             <button type="button" data-mode="slope" class="mode-btn">Slope</button>
+            <button type="button" data-mode="cottage" class="mode-btn">Cottage</button>
           </div>
-          <p class="hint lift-hint">Click bottom station, then top station.</p>
-          <p class="hint slope-hint hidden">Select difficulty and draw mode, then draw the slope. Press Escape to cancel.</p>
-          <button type="button" id="cancelSlopeBtn" class="cancel-slope-btn hidden">Cancel current slope</button>
+          <p class="hint lift-hint">Select type, then click bottom station, then top station. Press Escape to cancel.</p>
+          <p class="hint slope-hint hidden">Select difficulty, then draw the slope. Press Escape to cancel.</p>
+          <p class="hint cottage-hint hidden">Click on the map to place a cottage.</p>
+        </section>
+
+        <section class="tool-section lift-options">
+          <h2>Lift type</h2>
+          <div id="liftTypeDropdown" class="lift-type-dropdown"></div>
+          <button type="button" id="cancelLiftBtn" class="cancel-lift-btn hidden">Cancel current lift</button>
         </section>
 
         <section class="tool-section slope-options hidden">
-          <h2>Slope draw</h2>
-          <div class="slope-draw-mode">
-            <button type="button" data-slope-mode="points" class="slope-mode-btn active">Points</button>
-            <button type="button" data-slope-mode="pen" class="slope-mode-btn">Pen</button>
-          </div>
-          <p class="hint points-hint">Click points along the slope, double-click to finish.</p>
-          <p class="hint pen-hint hidden">Click and drag to draw; release to finish.</p>
           <h2>Slope difficulty</h2>
           <div class="difficulty-buttons">
             <button type="button" data-difficulty="green" class="diff-btn" title="Beginner">🟢 Green</button>
             <button type="button" data-difficulty="blue" class="diff-btn" title="Intermediate">🔵 Blue</button>
             <button type="button" data-difficulty="red" class="diff-btn" title="Advanced">🔴 Red</button>
             <button type="button" data-difficulty="black" class="diff-btn" title="Expert">⚫ Black</button>
+            <button type="button" data-difficulty="freeride" class="diff-btn" title="Freeride">◆ Freeride</button>
           </div>
+          <button type="button" id="cancelSlopeBtn" class="cancel-slope-btn hidden">Cancel current slope</button>
+        </section>
+
+        <section class="tool-section">
+          <h2>Lifts</h2>
+          <ul id="liftList" class="item-list"></ul>
+        </section>
+
+        <section class="tool-section">
+          <h2>Slopes</h2>
+          <ul id="slopeList" class="item-list"></ul>
+        </section>
+
+        <section class="tool-section">
+          <h2>Cottages</h2>
+          <ul id="cottageList" class="item-list"></ul>
         </section>
 
         <section class="tool-section">
@@ -58,45 +79,16 @@
           <button type="button" id="importBtn">Import config</button>
           <input type="file" id="importInput" accept=".json" hidden />
         </section>
-
-        <section class="tool-section">
-          <h2>Lifts</h2>
-          <ul id="liftList" class="item-list"></ul>
-        </section>
-
-        <section class="tool-section">
-          <h2>Slopes</h2>
-          <ul id="slopeList" class="item-list"></ul>
-        </section>
       </aside>
 
       <main class="canvas-area">
         <div class="canvas-wrapper">
           <img id="mountainImage" src="" alt="Mountain" class="mountain-img" />
           <canvas id="drawCanvas"></canvas>
+          <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
         </div>
       </main>
 
-      <dialog id="liftDialog" class="lift-dialog">
-        <h2>New lift</h2>
-        <div class="lift-dialog-section">
-          <label>Type</label>
-          <div class="lift-type-buttons">
-            <button type="button" data-lift-type="button" class="lift-type-btn" title="Button lift">Button</button>
-            <button type="button" data-lift-type="tbar" class="lift-type-btn" title="T-bar">T-bar</button>
-            <button type="button" data-lift-type="1seater" class="lift-type-btn" title="1-seater chair">1-seater</button>
-            <button type="button" data-lift-type="2seater" class="lift-type-btn active" title="2-seater chair">2-seater</button>
-          </div>
-        </div>
-        <div class="lift-dialog-section">
-          <label for="liftNameInput">Name</label>
-          <input type="text" id="liftNameInput" class="lift-name-input" placeholder="Lift name" />
-        </div>
-        <div class="lift-dialog-actions">
-          <button type="button" id="liftDialogCancel" class="lift-dialog-btn">Cancel</button>
-          <button type="button" id="liftDialogConfirm" class="lift-dialog-btn primary">Add lift</button>
-        </div>
-      </dialog>
     </div>
   </body>
 </html>
