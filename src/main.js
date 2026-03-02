@@ -23,6 +23,7 @@ const state = {
   // Lift placement
   liftBottom: null,
   liftTop: null,
+  mouseImage: null, // current mouse position in image coords (for ghost line)
   // Slope drawing
   slopePoints: [],
   slopeDrawing: false,
@@ -92,7 +93,10 @@ function init() {
   DOM.canvas.addEventListener('mousedown', onCanvasMouseDown);
   DOM.canvas.addEventListener('mousemove', onCanvasMouseMove);
   DOM.canvas.addEventListener('mouseup', onCanvasMouseUp);
-  DOM.canvas.addEventListener('mouseleave', onCanvasMouseUp);
+  DOM.canvas.addEventListener('mouseleave', (e) => {
+    if (state.mode === 'lift') state.mouseImage = null;
+    onCanvasMouseUp(e);
+  });
 
   document.getElementById('cancelSlopeBtn').addEventListener('click', cancelSlope);
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelSlope(); });
@@ -353,6 +357,16 @@ function fromNormalized(nx, ny) {
   };
 }
 
+/** Length in meters: normalized distance * 300 per 0.1 (same as ghost line display). */
+function getLiftLengthM(bottomImage, topImage) {
+  if (!state.imageWidth || !state.imageHeight) return 0;
+  const normDist = Math.sqrt(
+    Math.pow((topImage.x - bottomImage.x) / state.imageWidth, 2) +
+    Math.pow((topImage.y - bottomImage.y) / state.imageHeight, 2)
+  );
+  return Math.round((normDist / 0.1) * 450);
+}
+
 function getCanvasPoint(e) {
   const rect = DOM.canvas.getBoundingClientRect();
   return { x: e.clientX - rect.left, y: e.clientY - rect.top };
@@ -468,9 +482,14 @@ function findSnapPoint(px, py) {
 }
 
 function onCanvasMouseMove(e) {
-  if (!state.penDrawing || !state.image) return;
+  if (!state.image) return;
   const { x, y } = getCanvasPoint(e);
   const pt = canvasToImage(x, y);
+  if (state.mode === 'lift' && state.liftBottom && !state.liftTop) {
+    state.mouseImage = { x: pt.x, y: pt.y };
+    draw();
+  }
+  if (!state.penDrawing) return;
   const last = state.slopePoints[state.slopePoints.length - 1];
   if (last) {
     const dx = pt.x - last.x;
@@ -520,9 +539,17 @@ function onCanvasClick(e) {
     if (!state.liftBottom) {
       state.liftBottom = { x: pt.x, y: pt.y, norm };
     } else if (!state.liftTop) {
+      const lengthM = getLiftLengthM(state.liftBottom, pt);
+      const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
+      const liftDef = state.liftTypes.find((l) => l.id === typeId);
+      const maxLength = (liftDef && liftDef.max_length != null) ? liftDef.max_length : Infinity;
+      if (lengthM > maxLength) {
+        window.alert(`Line is too long for this lift type. Maximum length: ${maxLength} m. Calculated: ${lengthM} m.`);
+        draw();
+        return;
+      }
       state.liftTop = { x: pt.x, y: pt.y, norm };
       const nextNum = state.lifts.length + 1;
-      const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
       state.lifts.push({
         bottomStation: state.liftBottom.norm,
         topStation: state.liftTop.norm,
@@ -826,6 +853,35 @@ function draw() {
     if (state.liftTop) {
       drawLine(a.x, a.y, state.liftTop.x, state.liftTop.y, liftColor);
       drawLiftStationDot(state.liftTop.x, state.liftTop.y);
+    } else if (state.mouseImage) {
+      const mx = state.mouseImage.x;
+      const my = state.mouseImage.y;
+      const lengthM = getLiftLengthM(a, { x: mx, y: my });
+      const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
+      const liftDef = state.liftTypes.find((l) => l.id === typeId);
+      const maxLength = (liftDef && liftDef.max_length != null) ? liftDef.max_length : Infinity;
+      const tooLong = lengthM > maxLength;
+      ctx.save();
+      ctx.strokeStyle = tooLong ? 'rgba(180, 0, 0, 0.9)' : 'rgba(26, 26, 26, 0.5)';
+      ctx.lineWidth = LIFT_LINE_WIDTH;
+      ctx.setLineDash([6, 4]);
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(a.x * scaleX, a.y * scaleY);
+      ctx.lineTo(mx * scaleX, my * scaleY);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      const offsetX = 0.005 * state.imageWidth;
+      const offsetY = 0.005 * state.imageHeight;
+      ctx.fillStyle = tooLong ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
+      ctx.font = 'bold 12px "DM Sans", system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const msg = tooLong
+        ? `Too long for this lift (max ${maxLength} m)`
+        : `${lengthM} m`;
+      ctx.fillText(msg, (mx + offsetX) * scaleX, (my + offsetY) * scaleY);
+      ctx.restore();
     }
   }
 
