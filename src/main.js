@@ -7,7 +7,8 @@
 import defaultMountainUrl from '../assets/images/mountain1.png';
 import cottageIconUrl from '../assets/images/cottage.png';
 import spriteSheetUrl from '../assets/images/SpriteSheet.png';
-import skidollarUrl from '../assets/images/Skidollar.png';
+//import skidollarUrl from '../assets/images/Skidollar.png';
+import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
 import techTreeData from '../assets/data/techTree.json';
 
 const state = {
@@ -21,6 +22,7 @@ const state = {
   lifts: [],
   slopes: [],
   cottages: [],
+  budget: 100000, // Ski dollars
   // Lift placement
   liftBottom: null,
   liftTop: null,
@@ -100,7 +102,18 @@ function init() {
   });
 
   document.getElementById('cancelSlopeBtn').addEventListener('click', cancelSlope);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cancelSlope(); });
+  document.getElementById('cancelLiftBtn').addEventListener('click', cancelLift);
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (state.mode === 'lift' && state.liftBottom) cancelLift();
+      else cancelSlope();
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+      e.preventDefault();
+      state.budget += 10000;
+      updateBudgetDisplay();
+    }
+  });
 
   state.liftTypes = (techTreeData && techTreeData.lifts) ? [...techTreeData.lifts] : [];
   state.liftType = state.liftTypes.length > 0 ? state.liftTypes[0].id : null;
@@ -111,6 +124,9 @@ function init() {
   if (state.liftType) setLiftType(state.liftType);
   setDifficulty('blue');
   renderLists();
+  const budgetIcon = document.getElementById('budgetIcon');
+  if (budgetIcon) budgetIcon.src = skidollarg2mUrl;
+  updateBudgetDisplay();
 
   // Load default mountain image from assets on startup
   DOM.mountainImage.onload = () => {
@@ -172,8 +188,8 @@ function renderLiftTypeDropdown() {
     const opCost = lift.base_operating_cost != null ? lift.base_operating_cost : lift.base_maintenance;
     const costScale = scale1to3(lift.base_cost, minCost, maxCost);
     const opScale = scale1to3(opCost, minOp, maxOp);
-    const costIcons = skidollarIconsHtml(costScale, skidollarUrl);
-    const opIcons = skidollarIconsHtml(opScale, skidollarUrl);
+    const costIcons = skidollarIconsHtml(costScale, skidollarg2mUrl);
+    const opIcons = skidollarIconsHtml(opScale, skidollarg2mUrl);
     const prosCons = Array.isArray(lift.pros_cons) ? lift.pros_cons : [];
     const prosConsHtml = prosCons
       .map((item) => {
@@ -245,6 +261,17 @@ function formatNumber(n) {
   return Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+/** Format as currency (Ski dollars): locale grouping and 2 decimal places. */
+function formatCurrency(n) {
+  if (n === undefined || n === null) return '—';
+  return Number(n).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+}
+
+function updateBudgetDisplay() {
+  const el = document.getElementById('budgetAmount');
+  if (el) el.textContent = formatCurrency(state.budget);
+}
+
 /** Map value to relative scale 1–3 given min/max (for cost / operating cost display). */
 function scale1to3(value, min, max) {
   if (value === undefined || value === null || max === min) return 2;
@@ -277,6 +304,10 @@ function setMode(mode) {
   DOM.slopeOptions.classList.toggle('hidden', mode !== 'slope');
   if (DOM.liftOptions) DOM.liftOptions.classList.toggle('hidden', mode !== 'lift');
   DOM.liftHint.classList.toggle('hidden', mode !== 'lift');
+  if (mode !== 'lift') state.liftBottom = null;
+  state.liftTop = null;
+  state.mouseImage = null;
+  updateCancelLiftButton();
   const floatingPanel = document.getElementById('liftDetailFloating');
   if (floatingPanel) {
     if (mode === 'lift') {
@@ -291,7 +322,7 @@ function setMode(mode) {
   DOM.slopeHint.classList.toggle('hidden', mode !== 'slope');
   if (DOM.cottageHint) DOM.cottageHint.classList.toggle('hidden', mode !== 'cottage');
   const cancelBtn = document.getElementById('cancelSlopeBtn');
-  if (cancelBtn) cancelBtn.classList.toggle('hidden', mode !== 'slope');
+  if (cancelBtn) cancelBtn.classList.toggle('hidden', mode !== 'slope' || state.slopePoints.length === 0);
   state.penDrawing = false;
   updateSlopeHints();
 
@@ -323,6 +354,20 @@ function cancelSlope() {
   const btn = document.getElementById('cancelSlopeBtn');
   if (btn) btn.classList.add('hidden');
   draw();
+}
+
+function cancelLift() {
+  state.liftBottom = null;
+  state.liftTop = null;
+  state.mouseImage = null;
+  const btn = document.getElementById('cancelLiftBtn');
+  if (btn) btn.classList.add('hidden');
+  draw();
+}
+
+function updateCancelLiftButton() {
+  const btn = document.getElementById('cancelLiftBtn');
+  if (btn) btn.classList.toggle('hidden', !(state.mode === 'lift' && state.liftBottom));
 }
 
 function setLiftType(type) {
@@ -578,6 +623,8 @@ function onCanvasClick(e) {
     const norm = toNormalized(pt.x, pt.y);
     if (!state.liftBottom) {
       state.liftBottom = { x: pt.x, y: pt.y, norm };
+      state.mouseImage = null;
+      updateCancelLiftButton();
     } else if (!state.liftTop) {
       const lengthM = getLiftLengthM(state.liftBottom, pt);
       const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
@@ -588,7 +635,16 @@ function onCanvasClick(e) {
         draw();
         return;
       }
+      const baseCost = (liftDef && liftDef.base_cost != null) ? Number(liftDef.base_cost) : 0;
+      const costPerMeter = (liftDef && liftDef.cost_per_meter != null) ? Number(liftDef.cost_per_meter) : 0;
+      const totalCost = Math.round(baseCost + lengthM * costPerMeter);
+      if (state.budget < totalCost) {
+        window.alert(`Not enough budget to build this lift. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`);
+        draw();
+        return;
+      }
       state.liftTop = { x: pt.x, y: pt.y, norm };
+      state.budget -= totalCost;
       const nextNum = state.lifts.length + 1;
       state.lifts.push({
         bottomStation: state.liftBottom.norm,
@@ -598,7 +654,9 @@ function onCanvasClick(e) {
       });
       state.liftBottom = null;
       state.liftTop = null;
+      updateCancelLiftButton();
       renderLists();
+      updateBudgetDisplay();
       if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
     }
   } else if (state.mode === 'cottage') {
@@ -900,9 +958,14 @@ function draw() {
       const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
       const liftDef = state.liftTypes.find((l) => l.id === typeId);
       const maxLength = (liftDef && liftDef.max_length != null) ? liftDef.max_length : Infinity;
+      const baseCost = (liftDef && liftDef.base_cost != null) ? Number(liftDef.base_cost) : 0;
+      const costPerMeter = (liftDef && liftDef.cost_per_meter != null) ? Number(liftDef.cost_per_meter) : 0;
+      const totalCost = Math.round(baseCost + lengthM * costPerMeter);
       const tooLong = lengthM > maxLength;
+      const insufficientFunds = state.budget < totalCost;
+      const cannotBuild = tooLong || insufficientFunds;
       ctx.save();
-      ctx.strokeStyle = tooLong ? 'rgba(180, 0, 0, 0.9)' : 'rgba(26, 26, 26, 0.5)';
+      ctx.strokeStyle = cannotBuild ? 'rgba(180, 0, 0, 0.9)' : 'rgba(26, 26, 26, 0.5)';
       ctx.lineWidth = LIFT_LINE_WIDTH;
       ctx.setLineDash([6, 4]);
       ctx.lineCap = 'round';
@@ -913,14 +976,20 @@ function draw() {
       ctx.setLineDash([]);
       const offsetX = 0.005 * state.imageWidth;
       const offsetY = 0.005 * state.imageHeight;
-      ctx.fillStyle = tooLong ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
+      const labelX = (mx + offsetX) * scaleX;
+      const labelY = (my + offsetY) * scaleY;
+      const lineHeight = 14;
+      ctx.fillStyle = cannotBuild ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
       ctx.font = 'bold 12px "DM Sans", system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      const msg = tooLong
-        ? `Too long for this lift (max ${maxLength} m)`
-        : `${lengthM} m`;
-      ctx.fillText(msg, (mx + offsetX) * scaleX, (my + offsetY) * scaleY);
+      let msg = `${lengthM} m`;
+      if (tooLong) msg = `Too long for this lift (max ${maxLength} m)`;
+      else if (insufficientFunds) msg = `Not enough budget (need ${formatCurrency(totalCost)})`;
+      ctx.fillText(msg, labelX, labelY);
+      const costStr = `${formatNumber(totalCost)} $`;
+      const costLineY = labelY + lineHeight;
+      ctx.fillText(costStr, labelX, costLineY);
       ctx.restore();
     }
   }

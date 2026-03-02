@@ -43,9 +43,29 @@ body {
 
 .header {
   grid-area: header;
+  position: relative;
   padding: 1rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+}
+
+.budget-display {
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.budget-display .budget-icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  display: block;
 }
 
 .header h1 {
@@ -151,7 +171,8 @@ body {
 .hint.small { margin-top: 0.25rem; }
 .hidden { display: none !important; }
 
-.cancel-slope-btn {
+.cancel-slope-btn,
+.cancel-lift-btn {
   margin-top: 0.75rem;
   width: 100%;
 }
@@ -243,7 +264,7 @@ button:hover {
   display: block;
   max-width: 100%;
   height: auto;
-  vertical-align: top;
+  /* vertical-align: top; */
 }
 
 #drawCanvas {

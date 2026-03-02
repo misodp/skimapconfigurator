@@ -12,19 +12,23 @@
   <body>
     <div id="app">
       <header class="header">
-        <h1>Ski Map Configurator</h1>
-        <p class="subtitle">Configure lifts and slopes for Ski Resort Tycoon</p>
+        <h1>Retro Ski Resort Tycoon</h1>
+        <p class="subtitle">Build your dream ski resort in the 1960s.</p>
+        <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
+          <img class="budget-icon" id="budgetIcon" src="" alt="" />
+          <span id="budgetAmount">0</span>
+        </div>
       </header>
 
       <aside class="toolbar">
         <section class="tool-section">
-          <h2>Mode</h2>
+          <h2>Build</h2>
           <div class="mode-buttons">
             <button type="button" data-mode="lift" class="mode-btn active">Lift</button>
             <button type="button" data-mode="slope" class="mode-btn">Slope</button>
             <button type="button" data-mode="cottage" class="mode-btn">Cottage</button>
           </div>
-          <p class="hint lift-hint">Select type, then click bottom station, then top station.</p>
+          <p class="hint lift-hint">Select type, then click bottom station, then top station. Press Escape to cancel.</p>
           <p class="hint slope-hint hidden">Select difficulty, then draw the slope. Press Escape to cancel.</p>
           <p class="hint cottage-hint hidden">Click on the map to place a cottage.</p>
         </section>
@@ -32,6 +36,7 @@
         <section class="tool-section lift-options">
           <h2>Lift type</h2>
           <div id="liftTypeDropdown" class="lift-type-dropdown"></div>
+          <button type="button" id="cancelLiftBtn" class="cancel-lift-btn hidden">Cancel current lift</button>
         </section>
 
         <section class="tool-section slope-options hidden">

@@ -68,7 +68,7 @@
         "unlock_year": 1962,
         "description": "Italijanska 'delovna mula'. Masivna, a preprosta konstrukcija z minimalnim vzdrževanjem. Odlična dolgoročna investicija.",
         "pros_cons": ["+ Neuničljiva gradnja", "+ Minimalno vzdrževanje", "- Počasna vožnja"],
-        "frame": 3
+        "frame": 1
       },
       {
         "id": "graffer_double",
