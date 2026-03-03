@@ -104,5 +104,118 @@
         "pros_cons": ["+ Največji doseg", "+ Velik dvig ugleda", "- Draga elektrika"],
         "frame": 3
       }
+    ],
+    "slopes": [
+      {
+        "id": "green_beginner",
+        "difficulty": "Green",
+        "symbol": "Circle",
+        "linetype": "full",
+        "color": "#34a853",
+        "cost_per_meter": 2.0,
+        "grooming_load": 1.0,
+        "capacity_per_meter": 0.25,
+        "description": "Položne in varne proge. Zahtevajo minimalno teptanje, a privabijo množice začetnikov.",
+        "frame": 0        
+      },
+      {
+        "id": "blue_easy",
+        "difficulty": "Blue",
+        "symbol": "Circle",
+        "linetype": "full",
+        "color": "#4285f4",
+        "cost_per_meter": 4.0,
+        "grooming_load": 1.8,
+        "capacity_per_meter": 0.45,
+        "description": "Standardna družinska proga. Prenese največjo gostoto smučarjev brez večje nevarnosti.",
+        "frame": 1        
+    },
+      {
+        "id": "red_intermediate",
+        "difficulty": "Red",
+        "symbol": "Circle",
+        "linetype": "full",
+        "color": "#ea4335",
+        "cost_per_meter": 7.5,
+        "grooming_load": 2.5,
+        "capacity_per_meter": 0.35,
+        "description": "Športni tereni. Potrebujejo natančno teptanje in večji varnostni razmik med smučarji.",
+        "frame": 2        
+      },
+      {
+        "id": "black_expert",
+        "difficulty": "Black",
+        "symbol": "Circle",
+        "linetype": "full",
+        "color": "#1f1f1f",
+        "cost_per_meter": 12.0,
+        "grooming_load": 4.5,
+        "capacity_per_meter": 0.15,
+        "description": "Ekstremni nakloni. Nizka kapaciteta zaradi varnosti in hitre degradacije snežne podlage.",
+        "frame": 3        
+      },
+      {
+        "id": "freeride_zone",
+        "difficulty": "Freeride",
+        "symbol": "Diamond",
+        "linetype": "dotted",
+        "color": "#2d1b4e",
+        "cost_per_meter": 15.0,
+        "grooming_load": 0.5,
+        "capacity_per_meter": 0.10,
+        "description": "Neurejen teren. Zelo nizka kapaciteta; namenjeno elitnim smučarjem in avanturistom.",
+        "frame": 4        
+      }
+    ],
+    "groomers": [
+      {
+        "id": "prinoth_p15",
+        "brand": "Prinoth",
+        "name": "P-15 'The Beetle'",
+        "image": "Prinoth_p15.png",
+        "unlock_year": 1962,
+        "purchase_cost": 12000,
+        "base_operating_cost": 35,
+        "grooming_capacity": 10,
+        "speed": 12,
+        "description": "Majhen in okreten. Idealen za ozke gozdne poti in začetniške proge."
+      },
+      {
+        "id": "ratrac_s",
+        "brand": "Ratrac",
+        "name": "Ratrac Type S",
+        "image": "Ratrac_s.png",
+        "unlock_year": 1965,
+        "purchase_cost": 18500,
+        "base_operating_cost": 55,
+        "grooming_capacity": 18,
+        "speed": 15,
+        "description": "Švicarska vzdržljivost. Odličen za delo v ekstremnem mrazu in srednje zahtevne terene."
+      },
+      {
+        "id": "pb_145",
+        "brand": "Kässbohrer",
+        "name": "PistenBully 145",
+        "image": "PistenBully_145.png",
+        "unlock_year": 1969,
+        "purchase_cost": 28000,
+        "base_operating_cost": 85,
+        "grooming_capacity": 32,
+        "speed": 18,
+        "description": "Stroj, ki je spremenil vse. Prva izbira za hitro urejanje glavnih smučišč."
+      },
+      {
+        "id": "pb_170",
+        "brand": "Kässbohrer",
+        "name": "PistenBully 170",
+        "image": "PistenBully_170.png",
+        "unlock_year": 1972,
+        "purchase_cost": 36000,
+        "base_operating_cost": 110,
+        "grooming_capacity": 45,
+        "speed": 22,
+        "description": "Vrhunska moč. Hidrostatični pogon omogoča urejanje najtežjih črnih prog."
+      }
     ]
   }
+

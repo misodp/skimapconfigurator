@@ -22,15 +22,17 @@
 
       <aside class="toolbar">
         <section class="tool-section">
-          <h2>Build</h2>
+          <h2>Invest</h2>
           <div class="mode-buttons">
-            <button type="button" data-mode="lift" class="mode-btn active">Lift</button>
-            <button type="button" data-mode="slope" class="mode-btn">Slope</button>
-            <button type="button" data-mode="cottage" class="mode-btn">Cottage</button>
+            <button type="button" data-mode="lift" class="mode-btn active">Lifts</button>
+            <button type="button" data-mode="slope" class="mode-btn">Slopes</button>
+            <button type="button" data-mode="groomer" class="mode-btn">Groomers</button>
+            <button type="button" data-mode="cottage" class="mode-btn">Cottages</button>
           </div>
           <p class="hint lift-hint">Select type, then click bottom station, then top station. Press Escape to cancel.</p>
           <p class="hint slope-hint hidden">Select difficulty, then draw the slope. Press Escape to cancel.</p>
           <p class="hint cottage-hint hidden">Click on the map to place a cottage.</p>
+          <p class="hint groomer-hint hidden">Select type, then click on the map to place.</p>
         </section>
 
         <section class="tool-section lift-options">
@@ -40,15 +42,14 @@
         </section>
 
         <section class="tool-section slope-options hidden">
-          <h2>Slope difficulty</h2>
-          <div class="difficulty-buttons">
-            <button type="button" data-difficulty="green" class="diff-btn" title="Beginner">🟢 Green</button>
-            <button type="button" data-difficulty="blue" class="diff-btn" title="Intermediate">🔵 Blue</button>
-            <button type="button" data-difficulty="red" class="diff-btn" title="Advanced">🔴 Red</button>
-            <button type="button" data-difficulty="black" class="diff-btn" title="Expert">⚫ Black</button>
-            <button type="button" data-difficulty="freeride" class="diff-btn" title="Freeride">◆ Freeride</button>
-          </div>
+          <h2>Slope type</h2>
+          <div class="difficulty-buttons" id="difficultyButtons"></div>
           <button type="button" id="cancelSlopeBtn" class="cancel-slope-btn hidden">Cancel current slope</button>
+        </section>
+
+        <section class="tool-section groomer-options hidden">
+          <h2>Groomer type</h2>
+          <div id="groomerTypeDropdown" class="groomer-type-dropdown"></div>
         </section>
 
         <section class="tool-section">
@@ -64,6 +65,11 @@
         <section class="tool-section">
           <h2>Cottages</h2>
           <ul id="cottageList" class="item-list"></ul>
+        </section>
+
+        <section class="tool-section">
+          <h2>Groomers</h2>
+          <ul id="groomerList" class="item-list"></ul>
         </section>
 
         <section class="tool-section">

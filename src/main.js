@@ -7,22 +7,39 @@
 import defaultMountainUrl from '../assets/images/mountain1.png';
 import cottageIconUrl from '../assets/images/cottage.png';
 import spriteSheetUrl from '../assets/images/SpriteSheet.png';
-//import skidollarUrl from '../assets/images/Skidollar.png';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
 import techTreeData from '../assets/data/techTree.json';
+import groomerPrinothP15 from '../assets/images/Prinoth_p15.png';
+import groomerRatracS from '../assets/images/Ratrac_s.png';
+import groomerPb145 from '../assets/images/PistenBully_145.png';
+import groomerPb170 from '../assets/images/PistenBully_170.png';
+
+const GROOMER_IMAGE_URLS = {
+  'Prinoth_p15.png': groomerPrinothP15,
+  'Ratrac_s.png': groomerRatracS,
+  'PistenBully_145.png': groomerPb145,
+  'PistenBully_170.png': groomerPb170,
+};
+
+/** Difficulty display name -> icon/emoji for slope type buttons. */
+const SLOPE_DIFFICULTY_ICONS = { Green: '🟢', Blue: '🔵', Red: '🔴', Black: '⚫', Freeride: '◆' };
 
 const state = {
-  mode: 'lift', // 'lift' | 'slope' | 'cottage'
-  liftType: null, // lift id from techTree (set after load)
-  liftTypes: [], // [{ id, name, frame, ... }, ...] from techTree.lifts
-  difficulty: 'blue',
+  mode: 'lift', // 'lift' | 'slope' | 'cottage' | 'groomer'
+  liftType: null,
+  liftTypes: [],
+  slopeTypes: [],
+  difficulty: null,
+  groomerType: null, // selected groomer type id
+  groomerTypes: [], // from techTree.groomers
   image: null,
   imageWidth: 0,
   imageHeight: 0,
   lifts: [],
   slopes: [],
   cottages: [],
-  budget: 100000, // Ski dollars
+  groomers: [], // [{ position: {x,y}, groomerTypeId }]
+  budget: 100000,
   // Lift placement
   liftBottom: null,
   liftTop: null,
@@ -51,10 +68,14 @@ const DOM = {
   liftHint: null,
   slopeHint: null,
   cottageHint: null,
+  groomerHint: null,
+  groomerList: null,
+  groomerOptions: null,
 };
 
 let spriteSheet = null; // HTMLImageElement (loaded async)
 let cottageIcon = null; // HTMLImageElement
+const groomerImages = {}; // groomerTypeId -> HTMLImageElement
 
 function init() {
   DOM.mountainImage = document.getElementById('mountainImage');
@@ -68,12 +89,14 @@ function init() {
   DOM.slopeList = document.getElementById('slopeList');
   DOM.cottageList = document.getElementById('cottageList');
   DOM.modeBtns = document.querySelectorAll('.mode-btn');
-  DOM.diffBtns = document.querySelectorAll('.diff-btn');
   DOM.slopeOptions = document.querySelector('.slope-options');
   DOM.liftOptions = document.querySelector('.lift-options');
   DOM.liftHint = document.querySelector('.lift-hint');
   DOM.slopeHint = document.querySelector('.slope-hint');
   DOM.cottageHint = document.querySelector('.cottage-hint');
+  DOM.groomerHint = document.querySelector('.groomer-hint');
+  DOM.groomerList = document.getElementById('groomerList');
+  DOM.groomerOptions = document.querySelector('.groomer-options');
 
   DOM.imageInput.addEventListener('change', onImageSelected);
   DOM.exportBtn.addEventListener('click', exportConfig);
@@ -83,9 +106,13 @@ function init() {
   DOM.modeBtns.forEach((btn) => {
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
-  DOM.diffBtns.forEach((btn) => {
-    btn.addEventListener('click', () => setDifficulty(btn.dataset.difficulty));
-  });
+  const difficultyContainer = document.getElementById('difficultyButtons');
+  if (difficultyContainer) {
+    difficultyContainer.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-difficulty]');
+      if (btn) setDifficulty(btn.dataset.difficulty);
+    });
+  }
 
   document.querySelectorAll('.slope-mode-btn').forEach((btn) => {
     btn.addEventListener('click', () => setSlopeDrawMode(btn.dataset.slopeMode));
@@ -117,12 +144,19 @@ function init() {
 
   state.liftTypes = (techTreeData && techTreeData.lifts) ? [...techTreeData.lifts] : [];
   state.liftType = state.liftTypes.length > 0 ? state.liftTypes[0].id : null;
+  state.slopeTypes = (techTreeData && techTreeData.slopes) ? [...techTreeData.slopes] : [];
+  state.difficulty = state.slopeTypes.length > 0 ? state.slopeTypes[0].id : null;
+  state.groomerTypes = (techTreeData && techTreeData.groomers) ? [...techTreeData.groomers] : [];
+  state.groomerType = state.groomerTypes.length > 0 ? state.groomerTypes[0].id : null;
   loadSpriteSheet();
   loadCottageIcon();
+  loadGroomerImages();
   renderLiftTypeDropdown();
+  renderSlopeTypeButtons();
+  renderGroomerTypeDropdown();
   setMode('lift');
   if (state.liftType) setLiftType(state.liftType);
-  setDifficulty('blue');
+  if (state.difficulty) setDifficulty(state.difficulty);
   renderLists();
   const budgetIcon = document.getElementById('budgetIcon');
   if (budgetIcon) budgetIcon.src = skidollarg2mUrl;
@@ -208,8 +242,8 @@ function renderLiftTypeDropdown() {
         <dt>Cost</dt><dd class="lift-detail-skidollars">${costIcons}</dd>
         <dt>Operating cost</dt><dd class="lift-detail-skidollars">${opIcons}</dd>
         <dt>Max length</dt><dd>${lift.max_length != null ? formatNumber(lift.max_length) + ' m' : '—'}</dd>
-        <dt>Speed</dt><dd>${formatNumber(lift.speed)}</dd>
-        <dt>Capacity</dt><dd>${formatNumber(lift.capacity)}</dd>
+        <dt>Speed</dt><dd>${formatNumber(lift.speed)} m/s</dd>
+        <dt>Capacity</dt><dd>${formatNumber(lift.capacity)} p./hour</dd>
         <dt>Description</dt><dd class="lift-detail-description">${escapeHtml(lift.description || '—')}${prosConsHtml ? `<ul class="lift-detail-pros-cons">${prosConsHtml}</ul>` : ''}</dd>
       </dl>
     `;
@@ -255,6 +289,80 @@ function renderLiftTypeDropdown() {
   window.liftDetailSetBlank = setPanelBlank;
 }
 
+/** Groomer type list and floating detail panel (reuses liftDetailFloating when in groomer mode). */
+function renderGroomerTypeDropdown() {
+  const container = document.getElementById('groomerTypeDropdown');
+  const floatingPanel = document.getElementById('liftDetailFloating');
+  if (!container || !state.groomerTypes.length) return;
+
+  function setPanelBlank() {
+    if (!floatingPanel) return;
+    floatingPanel.innerHTML = '';
+  }
+
+  function getGroomerImageUrl(groomer) {
+    const filename = groomer && groomer.image;
+    return (filename && GROOMER_IMAGE_URLS[filename]) || '';
+  }
+
+  function fillFloatingDetail(groomer) {
+    if (!floatingPanel || !groomer) return;
+    const imgUrl = getGroomerImageUrl(groomer);
+    const imgHtml = imgUrl ? `<div class="groomer-detail-icon" style="background-image:url(${imgUrl})"></div>` : '';
+    floatingPanel.innerHTML = `
+      <button type="button" class="lift-detail-close" title="Close" aria-label="Close">×</button>
+      ${imgHtml}
+      <dl class="lift-type-detail-fields">
+        <dt>Brand</dt><dd>${escapeHtml(groomer.brand || '—')}</dd>
+        <dt>Name</dt><dd>${escapeHtml(groomer.name || '—')}</dd>
+        <dt>Cost</dt><dd class="lift-detail-skidollars"><img src="${skidollarg2mUrl}" alt="" class="skidollar-icon" /> ${formatCurrency(groomer.purchase_cost)}</dd>
+        <dt>Operating cost</dt><dd class="lift-detail-skidollars"><img src="${skidollarg2mUrl}" alt="" class="skidollar-icon" /> ${formatNumber(groomer.base_operating_cost)}</dd>
+        <dt>Capacity</dt><dd>${formatNumber(groomer.grooming_capacity)}</dd>
+        <dt>Description</dt><dd class="lift-detail-description">${escapeHtml(groomer.description || '—')}</dd>
+      </dl>
+    `;
+    const closeBtn = floatingPanel.querySelector('.lift-detail-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => setPanelBlank());
+  }
+
+  function showGroomerDetail(groomerId) {
+    const groomer = state.groomerTypes.find((g) => g.id === groomerId) || state.groomerTypes[0];
+    fillFloatingDetail(groomer);
+    if (floatingPanel) {
+      floatingPanel.hidden = false;
+      floatingPanel.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  container.innerHTML = state.groomerTypes
+    .map((g) => {
+      const isActive = state.groomerType === g.id ? ' active' : '';
+      const imgUrl = getGroomerImageUrl(g);
+      const iconStyle = imgUrl ? `style="background-image:url(${imgUrl})"` : '';
+      return `<button type="button" data-groomer-type="${escapeHtml(g.id)}" class="groomer-type-btn${isActive}">
+        <span class="groomer-type-icon" ${iconStyle}></span>
+        <span class="groomer-type-label">${escapeHtml(g.name)}</span>
+      </button>`;
+    })
+    .join('');
+
+  container.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-groomer-type]');
+    if (!btn) return;
+    const id = btn.dataset.groomerType;
+    state.groomerType = id;
+    container.querySelectorAll('.groomer-type-btn').forEach((b) => b.classList.toggle('active', b.dataset.groomerType === id));
+    showGroomerDetail(id);
+  });
+
+  window.groomerDetailSetBlank = setPanelBlank;
+}
+
+function setGroomerType(id) {
+  if (!state.groomerTypes.some((g) => g.id === id)) return;
+  state.groomerType = id;
+}
+
 function formatNumber(n) {
   if (n === undefined || n === null) return '—';
   if (Number.isInteger(n)) return String(n);
@@ -293,6 +401,19 @@ function loadCottageIcon() {
   img.src = cottageIconUrl;
 }
 
+function loadGroomerImages() {
+  if (!state.groomerTypes.length) return;
+  state.groomerTypes.forEach((g) => {
+    const url = GROOMER_IMAGE_URLS[g.image];
+    if (url) {
+      const img = new Image();
+      img.onload = () => draw();
+      img.src = url;
+      groomerImages[g.id] = img;
+    }
+  });
+}
+
 function setMode(mode) {
   state.mode = mode;
   state.liftBottom = null;
@@ -304,6 +425,8 @@ function setMode(mode) {
   DOM.slopeOptions.classList.toggle('hidden', mode !== 'slope');
   if (DOM.liftOptions) DOM.liftOptions.classList.toggle('hidden', mode !== 'lift');
   DOM.liftHint.classList.toggle('hidden', mode !== 'lift');
+  if (DOM.groomerOptions) DOM.groomerOptions.classList.toggle('hidden', mode !== 'groomer');
+  if (DOM.groomerHint) DOM.groomerHint.classList.toggle('hidden', mode !== 'groomer');
   if (mode !== 'lift') state.liftBottom = null;
   state.liftTop = null;
   state.mouseImage = null;
@@ -314,9 +437,18 @@ function setMode(mode) {
       floatingPanel.hidden = false;
       floatingPanel.setAttribute('aria-hidden', 'false');
       if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
+    } else if (mode === 'groomer') {
+      floatingPanel.hidden = false;
+      floatingPanel.setAttribute('aria-hidden', 'false');
+      if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
+    } else if (mode === 'slope') {
+      floatingPanel.hidden = false;
+      floatingPanel.setAttribute('aria-hidden', 'false');
+      if (typeof window.slopeDetailSetBlank === 'function') window.slopeDetailSetBlank();
     } else {
       floatingPanel.hidden = true;
       floatingPanel.setAttribute('aria-hidden', 'true');
+      floatingPanel.innerHTML = '';
     }
   }
   DOM.slopeHint.classList.toggle('hidden', mode !== 'slope');
@@ -376,9 +508,84 @@ function setLiftType(type) {
   if (typeof window.liftDropdownUpdateTrigger === 'function') window.liftDropdownUpdateTrigger();
 }
 
-function setDifficulty(d) {
-  state.difficulty = d;
-  DOM.diffBtns.forEach((b) => b.classList.toggle('selected', b.dataset.difficulty === d));
+function setDifficulty(slopeTypeId) {
+  state.difficulty = slopeTypeId;
+  const container = document.getElementById('difficultyButtons');
+  if (container) {
+    container.querySelectorAll('[data-difficulty]').forEach((b) => b.classList.toggle('active', b.dataset.difficulty === slopeTypeId));
+  }
+}
+
+/** Return background-position style for slope sprite (3×2 grid, frame from tech tree). Used for list icon and detail panel. */
+function getSlopeSpritePositionStyle(slopeType) {
+  const frame = Math.min(COLS * ROWS - 1, Math.max(0, Number(slopeType.frame) ?? 0));
+  const col = frame % COLS;
+  const row = Math.floor(frame / COLS);
+  const posX = COLS > 1 ? (col / (COLS - 1)) * 100 : 0;
+  const posY = ROWS > 1 ? (row / (ROWS - 1)) * 100 : 0;
+  return `background-position:${posX}% ${posY}%`;
+}
+
+/** Build slope type list and wire detail panel (same pattern as lifts: click type → show floating detail). */
+function renderSlopeTypeButtons() {
+  const container = document.getElementById('difficultyButtons');
+  const floatingPanel = document.getElementById('liftDetailFloating');
+  if (!container || !state.slopeTypes.length) return;
+
+  function setPanelBlank() {
+    if (!floatingPanel) return;
+    floatingPanel.innerHTML = '';
+  }
+
+  function fillSlopeDetailFloating(st) {
+    if (!floatingPanel || !st) return;
+    const posStyle = getSlopeSpritePositionStyle(st);
+    const costPerMeterHtml = st.cost_per_meter != null
+      ? `<span class="lift-detail-skidollars"><img src="${skidollarg2mUrl}" alt="" class="skidollar-icon" /> ${formatNumber(st.cost_per_meter)} / m</span>`
+      : '—';
+    floatingPanel.innerHTML = `
+      <button type="button" class="lift-detail-close" title="Close" aria-label="Close">×</button>
+      <div class="lift-type-detail-icon slope-type-icon" style="${posStyle}"></div>
+      <dl class="lift-type-detail-fields">
+        <dt>Difficulty</dt><dd>${escapeHtml(st.difficulty || '—')}</dd>
+        <dt>Cost per meter</dt><dd>${costPerMeterHtml}</dd>
+        <dt>Description</dt><dd class="lift-detail-description">${escapeHtml(st.description || '—')}</dd>
+      </dl>
+    `;
+    const closeBtn = floatingPanel.querySelector('.lift-detail-close');
+    if (closeBtn) closeBtn.addEventListener('click', () => setPanelBlank());
+  }
+
+  function showSlopeFloatingPanel(slopeTypeId) {
+    const st = state.slopeTypes.find((s) => s.id === slopeTypeId) || state.slopeTypes[0];
+    fillSlopeDetailFloating(st);
+    if (floatingPanel) {
+      floatingPanel.hidden = false;
+      floatingPanel.setAttribute('aria-hidden', 'false');
+    }
+  }
+
+  container.innerHTML = `<div class="slope-type-buttons" data-slope-list></div>`;
+  const listContainer = container.querySelector('[data-slope-list]');
+  listContainer.innerHTML = state.slopeTypes
+    .map((st) => {
+      const isSelected = state.difficulty === st.id ? ' active' : '';
+      const posStyle = getSlopeSpritePositionStyle(st);
+      return `<button type="button" data-difficulty="${escapeHtml(st.id)}" class="lift-type-btn${isSelected}" title="${escapeHtml(st.difficulty)}"><span class="lift-type-icon slope-type-icon" style="${posStyle}"></span><span class="lift-type-label">${escapeHtml(st.difficulty)}</span></button>`;
+    })
+    .join('');
+
+  listContainer.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-difficulty]');
+    if (!btn) return;
+    const id = btn.dataset.difficulty;
+    setDifficulty(id);
+    listContainer.querySelectorAll('[data-difficulty]').forEach((b) => b.classList.toggle('active', b.dataset.difficulty === id));
+    showSlopeFloatingPanel(id);
+  });
+
+  setPanelBlank();
+  window.slopeDetailSetBlank = setPanelBlank;
 }
 
 function onImageSelected(e) {
@@ -450,6 +657,27 @@ function getLiftLengthM(bottomImage, topImage) {
     Math.pow((topImage.y - bottomImage.y) / state.imageHeight, 2)
   );
   return Math.round((normDist / 0.1) * 450);
+}
+
+/** Path length in meters for a polyline (image coords). Uses same scale as lifts. */
+function getSlopePathLengthM(points) {
+  if (!state.imageWidth || !state.imageHeight || points.length < 2) return 0;
+  let normLen = 0;
+  for (let i = 0; i < points.length - 1; i++) {
+    const a = points[i];
+    const b = points[i + 1];
+    normLen += Math.sqrt(
+      Math.pow((b.x - a.x) / state.imageWidth, 2) + Math.pow((b.y - a.y) / state.imageHeight, 2)
+    );
+  }
+  return Math.round((normLen / 0.1) * 450);
+}
+
+/** Cost for a slope from path length and current slope type's cost_per_meter. */
+function getSlopeCost(lengthM) {
+  const st = getSlopeType(state.difficulty);
+  if (!st || st.cost_per_meter == null) return 0;
+  return Math.round(lengthM * Number(st.cost_per_meter));
 }
 
 function getCanvasPoint(e) {
@@ -603,10 +831,21 @@ function onCanvasMouseUp() {
       last.x = snapEnd.x;
       last.y = snapEnd.y;
     }
+    const lengthM = getSlopePathLengthM(pts);
+    const totalCost = getSlopeCost(lengthM);
+    if (state.budget < totalCost) {
+      window.alert(`Not enough budget to build this slope. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`);
+      state.slopePoints = [];
+      document.getElementById('cancelSlopeBtn').classList.add('hidden');
+      draw();
+      return;
+    }
+    state.budget -= totalCost;
     state.slopes.push({
-      difficulty: state.difficulty,
+      slopeTypeId: state.difficulty,
       points: pts.map((p) => toNormalized(p.x, p.y)),
     });
+    updateBudgetDisplay();
     renderLists();
   }
   state.slopePoints = [];
@@ -666,6 +905,22 @@ function onCanvasClick(e) {
     const name = window.prompt('Cottage name (optional)', `Cottage ${nextNum}`) || `Cottage ${nextNum}`;
     state.cottages.push({ position: norm, name: name.trim() || `Cottage ${nextNum}` });
     renderLists();
+  } else if (state.mode === 'groomer') {
+    const pt = canvasToImage(x, y);
+    const norm = toNormalized(pt.x, pt.y);
+    const typeId = state.groomerType || (state.groomerTypes[0] && state.groomerTypes[0].id);
+    const groomerDef = state.groomerTypes.find((g) => g.id === typeId);
+    const cost = (groomerDef && groomerDef.purchase_cost != null) ? Number(groomerDef.purchase_cost) : 0;
+    if (state.budget < cost) {
+      window.alert(`Not enough budget to buy this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      draw();
+      return;
+    }
+    state.budget -= cost;
+    state.groomers.push({ position: norm, groomerTypeId: typeId });
+    if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
+    updateBudgetDisplay();
+    renderLists();
   } else if (state.mode === 'slope' && state.slopeDrawMode === 'points') {
     const pt = canvasToImage(x, y);
     state.slopePoints.push({ x: pt.x, y: pt.y });
@@ -680,7 +935,6 @@ function onCanvasDblClick(e) {
   if (state.mode !== 'slope' || state.slopeDrawMode !== 'points' || !state.image) return;
   e.preventDefault();
   if (state.slopePoints.length >= 2) {
-    // Optionally snap start and end of point-drawn slope
     const first = state.slopePoints[0];
     const last = state.slopePoints[state.slopePoints.length - 1];
     const snapStart = findSnapPoint(first.x, first.y);
@@ -693,13 +947,22 @@ function onCanvasDblClick(e) {
       last.x = snapEnd.x;
       last.y = snapEnd.y;
     }
+    const lengthM = getSlopePathLengthM(state.slopePoints);
+    const totalCost = getSlopeCost(lengthM);
+    if (state.budget < totalCost) {
+      window.alert(`Not enough budget to build this slope. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`);
+      draw();
+      return;
+    }
+    state.budget -= totalCost;
     state.slopes.push({
-      difficulty: state.difficulty,
+      slopeTypeId: state.difficulty,
       points: state.slopePoints.map((p) => toNormalized(p.x, p.y)),
     });
     state.slopePoints = [];
     state.slopeDrawing = false;
     document.getElementById('cancelSlopeBtn').classList.add('hidden');
+    updateBudgetDisplay();
     renderLists();
   }
   draw();
@@ -804,7 +1067,7 @@ function draw() {
     ctx.restore();
   }
 
-  /** Draw a smooth curve through all points (Catmull-Rom style with cubic Bezier). dashed: use dotted line (e.g. for freeride). */
+  /** Draw a smooth curve through all points (Catmull-Rom style with cubic Bezier). dashed: use dotted line when slope type has linetype "dotted". */
   function drawSmoothCurve(points, color, lineWidth = SLOPE_LINE_WIDTH, dashed = false) {
     if (points.length < 2) return;
     const sx = (x) => x * scaleX;
@@ -836,7 +1099,6 @@ function draw() {
   }
 
   // Draw saved slopes (smooth curves) - BELOW lifts
-  const diffColors = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f', freeride: '#2d1b4e' };
   const SLOPE_NUMBER_RADIUS = 10;
 
   /** Get point at a fraction (0–1) along the polyline by path length. */
@@ -868,16 +1130,15 @@ function draw() {
     return pts[pts.length - 1];
   }
 
-  /** Draw slope number in a circle or, for freeride, in a black diamond. */
-  function drawSlopeNumber(pts, color, number, difficulty) {
+  /** Draw slope number in a circle or, for diamond symbol, in a black diamond. */
+  function drawSlopeNumber(pts, color, number, useDiamond) {
     if (pts.length === 0) return;
     const mid = getPointAtPathFraction(pts, 0.5);
     if (!mid) return;
     const cx = mid.x * scaleX;
     const cy = mid.y * scaleY;
-    const isFreeride = difficulty === 'freeride';
     ctx.save();
-    if (isFreeride) {
+    if (useDiamond) {
       // Black diamond (same size as circle: half-width/height = SLOPE_NUMBER_RADIUS)
       const r = SLOPE_NUMBER_RADIUS;
       ctx.beginPath();
@@ -910,17 +1171,24 @@ function draw() {
 
   state.slopes.forEach((slope, i) => {
     const pts = slope.points.map((p) => fromNormalized(p.x, p.y));
-    const color = diffColors[slope.difficulty] || slope.difficulty;
-    const isFreeride = slope.difficulty === 'freeride';
-    drawSmoothCurve(pts, color, SLOPE_LINE_WIDTH, isFreeride);
-    drawSlopeNumber(pts, color, i + 1, slope.difficulty);
+    const color = getDiffColor(slope);
+    const st = getSlopeType(slope);
+    const useDotted = st?.linetype === 'dotted';
+    const useDiamond = st?.symbol === 'Diamond';
+    drawSmoothCurve(pts, color, SLOPE_LINE_WIDTH, useDotted);
+    drawSlopeNumber(pts, color, i + 1, useDiamond);
   });
 
   // Draw current slope in progress
   if (state.slopePoints.length > 0) {
-    const c = diffColors[state.difficulty] || state.difficulty;
-    const isFreeride = state.difficulty === 'freeride';
-    drawSmoothCurve(state.slopePoints, c, SLOPE_LINE_WIDTH, isFreeride);
+    const currentSt = getSlopeType(state.difficulty);
+    const useDotted = currentSt?.linetype === 'dotted';
+    const useDiamond = currentSt?.symbol === 'Diamond';
+    const lengthM = getSlopePathLengthM(state.slopePoints);
+    const totalCost = getSlopeCost(lengthM);
+    const insufficientFunds = state.budget < totalCost;
+    const c = insufficientFunds ? 'rgba(180, 0, 0, 0.95)' : getDiffColor(state.difficulty);
+    drawSmoothCurve(state.slopePoints, c, SLOPE_LINE_WIDTH, useDotted);
     if (state.slopeDrawMode === 'points') {
       state.slopePoints.forEach((p, i) => {
         ctx.fillStyle = c;
@@ -928,6 +1196,24 @@ function draw() {
         ctx.arc(p.x * scaleX, p.y * scaleY, i === 0 ? 6 : 4, 0, Math.PI * 2);
         ctx.fill();
       });
+    }
+    if (state.slopePoints.length >= 2) {
+      const last = state.slopePoints[state.slopePoints.length - 1];
+      const offsetX = 0.005 * state.imageWidth;
+      const offsetY = 0.005 * state.imageHeight;
+      const labelX = (last.x + offsetX) * scaleX;
+      let labelY = (last.y + offsetY) * scaleY;
+      const lineHeight = 14;
+      ctx.save();
+      ctx.fillStyle = insufficientFunds ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
+      ctx.font = 'bold 12px "DM Sans", system-ui, sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      const msg = insufficientFunds ? `Not enough budget (need ${formatCurrency(totalCost)})` : `${lengthM} m`;
+      ctx.fillText(msg, labelX, labelY);
+      labelY += lineHeight;
+      ctx.fillText(`${formatNumber(totalCost)} $`, labelX, labelY);
+      ctx.restore();
     }
   }
 
@@ -1017,18 +1303,32 @@ function draw() {
       ctx.strokeRect(-10, -8, 20, 16);
       ctx.restore();
     }
-/*     // Optional: draw cottage name below icon
-    const name = cottage.name || `Cottage ${i + 1}`;
-    if (name) {
+  });
+
+  // Draw groomers (icon at position)
+  const GROOMER_ICON_SIZE = 48;
+  state.groomers.forEach((groomer, i) => {
+    const pos = fromNormalized(groomer.position.x, groomer.position.y);
+    const cx = pos.x * scaleX;
+    const cy = pos.y * scaleY;
+    const img = groomerImages[groomer.groomerTypeId];
+    if (img && img.complete && img.naturalWidth) {
       ctx.save();
-      ctx.translate(cx, cy + COTTAGE_ICON_SIZE / 2 + 10);
-      ctx.fillStyle = liftColor;
-      ctx.font = 'bold 11px "DM Sans", system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(name, 0, 0);
+      ctx.translate(cx, cy);
+      const w = GROOMER_ICON_SIZE;
+      const h = (img.naturalHeight / img.naturalWidth) * w;
+      ctx.drawImage(img, -w / 2, -h / 2, w, h);
       ctx.restore();
-    } */
+    } else {
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.fillStyle = '#4a5568';
+      ctx.strokeStyle = '#2d3748';
+      ctx.lineWidth = 2;
+      ctx.fillRect(-12, -10, 24, 20);
+      ctx.strokeRect(-12, -10, 24, 20);
+      ctx.restore();
+    }
   });
 }
 
@@ -1045,8 +1345,10 @@ function renderLists() {
     .join('');
   DOM.slopeList.innerHTML = state.slopes
     .map(
-      (s, i) =>
-        `<li><span class="diff-dot" style="color:${getDiffColor(s.difficulty)}">●</span> ${s.difficulty} ${i + 1} <button type="button" class="remove-btn" data-type="slope" data-idx="${i}">Remove</button></li>`
+      (s, i) => {
+        const label = getSlopeType(s)?.difficulty ?? s.difficulty ?? 'Slope';
+        return `<li><span class="diff-dot" style="color:${getDiffColor(s)}">●</span> ${escapeHtml(String(label))} ${i + 1} <button type="button" class="remove-btn" data-type="slope" data-idx="${i}">Remove</button></li>`;
+      }
     )
     .join('');
   DOM.cottageList.innerHTML = state.cottages
@@ -1055,6 +1357,16 @@ function renderLists() {
         `<li><span class="cottage-list-name" title="${escapeHtml(c.name || '')}">${escapeHtml(c.name || `Cottage ${i + 1}`)}</span> <button type="button" class="remove-btn" data-type="cottage" data-idx="${i}">Remove</button></li>`
     )
     .join('');
+  if (DOM.groomerList) {
+    DOM.groomerList.innerHTML = state.groomers
+      .map(
+        (g, i) => {
+          const typeLabel = (state.groomerTypes.find((t) => t.id === g.groomerTypeId) || {}).name || g.groomerTypeId || 'Groomer';
+          return `<li><span class="groomer-list-name" title="${escapeHtml(typeLabel)}">${escapeHtml(typeLabel)} ${i + 1}</span> <button type="button" class="remove-btn" data-type="groomer" data-idx="${i}">Remove</button></li>`;
+        }
+      )
+      .join('');
+  }
 
   DOM.liftList.querySelectorAll('.editable-lift-name').forEach((el) => {
     el.addEventListener('click', () => {
@@ -1090,11 +1402,39 @@ function renderLists() {
       draw();
     });
   });
+  if (DOM.groomerList) {
+    DOM.groomerList.querySelectorAll('.remove-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.type === 'groomer') {
+          state.groomers.splice(Number(btn.dataset.idx), 1);
+          renderLists();
+          draw();
+        }
+      });
+    });
+  }
 }
 
-function getDiffColor(d) {
-  const map = { green: '#34a853', blue: '#4285f4', red: '#ea4335', black: '#1f1f1f', freeride: '#2d1b4e' };
-  return map[d] || d;
+/** Resolve slope type from a slope object (with slopeTypeId or difficulty) or from a slope type id string. */
+function getSlopeType(slopeOrId) {
+  if (!state.slopeTypes.length) return null;
+  if (typeof slopeOrId === 'string') {
+    return state.slopeTypes.find((t) => t.id === slopeOrId) || null;
+  }
+  const s = slopeOrId;
+  if (s.slopeTypeId) return state.slopeTypes.find((t) => t.id === s.slopeTypeId) || null;
+  if (s.difficulty != null) {
+    const key = String(s.difficulty).toLowerCase();
+    return state.slopeTypes.find((t) => t.difficulty.toLowerCase() === key) || null;
+  }
+  return null;
+}
+
+function getDiffColor(slopeOrId) {
+  const st = getSlopeType(slopeOrId);
+  if (st && st.color) return st.color;
+  if (st) return st.difficulty;
+  return '#4285f4';
 }
 
 function escapeHtml(s) {
@@ -1110,6 +1450,7 @@ function exportConfig() {
     lifts: state.lifts,
     slopes: state.slopes,
     cottages: state.cottages,
+    groomers: state.groomers,
   };
   const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
@@ -1133,10 +1474,24 @@ function onConfigImported(e) {
         type: (state.liftTypes.some((lt) => lt.id === l.type) && l.type) ? l.type : defaultTypeId,
         name: l.name || `Lift ${i + 1}`,
       }));
-      state.slopes = config.slopes ?? [];
+      state.slopes = (config.slopes ?? []).map((s) => {
+        const points = s.points ?? [];
+        let slopeTypeId = s.slopeTypeId;
+        if (!slopeTypeId && s.difficulty != null && state.slopeTypes.length) {
+          const key = String(s.difficulty).toLowerCase();
+          const st = state.slopeTypes.find((t) => t.difficulty.toLowerCase() === key || t.id === s.difficulty);
+          slopeTypeId = st?.id ?? null;
+        }
+        return { slopeTypeId: slopeTypeId ?? state.slopeTypes[0]?.id, points };
+      });
       state.cottages = (config.cottages ?? []).map((c, i) => ({
         position: c.position,
         name: c.name || `Cottage ${i + 1}`,
+      }));
+      const defaultGroomerId = state.groomerTypes[0] ? state.groomerTypes[0].id : null;
+      state.groomers = (config.groomers ?? []).map((g) => ({
+        position: g.position,
+        groomerTypeId: (state.groomerTypes.some((t) => t.id === g.groomerTypeId) && g.groomerTypeId) ? g.groomerTypeId : defaultGroomerId,
       }));
       if (config.imageWidth) state.imageWidth = config.imageWidth;
       if (config.imageHeight) state.imageHeight = config.imageHeight;
