@@ -319,10 +319,14 @@ button:hover {
 }
 
 .lift-type-dropdown .lift-type-buttons,
-.slope-type-buttons {
+.slope-type-dropdown .slope-type-buttons {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+.slope-type-dropdown {
+  width: 100%;
 }
 
 /* Floating detail panel over mountain image */
