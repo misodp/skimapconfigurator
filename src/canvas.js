@@ -2,7 +2,7 @@
  * Canvas size, coordinate conversion, and mouse/click handlers.
  */
 
-import { state, DOM } from './state.js';
+import { state, DOM } from './state';
 import {
   toNormalized,
   fromNormalized,

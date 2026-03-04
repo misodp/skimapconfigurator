@@ -3,9 +3,9 @@
  */
 
 import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.png';
-import { state } from '../state.js';
+import { state } from '../state';
 import { escapeHtml, formatNumber } from '../utils.js';
-import { COLS, ROWS } from '../constants.js';
+import { COLS, ROWS } from '../constants';
 
 export function getSlopeSpritePositionStyle(slopeType) {
   const frame = Math.min(COLS * ROWS - 1, Math.max(0, Number(slopeType.frame) ?? 0));

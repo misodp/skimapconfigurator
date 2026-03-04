@@ -4,9 +4,9 @@
 
 import spriteSheetUrl from '../../assets/images/SpriteSheet.png';
 import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.png';
-import { state } from '../state.js';
+import { state } from '../state';
 import { escapeHtml, formatNumber, scale1to3, skidollarIconsHtml } from '../utils.js';
-import { COLS, ROWS } from '../constants.js';
+import { COLS, ROWS } from '../constants';
 
 const LIFT_DETAIL_BLANK_HTML = '';
 

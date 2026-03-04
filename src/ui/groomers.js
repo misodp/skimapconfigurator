@@ -7,7 +7,7 @@ import groomerPrinothP15 from '../../assets/images/Prinoth_p15.png';
 import groomerRatracS from '../../assets/images/Ratrac_s.png';
 import groomerPb145 from '../../assets/images/PistenBully_145.png';
 import groomerPb170 from '../../assets/images/PistenBully_170.png';
-import { state } from '../state.js';
+import { state } from '../state';
 import { escapeHtml, formatNumber, formatCurrency } from '../utils.js';
 
 const GROOMER_IMAGE_URLS = {

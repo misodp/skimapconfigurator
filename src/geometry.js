@@ -2,7 +2,7 @@
  * Coordinate conversion and path/length/cost helpers.
  */
 
-import { state, getSlopeType } from './state.js';
+import { state, getSlopeType } from './state';
 
 export function toNormalized(px, py) {
   return {

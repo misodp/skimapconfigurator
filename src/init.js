@@ -7,7 +7,7 @@ import cottageIconUrl from '../assets/images/cottage.png';
 import spriteSheetUrl from '../assets/images/SpriteSheet.png';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
 import techTreeData from '../assets/data/techTree.json';
-import { state, DOM } from './state.js';
+import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';

@@ -2,7 +2,7 @@
  * Config export/import, sidebar lists, budget display, and central refresh().
  */
 
-import { state, DOM, getSlopeType, getDiffColor } from './state.js';
+import { state, DOM, getSlopeType, getDiffColor } from './state';
 import { draw } from './draw.js';
 import { escapeHtml, formatCurrency } from './utils.js';
 

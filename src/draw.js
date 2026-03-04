@@ -3,7 +3,7 @@
  * Uses state, geometry (fromNormalized, getLiftLengthM, getSlopePathLengthM, getSlopeCost), utils.
  */
 
-import { state, DOM, getSlopeType, getDiffColor } from './state.js';
+import { state, DOM, getSlopeType, getDiffColor } from './state';
 import { fromNormalized, getLiftLengthM, getSlopePathLengthM, getSlopeCost } from './geometry.js';
 import { formatNumber, formatCurrency } from './utils.js';
 
