@@ -145,7 +145,9 @@ function init() {
   state.liftTypes = (techTreeData && techTreeData.lifts) ? [...techTreeData.lifts] : [];
   state.liftType = state.liftTypes.length > 0 ? state.liftTypes[0].id : null;
   state.slopeTypes = (techTreeData && techTreeData.slopes) ? [...techTreeData.slopes] : [];
-  state.difficulty = state.slopeTypes.length > 0 ? state.slopeTypes[0].id : null;
+  state.difficulty = state.slopeTypes.length > 0
+    ? (state.slopeTypes.find((s) => s.difficulty === 'Blue' || s.id === 'blue_easy') || state.slopeTypes[0]).id
+    : null;
   state.groomerTypes = (techTreeData && techTreeData.groomers) ? [...techTreeData.groomers] : [];
   state.groomerType = state.groomerTypes.length > 0 ? state.groomerTypes[0].id : null;
   loadSpriteSheet();
