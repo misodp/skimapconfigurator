@@ -104,4 +104,9 @@ export interface DOMRefs {
   groomerList: HTMLUListElement | null;
   groomerOptions: Element | null;
   currentDateDisplay: HTMLElement | null;
+  weatherDisplay: HTMLElement | null;
+  visitorsDisplay: HTMLElement | null;
+  salesDisplay: HTMLElement | null;
+  operatingCostsDisplay: HTMLElement | null;
+  profitDisplay: HTMLElement | null;
 }

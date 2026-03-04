@@ -12,12 +12,21 @@
   <body>
     <div id="app">
       <header class="header">
-        <h1>Retro Ski Resort Tycoon</h1>
-        <p class="subtitle">Build your dream ski resort in the 1960s.</p>
-        <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
-        <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
-          <img class="budget-icon" id="budgetIcon" src="" alt="" />
-          <span id="budgetAmount">0</span>
+        <div class="header-brand">
+          <h1>Retro Ski Resort Tycoon</h1>
+          <p class="subtitle">Build your dream ski resort in the 1960s.</p>
+        </div>
+        <div class="header-meta">
+          <div class="header-weather" id="weatherDisplay" aria-label="Current weather" title="Weather"></div>
+          <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
+          <div class="header-visitors" id="visitorsDisplay" data-label="Visitors:" aria-label="Daily visitors">0</div>
+          <div class="header-finance header-sales" id="salesDisplay" data-label="Sales:" aria-label="Daily sales">0</div>
+          <div class="header-finance header-costs" id="operatingCostsDisplay" data-label="Operating:" aria-label="Daily operating costs">0</div>
+          <div class="header-finance header-profit daily-change" id="profitDisplay" data-label="Profit:" aria-label="Daily profit">0</div>
+          <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
+            <img class="budget-icon" id="budgetIcon" src="" alt="" />
+            <span id="budgetAmount">0</span>
+          </div>
         </div>
       </header>
 

@@ -43,50 +43,118 @@ body {
 
 .header {
   grid-area: header;
-  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
   padding: 1rem 1.5rem;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
 }
 
-.header-date {
-  position: absolute;
-  top: 1rem;
-  right: 10rem;
-  font-size: 1.1rem;
-  font-weight: 500;
-  color: var(--text-muted);
+.header-brand {
+  min-width: 0;
 }
 
-.budget-display {
-  position: absolute;
-  top: 1rem;
-  right: 1.5rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1.5rem;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.budget-display .budget-icon {
-  width: 36px;
-  height: 36px;
-  object-fit: contain;
-  display: block;
-}
-
-.header h1 {
+.header-brand h1 {
   margin: 0;
   font-size: 1.5rem;
   font-weight: 600;
 }
 
-.subtitle {
+.header-brand .subtitle {
   margin: 0.25rem 0 0;
   color: var(--text-muted);
   font-size: 0.9rem;
+}
+
+.header-meta {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  flex-shrink: 0;
+}
+
+.header-weather {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+}
+
+.header-weather svg {
+  width: 24px;
+  height: 24px;
+  display: block;
+}
+
+.header-date {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.header-visitors {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.header-visitors::before {
+  content: attr(data-label);
+  margin-right: 0.35em;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.header-finance {
+  font-size: 1rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.header-finance::before {
+  content: attr(data-label);
+  margin-right: 0.35em;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.header-sales {
+  color: var(--green);
+}
+
+.header-costs {
+  color: var(--red);
+}
+
+.daily-change.profit {
+  color: var(--green);
+}
+
+.daily-change.loss {
+  color: var(--red);
+}
+
+.budget-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.budget-display .budget-icon {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  display: block;
 }
 
 .toolbar {

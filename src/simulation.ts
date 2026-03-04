@@ -4,6 +4,10 @@
 
 import { state, DOM } from './state';
 import type { SimulationDate } from './types';
+import { getSeason, generateWeatherForSeason } from './weather-simulation';
+import { updateWeatherDisplay } from './weather-icon';
+import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './geometry.js';
+import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay } from './config.js';
 
 const TICK_MS = 3000; // one game day per 3 seconds
 
@@ -22,20 +26,27 @@ function daysInMonth(month: number, year: number): number {
 }
 
 /**
- * Advance state.currentDate by one day. Handles month/year rollover.
+ * Advance state.currentDate by one day and simulate weather for the new day.
  */
 function advanceDay(): void {
   const d = state.currentDate;
   const maxDay = daysInMonth(d.month, d.year);
   d.day += 1;
   if (d.day > maxDay) {
-    d.day = 1
+    d.day = 1;
     d.month += 1;
     if (d.month > 12) {
       d.month = 1;
       d.year += 1;
     }
   }
+  const season = getSeason(d.month);
+  state.currentWeather = generateWeatherForSeason(season);
+  state.dailyVisitors = getDailyVisitors();
+  state.dailySales = state.dailyVisitors * TICKET_PRICE;
+  state.dailyCost = getDailyOperatingCost();
+  state.dailyProfit = state.dailySales - state.dailyCost;
+  state.budget = Math.max(0, state.budget + state.dailyProfit);
 }
 
 /**
@@ -63,11 +74,20 @@ let intervalId: ReturnType<typeof setInterval> | null = null;
  */
 export function startSimulation(): void {
   if (intervalId != null) return;
+  // Set initial weather and visitors for start date
+  state.currentWeather = generateWeatherForSeason(getSeason(state.currentDate.month));
+  state.dailyVisitors = getDailyVisitors();
   updateDateDisplay();
+  updateWeatherDisplay();
+  updateVisitorsDisplay();
+  updateDailyFinanceDisplay();
   intervalId = setInterval(() => {
     advanceDay();
     updateDateDisplay();
-    // Future: run daily economics, events, etc. here
+    updateWeatherDisplay();
+    updateVisitorsDisplay();
+    updateBudgetDisplay();
+    updateDailyFinanceDisplay();
   }, TICK_MS);
 }
 

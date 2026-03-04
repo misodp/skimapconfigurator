@@ -4,18 +4,44 @@
 
 import { state, DOM, getSlopeType, getDiffColor } from './state';
 import { draw } from './draw.js';
-import { escapeHtml, formatCurrency } from './utils.js';
+import { escapeHtml, formatCurrency, formatNumber } from './utils.js';
+import { getDailyVisitors } from './geometry.js';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
   if (el) el.textContent = formatCurrency(state.budget);
 }
 
-/** Redraw canvas, update lists, and refresh budget. Call after any state change. */
+export function updateVisitorsDisplay() {
+  if (DOM.visitorsDisplay) {
+    DOM.visitorsDisplay.textContent = formatNumber(state.dailyVisitors);
+  }
+}
+
+export function updateDailyFinanceDisplay() {
+  if (DOM.salesDisplay) {
+    DOM.salesDisplay.textContent = formatCurrency(state.dailySales);
+  }
+  if (DOM.operatingCostsDisplay) {
+    DOM.operatingCostsDisplay.textContent = formatCurrency(state.dailyCost);
+  }
+  const profitEl = DOM.profitDisplay;
+  if (profitEl) {
+    const profit = state.dailyProfit;
+    profitEl.textContent = (profit >= 0 ? '+' : '') + formatCurrency(profit);
+    profitEl.classList.remove('profit', 'loss');
+    if (profit > 0) profitEl.classList.add('profit');
+    else if (profit < 0) profitEl.classList.add('loss');
+  }
+}
+
+/** Redraw canvas, update lists, refresh budget and visitors. Call after any state change. */
 export function refresh() {
   draw();
   renderLists();
+  state.dailyVisitors = getDailyVisitors();
   updateBudgetDisplay();
+  updateVisitorsDisplay();
 }
 
 export function renderLists() {

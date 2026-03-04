@@ -167,6 +167,11 @@ export function init() {
   DOM.groomerList = document.getElementById('groomerList');
   DOM.groomerOptions = document.querySelector('.groomer-options');
   DOM.currentDateDisplay = document.getElementById('currentDateDisplay');
+  DOM.weatherDisplay = document.getElementById('weatherDisplay');
+  DOM.visitorsDisplay = document.getElementById('visitorsDisplay');
+  DOM.salesDisplay = document.getElementById('salesDisplay');
+  DOM.operatingCostsDisplay = document.getElementById('operatingCostsDisplay');
+  DOM.profitDisplay = document.getElementById('profitDisplay');
 
   DOM.imageInput.addEventListener('change', onImageSelected);
   DOM.exportBtn.addEventListener('click', exportConfig);
