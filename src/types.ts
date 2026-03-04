@@ -77,6 +77,13 @@ export interface ImagePoint {
   norm?: NormalizedPoint;
 }
 
+/** Game simulation date: month 1–12, day 1–31. */
+export interface SimulationDate {
+  year: number;
+  month: number;
+  day: number;
+}
+
 export interface DOMRefs {
   mountainImage: HTMLImageElement | null;
   canvas: HTMLCanvasElement | null;
@@ -96,4 +103,5 @@ export interface DOMRefs {
   groomerHint: Element | null;
   groomerList: HTMLUListElement | null;
   groomerOptions: Element | null;
+  currentDateDisplay: HTMLElement | null;
 }

@@ -9,6 +9,7 @@ import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
+import { startSimulation, updateDateDisplay } from './simulation';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
@@ -165,6 +166,7 @@ export function init() {
   DOM.groomerHint = document.querySelector('.groomer-hint');
   DOM.groomerList = document.getElementById('groomerList');
   DOM.groomerOptions = document.querySelector('.groomer-options');
+  DOM.currentDateDisplay = document.getElementById('currentDateDisplay');
 
   DOM.imageInput.addEventListener('change', onImageSelected);
   DOM.exportBtn.addEventListener('click', exportConfig);
@@ -236,4 +238,7 @@ export function init() {
   window.addEventListener('resize', () => {
     if (state.image) syncCanvasSize();
   });
+
+  updateDateDisplay();
+  startSimulation();
 }

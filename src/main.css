@@ -49,6 +49,15 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
+.header-date {
+  position: absolute;
+  top: 1rem;
+  right: 10rem;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
 .budget-display {
   position: absolute;
   top: 1rem;

@@ -14,10 +14,13 @@ import type {
   PlacedCottage,
   PlacedGroomer,
   ImagePoint,
+  SimulationDate,
   DOMRefs,
 } from './types';
 
 export interface AppState {
+  /** Current simulation date (starts Nov 1, 1960). */
+  currentDate: SimulationDate;
   mode: AppMode;
   liftType: string | null;
   liftTypes: LiftType[];
@@ -45,7 +48,10 @@ export interface AppState {
   groomerImages: Record<string, HTMLImageElement>;
 }
 
+const START_DATE: SimulationDate = { year: 1960, month: 11, day: 1 };
+
 export const state: AppState = {
+  currentDate: { ...START_DATE },
   mode: 'lift',
   liftType: null,
   liftTypes: [],
@@ -92,6 +98,7 @@ export const DOM: DOMRefs = {
   groomerHint: null,
   groomerList: null,
   groomerOptions: null,
+  currentDateDisplay: null,
 };
 
 type SlopeOrId = string | PlacedSlope;
