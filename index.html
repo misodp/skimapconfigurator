@@ -17,18 +17,11 @@
           <p class="subtitle">Build your dream ski resort in the 1960s.</p>
         </div>
         <div class="header-meta">
-          <div class="header-weather" id="weatherDisplay" aria-label="Current weather" title="Weather"></div>
           <div class="header-date-block">
             <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
             <div class="header-season" id="seasonDisplay" aria-label="Season">Winter</div>
           </div>
-          <div class="header-speed" aria-label="Simulation speed">
-            <span class="header-speed-label">Speed:</span>
-            <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
-            <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
-            <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
-            <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
-          </div>
+          <div class="header-weather" id="weatherDisplay" aria-label="Current weather" title="Weather"></div>
           <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
             <img class="budget-icon" id="budgetIcon" src="" alt="" />
             <span id="budgetAmount">0</span>
@@ -176,6 +169,15 @@
                 <span class="experience-segment medium" data-bucket="medium" title="Medium"></span>
                 <span class="experience-segment bad" data-bucket="bad" title="Bad"></span>
               </div>
+            </div>
+          </div>
+          <div class="stat-row stat-row-speed">
+            <div class="header-speed" aria-label="Simulation speed">
+              <span class="header-speed-label">Speed:</span>
+              <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
+              <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
+              <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
+              <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
             </div>
           </div>
         </section>

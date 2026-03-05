@@ -280,6 +280,16 @@ body {
   display: block;
 }
 
+.stat-row-speed {
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.stat-row-speed .header-speed {
+  flex-wrap: wrap;
+}
+
 .stat-finance-row {
   display: inline-flex;
   align-items: center;
