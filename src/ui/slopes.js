@@ -24,7 +24,11 @@ export function setDifficulty(slopeTypeId) {
   }
 }
 
-export function renderSlopeTypeButtons() {
+/**
+ * @param { { skipPanelBlank?: boolean } } [opts] - If skipPanelBlank is true, do not clear the detail panel.
+ */
+export function renderSlopeTypeButtons(opts) {
+  const skipPanelBlank = opts && opts.skipPanelBlank === true;
   const container = document.getElementById('difficultyButtons');
   const floatingPanel = document.getElementById('liftDetailFloating');
   if (!container || !state.slopeTypes.length) return;
@@ -81,6 +85,6 @@ export function renderSlopeTypeButtons() {
     showSlopeFloatingPanel(id);
   });
 
-  setPanelBlank();
+  if (!skipPanelBlank) setPanelBlank();
   window.slopeDetailSetBlank = setPanelBlank;
 }

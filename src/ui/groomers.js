@@ -27,7 +27,10 @@ export function setGroomerType(id) {
   state.groomerType = id;
 }
 
-export function renderGroomerTypeDropdown() {
+/**
+ * @param { { skipPanelBlank?: boolean } } [opts] - If skipPanelBlank is true, do not clear the detail panel (e.g. when refreshing for unlock year).
+ */
+export function renderGroomerTypeDropdown(opts) {
   const container = document.getElementById('groomerTypeDropdown');
   const floatingPanel = document.getElementById('liftDetailFloating');
   if (!container || !state.groomerTypes.length) return;
@@ -66,12 +69,17 @@ export function renderGroomerTypeDropdown() {
     }
   }
 
+  const currentYear = state.currentDate ? state.currentDate.year : 0;
   container.innerHTML = state.groomerTypes
     .map((g) => {
+      const unlockYear = g.unlock_year != null ? Number(g.unlock_year) : null;
+      const locked = unlockYear != null && currentYear < unlockYear;
+      const lockedClass = locked ? ' locked' : '';
       const isActive = state.groomerType === g.id ? ' active' : '';
+      const title = locked ? 'Unlocks in ' + unlockYear : '';
       const imgUrl = getGroomerImageUrl(g);
       const iconStyle = imgUrl ? `style="background-image:url(${imgUrl})"` : '';
-      return `<button type="button" data-groomer-type="${escapeHtml(g.id)}" class="groomer-type-btn${isActive}">
+      return `<button type="button" data-groomer-type="${escapeHtml(g.id)}" class="groomer-type-btn${isActive}${lockedClass}"${title ? ` title="${escapeHtml(title)}"` : ''}>
         <span class="groomer-type-icon" ${iconStyle}></span>
         <span class="groomer-type-label">${escapeHtml(g.name)}</span>
       </button>`;
@@ -80,7 +88,7 @@ export function renderGroomerTypeDropdown() {
 
   container.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-groomer-type]');
-    if (!btn) return;
+    if (!btn || btn.classList.contains('locked')) return;
     const id = btn.dataset.groomerType;
     state.groomerType = id;
     container.querySelectorAll('.groomer-type-btn').forEach((b) => b.classList.toggle('active', b.dataset.groomerType === id));

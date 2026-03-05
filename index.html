@@ -26,6 +26,25 @@
             <img class="budget-icon" id="budgetIcon" src="" alt="" />
             <span id="budgetAmount">0</span>
           </div>
+          <div class="header-save-load" aria-label="Save and load game">
+            <button type="button" id="saveBtn" class="header-icon-btn" title="Save game" aria-label="Save game">
+              <svg class="header-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                <polyline points="17 21 17 13 7 13 7 21"/>
+                <polyline points="7 3 7 8 15 8"/>
+              </svg>
+              <span class="header-btn-label">Save</span>
+            </button>
+            <button type="button" id="loadBtn" class="header-icon-btn" title="Load game" aria-label="Load game">
+              <svg class="header-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              <span class="header-btn-label">Load</span>
+            </button>
+            <input type="file" id="importInput" accept=".json" hidden />
+          </div>
         </div>
       </header>
 
@@ -91,13 +110,6 @@
               <h2>Mountain image</h2>
               <input type="file" id="imageInput" accept="image/*" />
               <p class="hint small">Upload your mountain image to draw on.</p>
-            </section>
-
-            <section class="tool-section">
-              <h2>Config</h2>
-              <button type="button" id="exportBtn">Export config JSON</button>
-              <button type="button" id="importBtn">Import config</button>
-              <input type="file" id="importInput" accept=".json" hidden />
             </section>
           </div>
         </div>

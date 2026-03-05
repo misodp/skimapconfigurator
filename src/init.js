@@ -10,6 +10,7 @@ import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
 import { startSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
+import { updateWeatherDisplay } from './weather-icon';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
@@ -151,8 +152,8 @@ export function init() {
   DOM.canvas = document.getElementById('drawCanvas');
   DOM.ctx = DOM.canvas.getContext('2d');
   DOM.imageInput = document.getElementById('imageInput');
-  DOM.exportBtn = document.getElementById('exportBtn');
-  DOM.importBtn = document.getElementById('importBtn');
+  DOM.saveBtn = document.getElementById('saveBtn');
+  DOM.loadBtn = document.getElementById('loadBtn');
   DOM.importInput = document.getElementById('importInput');
   DOM.liftList = document.getElementById('liftList');
   DOM.slopeList = document.getElementById('slopeList');
@@ -181,9 +182,18 @@ export function init() {
   DOM.satisfactionDisplay = document.getElementById('satisfactionDisplay');
 
   DOM.imageInput.addEventListener('change', onImageSelected);
-  DOM.exportBtn.addEventListener('click', exportConfig);
-  DOM.importBtn.addEventListener('click', () => DOM.importInput.click());
+  if (DOM.saveBtn) DOM.saveBtn.addEventListener('click', exportConfig);
+  if (DOM.loadBtn && DOM.importInput) DOM.loadBtn.addEventListener('click', () => DOM.importInput.click());
   DOM.importInput.addEventListener('change', onConfigImported);
+  window.onGameStateRestored = () => {
+    setMode(state.mode);
+    renderLiftTypeDropdown({ skipPanelBlank: true });
+    renderGroomerTypeDropdown({ skipPanelBlank: true });
+    renderSlopeTypeButtons({ skipPanelBlank: true });
+    updateDateDisplay();
+    updateWeatherDisplay();
+    applySimulationSpeed();
+  };
 
   DOM.modeBtns.forEach((btn) => {
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
@@ -217,6 +227,16 @@ export function init() {
       }
       if (statisticsPanel) {
         statisticsPanel.classList.toggle('active', tabName === 'statistics');
+      }
+      if (tabName === 'statistics') {
+        if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
+        if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
+        if (typeof window.slopeDetailSetBlank === 'function') window.slopeDetailSetBlank();
+        const fp = document.getElementById('liftDetailFloating');
+        if (fp) {
+          fp.hidden = true;
+          fp.setAttribute('aria-hidden', 'true');
+        }
       }
     });
   });

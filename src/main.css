@@ -76,6 +76,43 @@ body {
   flex-shrink: 0;
 }
 
+.header-save-load {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.25rem;
+}
+
+.header-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.6rem;
+  font: inherit;
+  font-size: 0.85rem;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.header-icon-btn:hover {
+  background: var(--surface-hover, rgba(255, 255, 255, 0.06));
+  border-color: var(--border-hover, rgba(255, 255, 255, 0.15));
+}
+
+.header-icon-btn .header-btn-icon {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.header-icon-btn .header-btn-label {
+  white-space: nowrap;
+}
+
 .header-weather {
   display: flex;
   flex-direction: column;
@@ -1005,6 +1042,17 @@ button:hover {
   color: #fff;
 }
 
+.lift-type-btn.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+
+.lift-type-btn.locked:hover {
+  background: var(--surface);
+  border-color: var(--border);
+}
+
 .groomer-type-dropdown {
   width: 100%;
   display: flex;
@@ -1039,6 +1087,17 @@ button:hover {
   background: var(--accent);
   border-color: var(--accent);
   color: #fff;
+}
+
+.groomer-type-btn.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
+  filter: grayscale(0.7);
+}
+
+.groomer-type-btn.locked:hover {
+  background: var(--surface);
+  border-color: var(--border);
 }
 
 .groomer-type-icon {

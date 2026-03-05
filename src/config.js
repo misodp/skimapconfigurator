@@ -199,19 +199,44 @@ export function renderLists() {
   }
 }
 
+/** Save format version for future migrations. */
+const SAVE_VERSION = 1;
+
 export function exportConfig() {
   const config = {
+    version: SAVE_VERSION,
+    currentDate: state.currentDate,
+    currentWeather: state.currentWeather,
+    dailyVisitors: state.dailyVisitors,
+    dailySales: state.dailySales,
+    dailyCost: state.dailyCost,
+    dailyProfit: state.dailyProfit,
+    snowDepth: state.snowDepth,
+    dailySnowfall: state.dailySnowfall,
+    dailyTempLow: state.dailyTempLow,
+    dailyTempHigh: state.dailyTempHigh,
+    simulationSpeed: state.simulationSpeed,
+    liftExperienceBucket: state.liftExperienceBucket,
+    slopeCrowdBucket: state.slopeCrowdBucket,
+    slopeQualityBucket: state.slopeQualityBucket,
+    satisfaction: state.satisfaction,
+    mode: state.mode,
+    liftType: state.liftType,
+    difficulty: state.difficulty,
+    groomerType: state.groomerType,
+    slopeDrawMode: state.slopeDrawMode,
     imageWidth: state.imageWidth,
     imageHeight: state.imageHeight,
     lifts: state.lifts,
     slopes: state.slopes,
     cottages: state.cottages,
     groomers: state.groomers,
+    budget: state.budget,
   };
   const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'ski-map-config.json';
+  a.download = 'ski-map-save.json';
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -223,6 +248,10 @@ export function onConfigImported(e) {
   reader.onload = () => {
     try {
       const config = JSON.parse(reader.result);
+
+      // Map/layout
+      if (config.imageWidth != null) state.imageWidth = config.imageWidth;
+      if (config.imageHeight != null) state.imageHeight = config.imageHeight;
       const defaultTypeId = state.liftTypes[0] ? state.liftTypes[0].id : null;
       state.lifts = (config.lifts ?? []).map((l, i) => ({
         bottomStation: l.bottomStation,
@@ -249,9 +278,41 @@ export function onConfigImported(e) {
         position: g.position,
         groomerTypeId: (state.groomerTypes.some((t) => t.id === g.groomerTypeId) && g.groomerTypeId) ? g.groomerTypeId : defaultGroomerId,
       }));
-      if (config.imageWidth) state.imageWidth = config.imageWidth;
-      if (config.imageHeight) state.imageHeight = config.imageHeight;
+
+      // Full game state (only when present, for backward compatibility with old saves)
+      if (config.budget != null) state.budget = config.budget;
+      if (config.currentDate && typeof config.currentDate.year === 'number') {
+        state.currentDate = {
+          year: config.currentDate.year,
+          month: config.currentDate.month ?? state.currentDate.month,
+          day: config.currentDate.day ?? state.currentDate.day,
+        };
+      }
+      const validWeather = ['sunny', 'snowy', 'blizzard', 'cloudy', 'icy'];
+      if (validWeather.includes(config.currentWeather)) state.currentWeather = config.currentWeather;
+      if (config.dailyVisitors != null) state.dailyVisitors = config.dailyVisitors;
+      if (config.dailySales != null) state.dailySales = config.dailySales;
+      if (config.dailyCost != null) state.dailyCost = config.dailyCost;
+      if (config.dailyProfit != null) state.dailyProfit = config.dailyProfit;
+      if (config.snowDepth != null) state.snowDepth = config.snowDepth;
+      if (config.dailySnowfall != null) state.dailySnowfall = config.dailySnowfall;
+      if (config.dailyTempLow != null) state.dailyTempLow = config.dailyTempLow;
+      if (config.dailyTempHigh != null) state.dailyTempHigh = config.dailyTempHigh;
+      if (config.simulationSpeed != null) state.simulationSpeed = config.simulationSpeed;
+      const validBucket = ['good', 'medium', 'bad'];
+      if (validBucket.includes(config.liftExperienceBucket)) state.liftExperienceBucket = config.liftExperienceBucket;
+      if (validBucket.includes(config.slopeCrowdBucket)) state.slopeCrowdBucket = config.slopeCrowdBucket;
+      if (validBucket.includes(config.slopeQualityBucket)) state.slopeQualityBucket = config.slopeQualityBucket;
+      if (config.satisfaction != null) state.satisfaction = Math.max(0, Math.min(100, config.satisfaction));
+      const validMode = ['lift', 'slope', 'cottage', 'groomer'];
+      if (validMode.includes(config.mode)) state.mode = config.mode;
+      if (config.liftType != null) state.liftType = config.liftType;
+      if (config.difficulty != null) state.difficulty = config.difficulty;
+      if (config.groomerType != null) state.groomerType = config.groomerType;
+      if (config.slopeDrawMode === 'points' || config.slopeDrawMode === 'pen') state.slopeDrawMode = config.slopeDrawMode;
+
       refresh();
+      if (typeof window.onGameStateRestored === 'function') window.onGameStateRestored();
     } catch (err) {
       alert('Invalid config file: ' + err.message);
     }

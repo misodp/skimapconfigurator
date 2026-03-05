@@ -9,6 +9,8 @@ import { updateWeatherDisplay } from './weather-icon';
 import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './economics.js';
 import { getTotalLiftCapacity, getTotalSlopeCapacity, getLiftWaitBucket, getSlopeCrowdBucket, getTotalGroomingDemand, getTotalGroomingCapacity, getSlopeQualityBucket, driftSatisfaction } from './experience-simulator';
 import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay } from './config.js';
+import { renderLiftTypeDropdown } from './ui/lifts.js';
+import { renderGroomerTypeDropdown } from './ui/groomers.js';
 
 const BASE_TICK_MS = 3000; // one game day per 3 seconds at 1x
 
@@ -120,6 +122,8 @@ function startLoopWithCurrentSpeed() {
     updateExperienceDisplay();
     updateSatisfactionDisplay();
     updateBudgetDisplay();
+    renderLiftTypeDropdown({ skipPanelBlank: true });
+    renderGroomerTypeDropdown({ skipPanelBlank: true });
   }, intervalMs);
 }
 

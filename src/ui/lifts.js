@@ -29,7 +29,11 @@ export function updateCancelLiftButton() {
   if (btn) btn.classList.toggle('hidden', !(state.mode === 'lift' && state.liftBottom));
 }
 
-export function renderLiftTypeDropdown() {
+/**
+ * @param { { skipPanelBlank?: boolean } } [opts] - If skipPanelBlank is true, do not clear the detail panel (e.g. when refreshing for unlock year).
+ */
+export function renderLiftTypeDropdown(opts) {
+  const skipPanelBlank = opts && opts.skipPanelBlank === true;
   const container = document.getElementById('liftTypeDropdown');
   const floatingPanel = document.getElementById('liftDetailFloating');
   if (!container || !state.liftTypes.length) return;
@@ -95,10 +99,15 @@ export function renderLiftTypeDropdown() {
     }
   }
 
+  const currentYear = state.currentDate ? state.currentDate.year : 0;
   listContainer.innerHTML = state.liftTypes
     .map((lift) => {
+      const unlockYear = lift.unlock_year != null ? Number(lift.unlock_year) : null;
+      const locked = unlockYear != null && currentYear < unlockYear;
+      const lockedClass = locked ? ' locked' : '';
       const isActive = state.liftType === lift.id ? ' active' : '';
-      return '<button type="button" data-lift-type="' + escapeHtml(lift.id) + '" class="lift-type-btn' + isActive + '">' +
+      const title = locked ? 'Unlocks in ' + unlockYear : '';
+      return '<button type="button" data-lift-type="' + escapeHtml(lift.id) + '" class="lift-type-btn' + isActive + lockedClass + '"' + (title ? ' title="' + escapeHtml(title) + '"' : '') + '>' +
         '<span class="lift-type-icon" style="' + getLiftSpriteStyle(lift) + '"></span>' +
         '<span class="lift-type-label">' + escapeHtml(lift.name) + '</span></button>';
     })
@@ -106,15 +115,15 @@ export function renderLiftTypeDropdown() {
 
   listContainer.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-lift-type]');
-    if (!btn) return;
+    if (!btn || btn.classList.contains('locked')) return;
     const id = btn.dataset.liftType;
     setLiftType(id);
     listContainer.querySelectorAll('.lift-type-btn').forEach((b) => b.classList.toggle('active', b.dataset.liftType === id));
     showFloatingPanel(id);
   });
 
-  setPanelBlank();
-  if (floatingPanel && state.mode === 'lift') {
+  if (!skipPanelBlank) setPanelBlank();
+  if (floatingPanel && state.mode === 'lift' && !skipPanelBlank) {
     floatingPanel.hidden = false;
     floatingPanel.setAttribute('aria-hidden', 'false');
   }

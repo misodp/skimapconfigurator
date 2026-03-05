@@ -17,6 +17,8 @@ export interface LiftType {
   description?: string;
   pros_cons?: string[];
   frame: number;
+  /** Year when this lift becomes available (from tech tree). */
+  unlock_year?: number;
 }
 
 export interface SlopeType {
@@ -41,6 +43,8 @@ export interface GroomerType {
   base_operating_cost?: number;
   grooming_capacity?: number;
   description?: string;
+  /** Year when this groomer becomes available (from tech tree). */
+  unlock_year?: number;
 }
 
 export interface NormalizedPoint {
@@ -94,8 +98,8 @@ export interface DOMRefs {
   canvas: HTMLCanvasElement | null;
   ctx: CanvasRenderingContext2D | null;
   imageInput: HTMLInputElement | null;
-  exportBtn: HTMLButtonElement | null;
-  importBtn: HTMLButtonElement | null;
+  saveBtn: HTMLButtonElement | null;
+  loadBtn: HTMLButtonElement | null;
   importInput: HTMLInputElement | null;
   liftList: HTMLUListElement | null;
   slopeList: HTMLUListElement | null;

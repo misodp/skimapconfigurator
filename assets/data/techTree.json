@@ -31,7 +31,7 @@
         "speed": 2.8,
         "capacity": 1100,
         "reliability": 0.90,
-        "unlock_year": 1964,
+        "unlock_year": 1962,
         "description": "Standard za družine. Sidra za dve osebi nudijo visoko kapaciteto, vendar zahtevajo več osebja za pomoč pri vstopu.",
         "pros_cons": ["+ Visoka kapaciteta", "+ Stabilna na strmini", "- Potrebuje osebje"],
         "frame": 2
@@ -173,7 +173,7 @@
         "brand": "Prinoth",
         "name": "P-15 'The Beetle'",
         "image": "Prinoth_p15.png",
-        "unlock_year": 1962,
+        "unlock_year": 1961,
         "purchase_cost": 12000,
         "base_operating_cost": 35,
         "grooming_capacity": 10,

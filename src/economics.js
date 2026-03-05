@@ -43,10 +43,18 @@ function getSatisfactionVisitorFactor() {
   return 0.6 + (s / 100) * 0.8;
 }
 
+/** Snow depth (cm): < 20 → no visitors; 20–200 → ramp 0→1; > 200 → slight increase. */
+function getSnowVisitorFactor() {
+  const snow = state.snowDepth ?? 0;
+  if (snow < 20) return 0; //no visitors
+  if (snow >= 200) return 1.1; // 10% boost for deep snow
+  return 1; // normal interest
+}
+
 /**
  * Potential visitors = installed lift capacity (for daily ticket sales).
- * Daily visitors = potential × season × weather × satisfaction × (1 ± 10% random).
- * Season reflects skiing interest (winter peak, summer off-season); weather and satisfaction also apply.
+ * Daily visitors = potential × snow × season × weather × satisfaction × (1 ± 10% random).
+ * Snow: none below 20 cm, full effect 20–200 cm, slight boost above 200 cm.
  */
 export function getDailyVisitors() {
   let potentialVisitors = 0;
@@ -55,10 +63,11 @@ export function getDailyVisitors() {
     if (!type || type.capacity == null) continue;
     potentialVisitors += Number(type.capacity) || 0;
   }
+  const snowFactor = getSnowVisitorFactor();
   const season = getSeason(state.currentDate.month);
   const seasonFactor = SEASON_VISITOR_MODIFIERS[season] ?? 1;
   const weatherFactor = WEATHER_VISITOR_MODIFIERS[state.currentWeather] ?? 0.85;
   const satisfactionFactor = getSatisfactionVisitorFactor();
   const randomFactor = 1 + (Math.random() * 2 - 1) * VISITOR_RANDOMNESS; // 0.9 to 1.1
-  return Math.round(potentialVisitors * seasonFactor * weatherFactor * satisfactionFactor * randomFactor);
+  return Math.round(potentialVisitors * snowFactor * seasonFactor * weatherFactor * satisfactionFactor * randomFactor);
 }
