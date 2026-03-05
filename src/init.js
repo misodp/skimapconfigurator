@@ -9,7 +9,7 @@ import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
-import { startSimulation, updateDateDisplay } from './simulation';
+import { startSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
@@ -167,11 +167,18 @@ export function init() {
   DOM.groomerList = document.getElementById('groomerList');
   DOM.groomerOptions = document.querySelector('.groomer-options');
   DOM.currentDateDisplay = document.getElementById('currentDateDisplay');
+  DOM.seasonDisplay = document.getElementById('seasonDisplay');
   DOM.weatherDisplay = document.getElementById('weatherDisplay');
   DOM.visitorsDisplay = document.getElementById('visitorsDisplay');
   DOM.salesDisplay = document.getElementById('salesDisplay');
   DOM.operatingCostsDisplay = document.getElementById('operatingCostsDisplay');
   DOM.profitDisplay = document.getElementById('profitDisplay');
+  DOM.snowDepthDisplay = document.getElementById('snowDepthDisplay');
+  DOM.simSpeedButtons = document.querySelectorAll('.sim-speed-btn');
+  DOM.liftExperienceDisplay = document.getElementById('liftExperienceDisplay');
+  DOM.slopeExperienceDisplay = document.getElementById('slopeExperienceDisplay');
+  DOM.slopeQualityDisplay = document.getElementById('slopeQualityDisplay');
+  DOM.satisfactionDisplay = document.getElementById('satisfactionDisplay');
 
   DOM.imageInput.addEventListener('change', onImageSelected);
   DOM.exportBtn.addEventListener('click', exportConfig);
@@ -181,6 +188,17 @@ export function init() {
   DOM.modeBtns.forEach((btn) => {
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
+
+  if (DOM.simSpeedButtons) {
+    DOM.simSpeedButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const speed = Number(btn.dataset.speed ?? '1') || 0;
+        state.simulationSpeed = Math.max(0, Math.min(3, speed));
+        DOM.simSpeedButtons.forEach((b) => b.classList.toggle('active', b === btn));
+        applySimulationSpeed();
+      });
+    });
+  }
 
   document.querySelectorAll('.slope-mode-btn').forEach((btn) => {
     btn.addEventListener('click', () => setSlopeDrawMode(btn.dataset.slopeMode));
@@ -232,6 +250,9 @@ export function init() {
 
   const budgetIcon = document.getElementById('budgetIcon');
   if (budgetIcon) budgetIcon.src = skidollarg2mUrl;
+  document.querySelectorAll('.stat-skidollar-icon').forEach((img) => {
+    img.src = skidollarg2mUrl;
+  });
 
   DOM.mountainImage.onload = () => {
     state.image = DOM.mountainImage;

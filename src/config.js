@@ -5,7 +5,9 @@
 import { state, DOM, getSlopeType, getDiffColor } from './state';
 import { draw } from './draw.js';
 import { escapeHtml, formatCurrency, formatNumber } from './utils.js';
-import { getDailyVisitors } from './geometry.js';
+import { getDailyVisitors } from './economics.js';
+import { getSlopePathLengthM, getLiftLengthM, fromNormalized } from './geometry.js';
+import { getTotalLiftCapacity, getTotalSlopeCapacity, getLiftWaitBucket, getSlopeCrowdBucket, getTotalGroomingDemand, getTotalGroomingCapacity, getSlopeQualityBucket } from './experience-simulator';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
@@ -35,13 +37,67 @@ export function updateDailyFinanceDisplay() {
   }
 }
 
+export function updateSnowDepthDisplay() {
+  if (DOM.snowDepthDisplay) {
+    DOM.snowDepthDisplay.textContent = formatNumber(state.snowDepth) + ' cm';
+  }
+}
+
+/** Update lift wait, slope crowd and slope quality bucket bars in the stats panel. */
+export function updateExperienceDisplay() {
+  const buckets = ['good', 'medium', 'bad'];
+  if (DOM.liftExperienceDisplay) {
+    buckets.forEach((b) => {
+      const seg = DOM.liftExperienceDisplay.querySelector(`[data-bucket="${b}"]`);
+      if (seg) seg.classList.toggle('active', state.liftExperienceBucket === b);
+    });
+  }
+  if (DOM.slopeExperienceDisplay) {
+    buckets.forEach((b) => {
+      const seg = DOM.slopeExperienceDisplay.querySelector(`[data-bucket="${b}"]`);
+      if (seg) seg.classList.toggle('active', state.slopeCrowdBucket === b);
+    });
+  }
+  if (DOM.slopeQualityDisplay) {
+    buckets.forEach((b) => {
+      const seg = DOM.slopeQualityDisplay.querySelector(`[data-bucket="${b}"]`);
+      if (seg) seg.classList.toggle('active', state.slopeQualityBucket === b);
+    });
+  }
+}
+
+/** Update overall satisfaction bar and percentage in the stats panel. Fill color reflects value (low=red, mid=amber, high=green). */
+export function updateSatisfactionDisplay() {
+  if (!DOM.satisfactionDisplay) return;
+  const fill = DOM.satisfactionDisplay.querySelector('.satisfaction-fill');
+  const valueEl = DOM.satisfactionDisplay.querySelector('.satisfaction-value');
+  const pct = Math.round(state.satisfaction);
+  if (fill) {
+    fill.style.width = `${state.satisfaction}%`;
+    fill.classList.remove('satisfaction-fill-low', 'satisfaction-fill-mid', 'satisfaction-fill-high');
+    if (state.satisfaction < 34) fill.classList.add('satisfaction-fill-low');
+    else if (state.satisfaction < 67) fill.classList.add('satisfaction-fill-mid');
+    else fill.classList.add('satisfaction-fill-high');
+  }
+  if (valueEl) valueEl.textContent = `${pct}%`;
+}
+
 /** Redraw canvas, update lists, refresh budget and visitors. Call after any state change. */
 export function refresh() {
   draw();
   renderLists();
   state.dailyVisitors = getDailyVisitors();
+  const liftCap = getTotalLiftCapacity();
+  const slopeCap = getTotalSlopeCapacity();
+  state.liftExperienceBucket = getLiftWaitBucket(state.dailyVisitors, liftCap);
+  state.slopeCrowdBucket = getSlopeCrowdBucket(state.dailyVisitors, slopeCap);
+  const groomingDemand = getTotalGroomingDemand();
+  const groomingCapacity = getTotalGroomingCapacity();
+  state.slopeQualityBucket = getSlopeQualityBucket(groomingDemand, groomingCapacity);
   updateBudgetDisplay();
   updateVisitorsDisplay();
+  updateExperienceDisplay();
+  updateSatisfactionDisplay();
 }
 
 export function renderLists() {
@@ -50,16 +106,37 @@ export function renderLists() {
       (lift, i) => {
         const name = (lift.name || `Lift ${i + 1}`).trim();
         const typeId = lift.type || (state.liftTypes[0] && state.liftTypes[0].id);
-        const typeLabel = (state.liftTypes.find((l) => l.id === typeId) || {}).name || typeId || 'Lift';
-        return `<li><span class="lift-list-name editable-lift-name" data-idx="${i}" title="${escapeHtml(typeLabel)} – click to edit name">${escapeHtml(name)}</span> <button type="button" class="remove-btn" data-type="lift" data-idx="${i}">Remove</button></li>`;
+        const liftType = state.liftTypes.find((l) => l.id === typeId);
+        const typeLabel = (liftType || {}).name || typeId || 'Lift';
+        const bottomImage = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+        const topImage = fromNormalized(lift.topStation.x, lift.topStation.y);
+        const lengthM = getLiftLengthM(bottomImage, topImage);
+        const lengthText = lengthM != null ? `Length: ${formatNumber(lengthM)} m` : '';
+        const cap = liftType && liftType.capacity != null ? Number(liftType.capacity) : null;
+        const capText = cap != null ? `Capacity: ${formatNumber(cap)}` : '';
+        const metaParts = [lengthText, capText].filter(Boolean).map((t) => `<div class="lift-list-meta">${escapeHtml(t)}</div>`).join('');
+        return `<li class="lift-list-item"><div class="lift-list-content"><span class="lift-list-name editable-lift-name" data-idx="${i}" title="${escapeHtml(typeLabel)} – click to edit name">${escapeHtml(name)}</span>${metaParts}</div><button type="button" class="remove-btn" data-type="lift" data-idx="${i}">Remove</button></li>`;
       }
     )
     .join('');
   DOM.slopeList.innerHTML = state.slopes
     .map(
       (s, i) => {
-        const label = getSlopeType(s)?.difficulty ?? s.difficulty ?? 'Slope';
-        return `<li><span class="diff-dot" style="color:${getDiffColor(s)}">●</span> ${escapeHtml(String(label))} ${i + 1} <button type="button" class="remove-btn" data-type="slope" data-idx="${i}">Remove</button></li>`;
+        const st = getSlopeType(s);
+        const label = st?.difficulty ?? s.difficulty ?? 'Slope';
+        let lengthM = null;
+        let cap = typeof s.capacity === 'number' ? s.capacity : null;
+        if (s.points && s.points.length >= 2) {
+          const imagePoints = s.points.map((p) => fromNormalized(p.x, p.y));
+          lengthM = getSlopePathLengthM(imagePoints);
+          if (cap == null && st && st.capacity_per_meter != null) {
+            cap = Math.round(lengthM * Number(st.capacity_per_meter));
+          }
+        }
+        const lengthText = lengthM != null ? `Length: ${formatNumber(lengthM)} m` : '';
+        const capText = cap != null ? `Capacity: ${formatNumber(cap)}` : '';
+        const metaParts = [lengthText, capText].filter(Boolean).map((t) => `<div class="slope-list-meta">${escapeHtml(t)}</div>`).join('');
+        return `<li class="slope-list-item"><div class="slope-list-content"><div><span class="diff-dot" style="color:${getDiffColor(s)}">●</span> ${escapeHtml(String(label))} ${i + 1}</div>${metaParts}</div><button type="button" class="remove-btn" data-type="slope" data-idx="${i}">Remove</button></li>`;
       }
     )
     .join('');

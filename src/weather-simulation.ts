@@ -105,8 +105,56 @@ export function getTempRange(season: Season, weather: WeatherType): [number, num
 }
 
 /**
+ * Daily snowfall in cm for the given weather type (for snow depth accumulation).
+ * Based on the same ranges as the weekly forecast, scaled to one day.
+ */
+export function getDailySnowfall(weather: WeatherType): number {
+  switch (weather) {
+    case "blizzard":
+      return randInt(3, 40)
+    case "snowy":
+      return randInt(1, 25)
+    case "icy":
+      return randInt(0, 5)
+    default:
+      return 0
+  }
+}
+
+/**
+ * Daily snow melt in cm from forecasted temperature, weather, and season.
+ * Positive temps cause melt; sunny and summer increase melt rate.
+ */
+export function getDailyMelt(season: Season, weather: WeatherType): number {
+  const [tempLow, tempHigh] = getTempRange(season, weather)
+  const avgTemp = (tempLow + tempHigh) / 2
+  if (avgTemp <= 0) return 0
+
+  // Base melt: ~2.0 cm per degree above 0
+  let melt = avgTemp * 2.0
+
+  // Weather: sunny accelerates melt, precipitation/clouds reduce it
+  const weatherFactor =
+    weather === "sunny" ? 1.5 :
+    weather === "cloudy" ? 1.0 :
+    weather === "snowy" || weather === "blizzard" ? 0.2 :
+    0.4 // icy
+  melt *= weatherFactor
+
+  // Season: summer strong melt, winter weak, spring/autumn moderate
+  const seasonFactor =
+    season === "summer" ? 1.4 :
+    season === "autumn" ? 1.1 :
+    season === "spring" ? 1.2 :
+    0.5 // winter
+  melt *= seasonFactor
+
+  return Math.round(Math.max(0, melt))
+}
+
+/**
  * Generates a 4-week weather forecast for the given month (1–12).
- * Each week has type, tempHigh, tempLow, and snowfall (cm).
+ * Each week has type, tempHigh, tempLow, and snowfall (cm). TODO apply same snow acummulation
  */
 export function generateWeatherForecast(month: number): WeatherForecast[] {
   const season = getSeason(month)

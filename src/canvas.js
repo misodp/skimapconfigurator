@@ -2,7 +2,7 @@
  * Canvas size, coordinate conversion, and mouse/click handlers.
  */
 
-import { state, DOM } from './state';
+import { state, DOM, getSlopeType } from './state';
 import {
   toNormalized,
   fromNormalized,
@@ -202,9 +202,13 @@ export function onCanvasMouseUp() {
       return;
     }
     state.budget -= totalCost;
+    const slopeType = getSlopeType(state.difficulty);
+    const capacityPerMeter = slopeType && slopeType.capacity_per_meter != null ? Number(slopeType.capacity_per_meter) : 0;
+    const capacity = Math.round(lengthM * capacityPerMeter);
     state.slopes.push({
       slopeTypeId: state.difficulty,
       points: pts.map((p) => toNormalized(p.x, p.y)),
+      capacity,
     });
     refresh();
   }

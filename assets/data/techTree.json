@@ -113,7 +113,7 @@
         "linetype": "full",
         "color": "#34a853",
         "cost_per_meter": 2.0,
-        "grooming_load": 1.0,
+        "grooming_load": 0.6,
         "capacity_per_meter": 0.25,
         "description": "Položne in varne proge. Zahtevajo minimalno teptanje, a privabijo množice začetnikov.",
         "frame": 0        
@@ -125,7 +125,7 @@
         "linetype": "full",
         "color": "#4285f4",
         "cost_per_meter": 4.0,
-        "grooming_load": 1.8,
+        "grooming_load": 1.0,
         "capacity_per_meter": 0.45,
         "description": "Standardna družinska proga. Prenese največjo gostoto smučarjev brez večje nevarnosti.",
         "frame": 1        
@@ -137,7 +137,7 @@
         "linetype": "full",
         "color": "#ea4335",
         "cost_per_meter": 7.5,
-        "grooming_load": 2.5,
+        "grooming_load": 1.4,
         "capacity_per_meter": 0.35,
         "description": "Športni tereni. Potrebujejo natančno teptanje in večji varnostni razmik med smučarji.",
         "frame": 2        
@@ -149,7 +149,7 @@
         "linetype": "full",
         "color": "#1f1f1f",
         "cost_per_meter": 12.0,
-        "grooming_load": 4.5,
+        "grooming_load": 2.5,
         "capacity_per_meter": 0.15,
         "description": "Ekstremni nakloni. Nizka kapaciteta zaradi varnosti in hitre degradacije snežne podlage.",
         "frame": 3        
@@ -161,7 +161,7 @@
         "linetype": "dotted",
         "color": "#2d1b4e",
         "cost_per_meter": 15.0,
-        "grooming_load": 0.5,
+        "grooming_load": 0.25,
         "capacity_per_meter": 0.10,
         "description": "Neurejen teren. Zelo nizka kapaciteta; namenjeno elitnim smučarjem in avanturistom.",
         "frame": 4        

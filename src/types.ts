@@ -59,6 +59,8 @@ export interface PlacedSlope {
   slopeTypeId: string;
   points: NormalizedPoint[];
   difficulty?: string;
+  /** Ideal capacity (visitors per day) based on length and slope type. */
+  capacity?: number;
 }
 
 export interface PlacedCottage {
@@ -76,6 +78,9 @@ export interface ImagePoint {
   y: number;
   norm?: NormalizedPoint;
 }
+
+/** Visitor experience bucket for lift wait / slope crowds. */
+export type ExperienceBucket = 'good' | 'medium' | 'bad';
 
 /** Game simulation date: month 1–12, day 1–31. */
 export interface SimulationDate {
@@ -104,9 +109,20 @@ export interface DOMRefs {
   groomerList: HTMLUListElement | null;
   groomerOptions: Element | null;
   currentDateDisplay: HTMLElement | null;
+  seasonDisplay: HTMLElement | null;
   weatherDisplay: HTMLElement | null;
   visitorsDisplay: HTMLElement | null;
   salesDisplay: HTMLElement | null;
   operatingCostsDisplay: HTMLElement | null;
   profitDisplay: HTMLElement | null;
+  snowDepthDisplay: HTMLElement | null;
+  simSpeedButtons: NodeListOf<HTMLButtonElement> | null;
+  /** Lift wait experience bucket bar (3 segments). */
+  liftExperienceDisplay: HTMLElement | null;
+  /** Slope crowd experience bucket bar (3 segments). */
+  slopeExperienceDisplay: HTMLElement | null;
+  /** Slope quality experience bucket bar (3 segments). */
+  slopeQualityDisplay: HTMLElement | null;
+  /** Satisfaction bar container (contains .satisfaction-fill and .satisfaction-value). */
+  satisfactionDisplay: HTMLElement | null;
 }

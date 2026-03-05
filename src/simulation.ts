@@ -4,12 +4,13 @@
 
 import { state, DOM } from './state';
 import type { SimulationDate } from './types';
-import { getSeason, generateWeatherForSeason } from './weather-simulation';
+import { getSeason, generateWeatherForSeason, getDailySnowfall, getDailyMelt, getTempRange } from './weather-simulation';
 import { updateWeatherDisplay } from './weather-icon';
-import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './geometry.js';
-import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay } from './config.js';
+import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './economics.js';
+import { getTotalLiftCapacity, getTotalSlopeCapacity, getLiftWaitBucket, getSlopeCrowdBucket, getTotalGroomingDemand, getTotalGroomingCapacity, getSlopeQualityBucket, driftSatisfaction } from './experience-simulator';
+import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay } from './config.js';
 
-const TICK_MS = 3000; // one game day per 3 seconds
+const BASE_TICK_MS = 3000; // one game day per 3 seconds at 1x
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -42,7 +43,22 @@ function advanceDay(): void {
   }
   const season = getSeason(d.month);
   state.currentWeather = generateWeatherForSeason(season);
+  const dailySnowfall = getDailySnowfall(state.currentWeather);
+  const [dailyTempLow, dailyTempHigh] = getTempRange(season, state.currentWeather);
+  state.dailySnowfall = dailySnowfall;
+  state.dailyTempLow = dailyTempLow;
+  state.dailyTempHigh = dailyTempHigh;
+  const dailyMelt = getDailyMelt(season, state.currentWeather);
+  state.snowDepth = Math.max(0, Math.min(450, state.snowDepth + dailySnowfall - dailyMelt));
   state.dailyVisitors = getDailyVisitors();
+  const liftCap = getTotalLiftCapacity();
+  const slopeCap = getTotalSlopeCapacity();
+  state.liftExperienceBucket = getLiftWaitBucket(state.dailyVisitors, liftCap);
+  state.slopeCrowdBucket = getSlopeCrowdBucket(state.dailyVisitors, slopeCap);
+  const groomingDemand = getTotalGroomingDemand();
+  const groomingCapacity = getTotalGroomingCapacity();
+  state.slopeQualityBucket = getSlopeQualityBucket(groomingDemand, groomingCapacity);
+  driftSatisfaction();
   state.dailySales = state.dailyVisitors * TICKET_PRICE;
   state.dailyCost = getDailyOperatingCost();
   state.dailyProfit = state.dailySales - state.dailyCost;
@@ -58,45 +74,95 @@ export function formatSimulationDate(date: SimulationDate | null | undefined): s
   return `${name} ${date.day}, ${date.year}`;
 }
 
+function formatSeasonLabel(season: string): string {
+  return season.charAt(0).toUpperCase() + season.slice(1);
+}
+
 /**
- * Update the header date display element.
+ * Update the header date and season display elements.
  */
 export function updateDateDisplay(): void {
   if (DOM.currentDateDisplay) {
     DOM.currentDateDisplay.textContent = formatSimulationDate(state.currentDate);
   }
+  if (DOM.seasonDisplay) {
+    const season = getSeason(state.currentDate.month);
+    DOM.seasonDisplay.textContent = formatSeasonLabel(season);
+  }
 }
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 
+function getIntervalMsFromSpeed(): number | null {
+  const speed = Number.isFinite(state.simulationSpeed) ? Math.max(0, Math.min(3, state.simulationSpeed)) : 1;
+  if (speed <= 0) return null; // paused
+  return BASE_TICK_MS / speed;
+}
+
+function clearLoop() {
+  if (intervalId != null) {
+    clearInterval(intervalId);
+    intervalId = null;
+  }
+}
+
+function startLoopWithCurrentSpeed() {
+  clearLoop();
+  const intervalMs = getIntervalMsFromSpeed();
+  if (intervalMs == null) return; // paused
+  intervalId = setInterval(() => {
+    advanceDay(); // always one in‑game day per tick
+    updateDateDisplay();
+    updateWeatherDisplay();
+    updateVisitorsDisplay();
+    updateDailyFinanceDisplay();
+    updateSnowDepthDisplay();
+    updateExperienceDisplay();
+    updateSatisfactionDisplay();
+    updateBudgetDisplay();
+  }, intervalMs);
+}
+
 /**
- * Start the game loop. Each tick advances the date by one day and refreshes the date display.
+ * Start the game loop. Each tick advances the date by one day; speed changes the tick interval.
  */
 export function startSimulation(): void {
   if (intervalId != null) return;
   // Set initial weather and visitors for start date
-  state.currentWeather = generateWeatherForSeason(getSeason(state.currentDate.month));
+  const startSeason = getSeason(state.currentDate.month);
+  state.currentWeather = generateWeatherForSeason(startSeason);
+  state.dailySnowfall = getDailySnowfall(state.currentWeather);
+  const [tLow, tHigh] = getTempRange(startSeason, state.currentWeather);
+  state.dailyTempLow = tLow;
+  state.dailyTempHigh = tHigh;
   state.dailyVisitors = getDailyVisitors();
+  const liftCap = getTotalLiftCapacity();
+  const slopeCap = getTotalSlopeCapacity();
+  state.liftExperienceBucket = getLiftWaitBucket(state.dailyVisitors, liftCap);
+  state.slopeCrowdBucket = getSlopeCrowdBucket(state.dailyVisitors, slopeCap);
+  const groomingDemand = getTotalGroomingDemand();
+  const groomingCapacity = getTotalGroomingCapacity();
+  state.slopeQualityBucket = getSlopeQualityBucket(groomingDemand, groomingCapacity);
   updateDateDisplay();
   updateWeatherDisplay();
   updateVisitorsDisplay();
   updateDailyFinanceDisplay();
-  intervalId = setInterval(() => {
-    advanceDay();
-    updateDateDisplay();
-    updateWeatherDisplay();
-    updateVisitorsDisplay();
-    updateBudgetDisplay();
-    updateDailyFinanceDisplay();
-  }, TICK_MS);
+  updateSnowDepthDisplay();
+  updateExperienceDisplay();
+  updateSatisfactionDisplay();
+  startLoopWithCurrentSpeed();
+}
+
+/**
+ * Apply the current simulationSpeed (pause / 1x / 2x / 3x) to the loop.
+ */
+export function applySimulationSpeed(): void {
+  startLoopWithCurrentSpeed();
 }
 
 /**
  * Stop the game loop (e.g. for pause menu).
  */
 export function stopSimulation(): void {
-  if (intervalId != null) {
-    clearInterval(intervalId);
-    intervalId = null;
-  }
+  clearLoop();
 }

@@ -5,6 +5,7 @@
 
 import type {
   AppMode,
+  ExperienceBucket,
   SlopeDrawMode,
   LiftType,
   SlopeType,
@@ -32,6 +33,23 @@ export interface AppState {
   dailyCost: number;
   /** Last day's profit (sales − operating cost). */
   dailyProfit: number;
+  /** Snow depth in cm (0–450). Recalculated daily from weather snowfall. */
+  snowDepth: number;
+  /** Today's snowfall in cm (for display). */
+  dailySnowfall: number;
+  /** Today's temp range in °C (for display). */
+  dailyTempLow: number;
+  dailyTempHigh: number;
+  /** Simulation speed: 0 = paused, 1 = 1x, 2 = 2x, 3 = 3x days per tick. */
+  simulationSpeed: number;
+  /** Lift wait experience bucket (good/medium/bad). */
+  liftExperienceBucket: ExperienceBucket;
+  /** Slope crowd experience bucket (good/medium/bad). */
+  slopeCrowdBucket: ExperienceBucket;
+  /** Slope quality experience bucket (grooming capacity vs demand). */
+  slopeQualityBucket: ExperienceBucket;
+  /** Overall visitor satisfaction 0–100%, drifts daily from experience buckets. */
+  satisfaction: number;
   mode: AppMode;
   liftType: string | null;
   liftTypes: LiftType[];
@@ -68,6 +86,15 @@ export const state: AppState = {
   dailySales: 0,
   dailyCost: 0,
   dailyProfit: 0,
+  snowDepth: 50,
+  dailySnowfall: 0,
+  dailyTempLow: 0,
+  dailyTempHigh: 0,
+  simulationSpeed: 1,
+  liftExperienceBucket: 'good',
+  slopeCrowdBucket: 'good',
+  slopeQualityBucket: 'good',
+  satisfaction: 20,
   mode: 'lift',
   liftType: null,
   liftTypes: [],
@@ -115,11 +142,18 @@ export const DOM: DOMRefs = {
   groomerList: null,
   groomerOptions: null,
   currentDateDisplay: null,
+  seasonDisplay: null,
   weatherDisplay: null,
   visitorsDisplay: null,
   salesDisplay: null,
   operatingCostsDisplay: null,
   profitDisplay: null,
+  snowDepthDisplay: null,
+  simSpeedButtons: null,
+  liftExperienceDisplay: null,
+  slopeExperienceDisplay: null,
+  slopeQualityDisplay: null,
+  satisfactionDisplay: null,
 };
 
 type SlopeOrId = string | PlacedSlope;

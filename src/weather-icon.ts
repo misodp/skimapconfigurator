@@ -6,6 +6,10 @@ import { state, DOM } from './state';
 import type { WeatherType } from './weather-simulation';
 import { getWeatherLabel } from './weather-simulation';
 
+function formatTemp(low: number, high: number): string {
+  return `${low}° / ${high}°`;
+}
+
 const WEATHER_COLORS: Record<WeatherType, string> = {
   sunny: '#fbbf24',
   snowy: '#7dd3fc',
@@ -79,14 +83,23 @@ function getWeatherIconSvg(type: WeatherType): string {
 }
 
 /**
- * Update the header weather display with the current weather icon and label.
+ * Update the header weather display with icon, label, temperature and new snow.
  */
 export function updateWeatherDisplay(): void {
   const el = DOM.weatherDisplay;
   if (!el) return;
   const type = state.currentWeather;
   const label = getWeatherLabel(type);
-  el.innerHTML = getWeatherIconSvg(type);
-  el.title = label;
-  el.setAttribute('aria-label', `Weather: ${label}`);
+  const tempStr = formatTemp(state.dailyTempLow, state.dailyTempHigh);
+  const snowStr = state.dailySnowfall > 0 ? `${state.dailySnowfall} cm new` : 'No new snow';
+  el.innerHTML = `
+    <div class="header-weather-icon">${getWeatherIconSvg(type)}</div>
+    <div class="header-weather-details">
+      <span class="header-weather-label">${label}</span>
+      <span class="header-weather-temp">${tempStr}</span>
+      <span class="header-weather-snow">${snowStr}</span>
+    </div>
+  `;
+  el.title = `${label}, ${tempStr}, ${snowStr}`;
+  el.setAttribute('aria-label', `Weather: ${label}, ${tempStr}, ${snowStr}`);
 }

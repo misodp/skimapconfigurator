@@ -18,11 +18,17 @@
         </div>
         <div class="header-meta">
           <div class="header-weather" id="weatherDisplay" aria-label="Current weather" title="Weather"></div>
-          <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
-          <div class="header-visitors" id="visitorsDisplay" data-label="Visitors:" aria-label="Daily visitors">0</div>
-          <div class="header-finance header-sales" id="salesDisplay" data-label="Sales:" aria-label="Daily sales">0</div>
-          <div class="header-finance header-costs" id="operatingCostsDisplay" data-label="Operating:" aria-label="Daily operating costs">0</div>
-          <div class="header-finance header-profit daily-change" id="profitDisplay" data-label="Profit:" aria-label="Daily profit">0</div>
+          <div class="header-date-block">
+            <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
+            <div class="header-season" id="seasonDisplay" aria-label="Season">Winter</div>
+          </div>
+          <div class="header-speed" aria-label="Simulation speed">
+            <span class="header-speed-label">Speed:</span>
+            <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
+            <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
+            <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
+            <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
+          </div>
           <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
             <img class="budget-icon" id="budgetIcon" src="" alt="" />
             <span id="budgetAmount">0</span>
@@ -103,6 +109,77 @@
           <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
         </div>
       </main>
+
+      <aside class="stats-panel" aria-label="Resort statistics">
+        <section class="stats-section">
+          <h2 class="stats-panel-title">Statistics</h2>
+          <div class="stat-row">
+            <div class="header-visitors stat-item" id="visitorsDisplay" data-label="Visitors:" aria-label="Daily visitors">0</div>
+          </div>
+          <div class="stat-row">
+            <div class="header-finance header-sales stat-item stat-finance-row" data-label="Sales:" aria-label="Daily sales">
+              <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+              <span id="salesDisplay">0</span>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="header-finance header-costs stat-item stat-finance-row" data-label="Costs:" aria-label="Daily operating costs">
+              <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+              <span id="operatingCostsDisplay">0</span>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="header-finance header-profit daily-change stat-item stat-finance-row" data-label="Profit:" aria-label="Daily profit">
+              <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+              <span id="profitDisplay">0</span>
+            </div>
+          </div>
+          <div class="stat-row">
+            <div class="header-snow-depth stat-item" id="snowDepthDisplay" data-label="Snow:" aria-label="Snow depth">0 cm</div>
+          </div>
+          <div class="stat-row satisfaction-row">
+            <div id="satisfactionDisplay" class="satisfaction-widget" aria-label="Visitor satisfaction">
+              <div class="satisfaction-header">
+                <span class="satisfaction-label">Satisfaction</span>
+                <span class="satisfaction-value" aria-live="polite">20%</span>
+              </div>
+              <div class="satisfaction-track" role="presentation">
+                <div class="satisfaction-fill satisfaction-fill-low" style="width: 20%;"></div>
+              </div>
+            </div>
+          </div>
+          <div class="stat-row experience-metric-row">
+            <div class="experience-metric">
+              <span class="experience-metric-label">Lift wait</span>
+              <div id="liftExperienceDisplay" class="experience-bar" role="img" aria-label="Lift wait experience">
+                <span class="experience-segment good" data-bucket="good" title="Good"></span>
+                <span class="experience-segment medium" data-bucket="medium" title="Medium"></span>
+                <span class="experience-segment bad" data-bucket="bad" title="Bad"></span>
+              </div>
+            </div>
+          </div>
+          <div class="stat-row experience-metric-row">
+            <div class="experience-metric">
+              <span class="experience-metric-label">Slope crowds</span>
+              <div id="slopeExperienceDisplay" class="experience-bar" role="img" aria-label="Slope crowd experience">
+                <span class="experience-segment good" data-bucket="good" title="Good"></span>
+                <span class="experience-segment medium" data-bucket="medium" title="Medium"></span>
+                <span class="experience-segment bad" data-bucket="bad" title="Bad"></span>
+              </div>
+            </div>
+          </div>
+          <div class="stat-row experience-metric-row">
+            <div class="experience-metric">
+              <span class="experience-metric-label">Slope quality</span>
+              <div id="slopeQualityDisplay" class="experience-bar" role="img" aria-label="Slope quality (grooming)">
+                <span class="experience-segment good" data-bucket="good" title="Good"></span>
+                <span class="experience-segment medium" data-bucket="medium" title="Medium"></span>
+                <span class="experience-segment bad" data-bucket="bad" title="Bad"></span>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
 
     </div>
     <script type="module" src="/src/main.js"></script>
