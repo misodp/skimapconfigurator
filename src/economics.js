@@ -4,7 +4,7 @@
 
 import { state } from './state';
 import { fromNormalized, getLiftLengthM } from './geometry.js';
-import { WEATHER_VISITOR_MODIFIERS } from './weather-simulation';
+import { WEATHER_VISITOR_MODIFIERS, SEASON_VISITOR_MODIFIERS, getSeason } from './weather-simulation';
 
 /** Ticket price in ski dollars per visitor per day. */
 export const TICKET_PRICE = 1.0;
@@ -45,8 +45,8 @@ function getSatisfactionVisitorFactor() {
 
 /**
  * Potential visitors = installed lift capacity (for daily ticket sales).
- * Daily visitors = potential × weather × satisfaction × (1 ± 10% random).
- * Low satisfaction reduces visitors; high satisfaction increases them.
+ * Daily visitors = potential × season × weather × satisfaction × (1 ± 10% random).
+ * Season reflects skiing interest (winter peak, summer off-season); weather and satisfaction also apply.
  */
 export function getDailyVisitors() {
   let potentialVisitors = 0;
@@ -55,8 +55,10 @@ export function getDailyVisitors() {
     if (!type || type.capacity == null) continue;
     potentialVisitors += Number(type.capacity) || 0;
   }
+  const season = getSeason(state.currentDate.month);
+  const seasonFactor = SEASON_VISITOR_MODIFIERS[season] ?? 1;
   const weatherFactor = WEATHER_VISITOR_MODIFIERS[state.currentWeather] ?? 0.85;
   const satisfactionFactor = getSatisfactionVisitorFactor();
   const randomFactor = 1 + (Math.random() * 2 - 1) * VISITOR_RANDOMNESS; // 0.9 to 1.1
-  return Math.round(potentialVisitors * weatherFactor * satisfactionFactor * randomFactor);
+  return Math.round(potentialVisitors * seasonFactor * weatherFactor * satisfactionFactor * randomFactor);
 }

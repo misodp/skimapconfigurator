@@ -11,8 +11,6 @@ const LIFT_LINE_WIDTH = 3;
 const LIFT_DOT_RADIUS = 5;
 const SLOPE_LINE_WIDTH = 2;
 const SLOPE_NUMBER_RADIUS = 10;
-const LIFT_ICON_TOWARDS_TOP = 0.7;
-const LIFT_ICON_SIZE = 24;
 
 function drawLine(ctx, scaleX, scaleY, ax, ay, bx, by, color, lineWidth = LIFT_LINE_WIDTH) {
   ctx.strokeStyle = color;
@@ -36,40 +34,6 @@ function normalizeAngleForDisplay(angle) {
   while (a > Math.PI / 2) a -= Math.PI;
   while (a <= -Math.PI / 2) a += Math.PI;
   return a;
-}
-
-function drawLiftIcon(ctx, scaleX, scaleY, ax, ay, bx, by, typeId, liftColor) {
-  const sx = (x) => x * scaleX;
-  const sy = (y) => y * scaleY;
-  const cx = ax + (bx - ax) * LIFT_ICON_TOWARDS_TOP;
-  const cy = ay + (by - ay) * LIFT_ICON_TOWARDS_TOP;
-  const liftDef = state.liftTypes.find((l) => l.id === typeId);
-  const frame = liftDef ? liftDef.frame : 0;
-  const spriteSheet = state.spriteSheet;
-  if (spriteSheet && spriteSheet.complete && spriteSheet.naturalWidth) {
-    const COLS = 3;
-    const ROWS = 2;
-    const fw = spriteSheet.naturalWidth / COLS;
-    const fh = spriteSheet.naturalHeight / ROWS;
-    const col = frame % COLS;
-    const row = Math.floor(frame / COLS);
-    const srcX = col * fw;
-    const srcY = row * fh;
-    const w = LIFT_ICON_SIZE;
-    const h = (fh / fw) * w;
-    ctx.save();
-    ctx.translate(sx(cx), sy(cy));
-    ctx.drawImage(spriteSheet, srcX, srcY, fw, fh, -w / 2, -h / 2, w, h);
-    ctx.restore();
-  } else {
-    ctx.save();
-    ctx.translate(sx(cx), sy(cy));
-    ctx.strokeStyle = liftColor;
-    ctx.fillStyle = liftColor;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(-6, -4, 12, 8);
-    ctx.restore();
-  }
 }
 
 function drawLiftLabel(ctx, scaleX, scaleY, name, ax, ay, bx, by, liftColor) {
@@ -247,8 +211,6 @@ function drawLifts(ctx, scaleX, scaleY) {
     drawLine(ctx, scaleX, scaleY, a.x, a.y, b.x, b.y, liftColor);
     drawLiftStationDot(ctx, scaleX, scaleY, a.x, a.y, liftColor);
     drawLiftStationDot(ctx, scaleX, scaleY, b.x, b.y, liftColor);
-    const typeId = lift.type || (state.liftTypes[0] && state.liftTypes[0].id);
-    if (typeId) drawLiftIcon(ctx, scaleX, scaleY, a.x, a.y, b.x, b.y, typeId, liftColor);
     drawLiftLabel(ctx, scaleX, scaleY, lift.name || `Lift ${i + 1}`, a.x, a.y, b.x, b.y, liftColor);
   });
 

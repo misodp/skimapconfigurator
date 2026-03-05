@@ -11,12 +11,15 @@ import {
   getSlopeCost,
 } from './geometry.js';
 import { refresh } from './config.js';
-import { formatCurrency } from './utils.js';
+import { formatCurrency, escapeHtml, formatNumber } from './utils.js';
 import { updateCancelLiftButton } from './ui/lifts.js';
+import { COLS, ROWS } from './constants';
 
 const PEN_SMOOTH_SAMPLES = 24;
 const PEN_MIN_DIST_SQ = 16;
 const SNAP_DIST_SQ = 50 * 50;
+/** Image-space distance threshold (px) to consider cursor over a lift line. */
+const LIFT_HOVER_THRESHOLD_SQ = 24 * 24;
 
 export function syncCanvasSize() {
   if (!state.image) return;
@@ -145,6 +148,85 @@ export function findSnapPoint(px, py) {
   return best;
 }
 
+/** Return index of lift at image point (px, py), or null if none within threshold. */
+function getLiftIndexAtImage(px, py) {
+  let bestIdx = null;
+  let bestDistSq = LIFT_HOVER_THRESHOLD_SQ;
+
+  state.lifts.forEach((lift, idx) => {
+    const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+    const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+    const p = closestPointOnSegment(px, py, a.x, a.y, b.x, b.y);
+    const dx = px - p.x;
+    const dy = py - p.y;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestDistSq) {
+      bestDistSq = d2;
+      bestIdx = idx;
+    }
+  });
+
+  return bestIdx;
+}
+
+function getLiftPopupHtml(lift, liftType, lengthM) {
+  const name = escapeHtml(lift.name || 'Lift');
+  const speedStr = liftType && liftType.speed != null ? formatNumber(liftType.speed) + ' m/s' : '—';
+  const capacity = liftType && liftType.capacity != null ? formatNumber(liftType.capacity) : '—';
+  const lengthStr = lengthM != null ? formatNumber(lengthM) + ' m' : '—';
+  const sprite = state.spriteSheet;
+  const src = sprite && sprite.src ? sprite.src : '';
+  let iconStyle = 'background-color: rgba(255,255,255,0.06); border-radius: 4px;';
+  if (src && liftType != null) {
+    const col = (liftType.frame % COLS) / (COLS - 1 || 1) * 100;
+    const row = (Math.floor(liftType.frame / COLS) / (ROWS - 1 || 1)) * 100;
+    iconStyle = `background-image: url(${escapeHtml(src)}); background-size: ${COLS * 100}% ${ROWS * 100}%; background-position: ${col}% ${row}%; background-repeat: no-repeat;`;
+  }
+  return (
+    '<div class="lift-hover-popup-icon" style="' + iconStyle + '"></div>' +
+    '<div class="lift-hover-popup-name">' + name + '</div>' +
+    '<div class="lift-hover-popup-meta">Speed: ' + speedStr + '</div>' +
+    '<div class="lift-hover-popup-meta">Capacity: ' + capacity + '</div>' +
+    '<div class="lift-hover-popup-meta">Length: ' + lengthStr + '</div>'
+  );
+}
+
+function updateLiftHoverPopup(liftIndex, clientX, clientY) {
+  const popup = document.getElementById('liftHoverPopup');
+  if (!popup) return;
+  if (liftIndex == null || liftIndex < 0 || liftIndex >= state.lifts.length) {
+    popup.hidden = true;
+    popup.setAttribute('aria-hidden', 'true');
+    return;
+  }
+  const lift = state.lifts[liftIndex];
+  const liftType = state.liftTypes.find((l) => l.id === lift.type) || state.liftTypes[0];
+  const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+  const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+  const lengthM = getLiftLengthM(a, b);
+  popup.innerHTML = getLiftPopupHtml(lift, liftType, lengthM);
+  popup.hidden = false;
+  popup.removeAttribute('aria-hidden');
+  const padding = 12;
+  popup.style.left = (clientX + padding) + 'px';
+  popup.style.top = (clientY + padding) + 'px';
+  const rect = popup.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  if (rect.right > vw) popup.style.left = (clientX - rect.width - padding) + 'px';
+  if (rect.bottom > vh) popup.style.top = (clientY - rect.height - padding) + 'px';
+  if (rect.left < 0) popup.style.left = padding + 'px';
+  if (rect.top < 0) popup.style.top = padding + 'px';
+}
+
+export function hideLiftHoverPopup() {
+  const popup = document.getElementById('liftHoverPopup');
+  if (popup) {
+    popup.hidden = true;
+    popup.setAttribute('aria-hidden', 'true');
+  }
+}
+
 export function onCanvasMouseDown(e) {
   if (!state.image || state.mode !== 'slope' || state.slopeDrawMode !== 'pen') return;
   const { x, y } = getCanvasPoint(e);
@@ -162,16 +244,22 @@ export function onCanvasMouseMove(e) {
   if (state.mode === 'lift' && state.liftBottom && !state.liftTop) {
     state.mouseImage = { x: pt.x, y: pt.y };
     refresh();
+    hideLiftHoverPopup();
+    return;
   }
-  if (!state.penDrawing) return;
-  const last = state.slopePoints[state.slopePoints.length - 1];
-  if (last) {
-    const dx = pt.x - last.x;
-    const dy = pt.y - last.y;
-    if (dx * dx + dy * dy < PEN_MIN_DIST_SQ) return;
+  if (state.penDrawing) {
+    const last = state.slopePoints[state.slopePoints.length - 1];
+    if (last) {
+      const dx = pt.x - last.x;
+      const dy = pt.y - last.y;
+      if (dx * dx + dy * dy < PEN_MIN_DIST_SQ) return;
+    }
+    state.slopePoints.push({ x: pt.x, y: pt.y });
+    refresh();
+    return;
   }
-  state.slopePoints.push({ x: pt.x, y: pt.y });
-  refresh();
+  const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
+  updateLiftHoverPopup(liftIdx, e.clientX, e.clientY);
 }
 
 export function onCanvasMouseUp() {

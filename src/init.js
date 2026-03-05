@@ -10,7 +10,7 @@ import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
 import { startSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
-import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick } from './canvas.js';
+import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
 import { renderGroomerTypeDropdown, getGroomerImageUrls } from './ui/groomers.js';
@@ -200,6 +200,27 @@ export function init() {
     });
   }
 
+  const sidebarTabs = document.querySelectorAll('.sidebar-tab');
+  const investPanel = document.getElementById('investPanel');
+  const statisticsPanel = document.getElementById('statisticsPanel');
+  sidebarTabs.forEach((tab) => {
+    tab.addEventListener('click', () => {
+      const tabName = tab.dataset.tab;
+      sidebarTabs.forEach((t) => {
+        t.classList.remove('active');
+        t.setAttribute('aria-selected', 'false');
+      });
+      tab.classList.add('active');
+      tab.setAttribute('aria-selected', 'true');
+      if (investPanel) {
+        investPanel.classList.toggle('active', tabName === 'invest');
+      }
+      if (statisticsPanel) {
+        statisticsPanel.classList.toggle('active', tabName === 'statistics');
+      }
+    });
+  });
+
   document.querySelectorAll('.slope-mode-btn').forEach((btn) => {
     btn.addEventListener('click', () => setSlopeDrawMode(btn.dataset.slopeMode));
   });
@@ -211,6 +232,7 @@ export function init() {
   DOM.canvas.addEventListener('mouseup', onCanvasMouseUp);
   DOM.canvas.addEventListener('mouseleave', (e) => {
     if (state.mode === 'lift') state.mouseImage = null;
+    hideLiftHoverPopup();
     onCanvasMouseUp(e);
   });
 

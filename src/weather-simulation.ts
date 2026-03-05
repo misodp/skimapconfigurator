@@ -31,7 +31,7 @@ export const SEASON_BY_MONTH: Record<number, Season> = {
 
 /** Base temp ranges [low, high] °C by season (before weather modifiers). */
 export const BASE_TEMP_RANGES: Record<Season, [number, number]> = {
-  winter: [-15, -2],
+  winter: [-15, 5],
   spring: [-5, 10],
   summer: [5, 22],
   autumn: [-3, 8],
@@ -111,9 +111,9 @@ export function getTempRange(season: Season, weather: WeatherType): [number, num
 export function getDailySnowfall(weather: WeatherType): number {
   switch (weather) {
     case "blizzard":
-      return randInt(3, 40)
+      return randInt(3, 25)
     case "snowy":
-      return randInt(1, 25)
+      return randInt(1, 15)
     case "icy":
       return randInt(0, 5)
     default:
@@ -146,7 +146,7 @@ export function getDailyMelt(season: Season, weather: WeatherType): number {
     season === "summer" ? 1.4 :
     season === "autumn" ? 1.1 :
     season === "spring" ? 1.2 :
-    0.5 // winter
+    1.0 // winter
   melt *= seasonFactor
 
   return Math.round(Math.max(0, melt))
@@ -179,6 +179,16 @@ export const WEATHER_VISITOR_MODIFIERS: Record<WeatherType, number> = {
   cloudy: 0.85,
   blizzard: 0.25,
   icy: 0.55,
+}
+
+/**
+ * Visitor multiplier by season (skiing interest: winter peak, summer off-season).
+ */
+export const SEASON_VISITOR_MODIFIERS: Record<Season, number> = {
+  winter: 1.2,   // peak season
+  spring: 1.0,   // late season, still good
+  summer: 0.05,  // off-season, little interest
+  autumn: 0.85,  // early season building
 }
 
 /**

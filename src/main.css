@@ -33,11 +33,11 @@ body {
 
 #app {
   display: grid;
-  grid-template-columns: 280px 1fr 220px;
+  grid-template-columns: 300px 1fr;
   grid-template-rows: auto 1fr;
   grid-template-areas:
-    "header header header"
-    "toolbar canvas stats";
+    "header header"
+    "sidebar canvas";
   min-height: 100vh;
 }
 
@@ -246,11 +246,64 @@ body {
   display: block;
 }
 
-.stats-panel {
-  grid-area: stats;
-  padding: 1rem;
+/* Combined left sidebar with Invest / Statistics tabs */
+.sidebar {
+  grid-area: sidebar;
+  display: flex;
+  flex-direction: column;
   background: var(--surface);
-  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  min-width: 0;
+}
+
+.sidebar-tabs {
+  display: flex;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
+  padding: 0 0.5rem;
+  gap: 0;
+}
+
+.sidebar-tab {
+  flex: 1;
+  padding: 0.6rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.sidebar-tab:hover {
+  color: var(--text);
+}
+
+.sidebar-tab.active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.sidebar-panel {
+  display: none;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.sidebar-panel.active {
+  display: flex;
+}
+
+.toolbar-content,
+.stats-content {
+  padding: 1rem;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
 }
 
@@ -415,13 +468,7 @@ body {
   background: var(--red);
 }
 
-.toolbar {
-  grid-area: toolbar;
-  padding: 1rem;
-  background: var(--surface);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-}
+/* Tool sections live inside .toolbar-content (Invest tab) */
 
 .tool-section {
   margin-bottom: 1.5rem;
@@ -436,7 +483,13 @@ body {
   color: var(--text-muted);
 }
 
-.mode-buttons,
+.mode-buttons {
+  display: flex;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  min-width: 0;
+}
+
 .difficulty-buttons,
 .slope-draw-mode {
   display: flex;
@@ -467,7 +520,19 @@ body {
   color: #fff;
 }
 
-.mode-btn,
+.mode-btn {
+  padding: 0.35rem 0.5rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  cursor: pointer;
+  flex: 0 0 auto;
+}
+
 .diff-btn {
   padding: 0.5rem 0.75rem;
   border: 1px solid var(--border);
@@ -635,6 +700,49 @@ button:hover {
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   border-radius: var(--radius);
   overflow: visible;
+}
+
+.lift-hover-popup {
+  position: fixed;
+  z-index: 20;
+  width: 100px;
+  padding: 0.4rem 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.lift-hover-popup .lift-hover-popup-icon {
+  width: 40px;
+  height: 40px;
+  margin: 0 auto 0.3rem;
+  background-repeat: no-repeat;
+  background-size: 300% 200%;
+  background-color: rgba(255, 255, 255, 0.06);
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.lift-hover-popup .lift-hover-popup-name {
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 0.2rem;
+  word-break: break-word;
+  text-align: center;
+}
+
+.lift-hover-popup .lift-hover-popup-meta {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  display: block;
+}
+
+.lift-hover-popup .lift-hover-popup-meta + .lift-hover-popup-meta {
+  margin-top: 0.1rem;
 }
 
 .mountain-img {
