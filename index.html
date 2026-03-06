@@ -7,8 +7,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/skimapconfigurator/assets/index-wiUNiO7X.js"></script>
-    <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-TE1z-bsc.css">
+    <script type="module" crossorigin src="/skimapconfigurator/assets/index-Dd6lcMtK.js"></script>
+    <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-J-ITJEJg.css">
   </head>
   <body>
     <div id="app">
@@ -118,6 +118,13 @@
           <div class="stats-content">
             <section class="stats-section">
               <h2 class="stats-panel-title">Operate</h2>
+              <div class="stat-row stat-row-resort">
+                <span class="stat-label">Resort</span>
+                <div class="resort-toggle" role="group" aria-label="Resort open or closed">
+                  <button type="button" class="resort-btn active" id="resortOpenBtn" data-resort="open" aria-pressed="true">Open</button>
+                  <button type="button" class="resort-btn" id="resortClosedBtn" data-resort="closed" aria-pressed="false">Closed</button>
+                </div>
+              </div>
               <div class="stat-row">
                 <div class="header-visitors stat-item" id="visitorsDisplay" data-label="Visitors:" aria-label="Daily visitors">0</div>
               </div>
@@ -155,31 +162,40 @@
               </div>
               <div class="stat-row experience-metric-row">
                 <div class="experience-metric">
-                  <span class="experience-metric-label">Lift wait</span>
-                  <div id="liftExperienceDisplay" class="experience-bar" role="img" aria-label="Lift wait experience">
-                    <span class="experience-segment good" data-bucket="good" title="Good"></span>
-                    <span class="experience-segment medium" data-bucket="medium" title="Medium"></span>
-                    <span class="experience-segment bad" data-bucket="bad" title="Bad"></span>
+                  <div class="experience-header">
+                    <span class="experience-metric-label">Lift wait <span class="experience-change change-stable" aria-label="Trend">−</span></span>
+                    <span class="experience-state-label" aria-live="polite">Medium</span>
+                  </div>
+                  <div class="experience-bar-wrap">
+                    <div id="liftExperienceDisplay" class="experience-bar experience-bar-gradient" role="img" aria-label="Lift wait experience">
+                      <div class="experience-track"><div class="experience-fill experience-fill-mid" style="width: 50%;"></div></div>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="stat-row experience-metric-row">
                 <div class="experience-metric">
-                  <span class="experience-metric-label">Slope crowds</span>
-                  <div id="slopeExperienceDisplay" class="experience-bar" role="img" aria-label="Slope crowd experience">
-                    <span class="experience-segment good" data-bucket="good" title="Good"></span>
-                    <span class="experience-segment medium" data-bucket="medium" title="Medium"></span>
-                    <span class="experience-segment bad" data-bucket="bad" title="Bad"></span>
+                  <div class="experience-header">
+                    <span class="experience-metric-label">Slope crowds <span class="experience-change change-stable" aria-label="Trend">−</span></span>
+                    <span class="experience-state-label" aria-live="polite">Medium</span>
+                  </div>
+                  <div class="experience-bar-wrap">
+                    <div id="slopeExperienceDisplay" class="experience-bar experience-bar-gradient" role="img" aria-label="Slope crowd experience">
+                      <div class="experience-track"><div class="experience-fill experience-fill-mid" style="width: 50%;"></div></div>
+                    </div>
                   </div>
                 </div>
               </div>
               <div class="stat-row experience-metric-row">
                 <div class="experience-metric">
-                  <span class="experience-metric-label">Slope quality</span>
-                  <div id="slopeQualityDisplay" class="experience-bar" role="img" aria-label="Slope quality (grooming)">
-                    <span class="experience-segment good" data-bucket="good" title="Good"></span>
-                    <span class="experience-segment medium" data-bucket="medium" title="Medium"></span>
-                    <span class="experience-segment bad" data-bucket="bad" title="Bad"></span>
+                  <div class="experience-header">
+                    <span class="experience-metric-label">Slope quality <span class="experience-change change-stable" aria-label="Trend">−</span></span>
+                    <span class="experience-state-label" aria-live="polite">Medium</span>
+                  </div>
+                  <div class="experience-bar-wrap">
+                    <div id="slopeQualityDisplay" class="experience-bar experience-bar-gradient" role="img" aria-label="Slope quality (grooming)">
+                      <div class="experience-track"><div class="experience-fill experience-fill-mid" style="width: 50%;"></div></div>
+                    </div>
                   </div>
                 </div>
               </div>
