@@ -11,6 +11,7 @@ import { getTotalLiftCapacity, getTotalSlopeCapacity, getLiftWaitBucket, getSlop
 import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay } from './config.js';
 import { renderLiftTypeDropdown } from './ui/lifts.js';
 import { renderGroomerTypeDropdown } from './ui/groomers.js';
+import { updateMountainImage } from './mountain-images.js';
 
 const BASE_TICK_MS = 3000; // one game day per 3 seconds at 1x
 
@@ -116,6 +117,7 @@ function startLoopWithCurrentSpeed() {
     advanceDay(); // always one in‑game day per tick
     updateDateDisplay();
     updateWeatherDisplay();
+    updateMountainImage();
     updateVisitorsDisplay();
     updateDailyFinanceDisplay();
     updateSnowDepthDisplay();
@@ -149,6 +151,7 @@ export function startSimulation(): void {
   state.slopeQualityBucket = getSlopeQualityBucket(groomingDemand, groomingCapacity);
   updateDateDisplay();
   updateWeatherDisplay();
+  updateMountainImage();
   updateVisitorsDisplay();
   updateDailyFinanceDisplay();
   updateSnowDepthDisplay();

@@ -75,6 +75,16 @@ export interface AppState {
   spriteSheet: HTMLImageElement | null;
   cottageIcon: HTMLImageElement | null;
   groomerImages: Record<string, HTMLImageElement>;
+  /** When set, mountain image uses this URL instead of snow-based assets. */
+  customMountainUrl: string | null;
+  /** Resort is open for visitors (true) or closed (no visitors, 30% operating costs). */
+  resortOpen: boolean;
+  /** Snow threshold (cm) of the currently displayed mountain image; null until first pick. */
+  displayedMountainThreshold: number | null;
+  /** When snow suggests a different image, threshold we might switch to after 3 days. */
+  mountainPendingThreshold: number | null;
+  /** Consecutive days the pending threshold has been the target. */
+  mountainDaysAtPending: number;
 }
 
 const START_DATE: SimulationDate = { year: 1960, month: 11, day: 1 };
@@ -120,6 +130,11 @@ export const state: AppState = {
   spriteSheet: null,
   cottageIcon: null,
   groomerImages: {},
+  customMountainUrl: null,
+  resortOpen: true,
+  displayedMountainThreshold: null,
+  mountainPendingThreshold: null,
+  mountainDaysAtPending: 0,
 };
 
 export const DOM: DOMRefs = {

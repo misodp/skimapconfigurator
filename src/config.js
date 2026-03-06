@@ -225,6 +225,7 @@ export function exportConfig() {
     difficulty: state.difficulty,
     groomerType: state.groomerType,
     slopeDrawMode: state.slopeDrawMode,
+    resortOpen: state.resortOpen,
     imageWidth: state.imageWidth,
     imageHeight: state.imageHeight,
     lifts: state.lifts,
@@ -310,6 +311,7 @@ export function onConfigImported(e) {
       if (config.difficulty != null) state.difficulty = config.difficulty;
       if (config.groomerType != null) state.groomerType = config.groomerType;
       if (config.slopeDrawMode === 'points' || config.slopeDrawMode === 'pen') state.slopeDrawMode = config.slopeDrawMode;
+      if (config.resortOpen !== undefined) state.resortOpen = Boolean(config.resortOpen);
 
       refresh();
       if (typeof window.onGameStateRestored === 'function') window.onGameStateRestored();

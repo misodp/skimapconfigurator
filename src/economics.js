@@ -13,6 +13,7 @@ export const TICKET_PRICE = 1.0;
  * Total daily operating cost for all built lifts and groomers.
  * Lifts: base_operating_cost + (length in m × op_cost_per_meter).
  * Groomers: base_operating_cost each.
+ * When resort is closed, cost is 30% of normal.
  */
 export function getDailyOperatingCost() {
   let total = 0;
@@ -31,7 +32,8 @@ export function getDailyOperatingCost() {
     if (!type) continue;
     total += Number(type.base_operating_cost) || 0;
   }
-  return Math.round(total);
+  if (state.resortOpen !== false) return Math.round(total);
+  return Math.round(total * 0.3);
 }
 
 /** Randomness: ±10% multiplier (0.9 to 1.1). */
@@ -54,9 +56,10 @@ function getSnowVisitorFactor() {
 /**
  * Potential visitors = installed lift capacity (for daily ticket sales).
  * Daily visitors = potential × snow × season × weather × satisfaction × (1 ± 10% random).
- * Snow: none below 20 cm, full effect 20–200 cm, slight boost above 200 cm.
+ * When resort is closed, returns 0.
  */
 export function getDailyVisitors() {
+  if (state.resortOpen !== true) return 0;
   let potentialVisitors = 0;
   for (const lift of state.lifts) {
     const type = state.liftTypes.find((t) => t.id === lift.type);

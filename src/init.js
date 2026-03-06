@@ -2,7 +2,6 @@
  * Application init: DOM wiring, tech tree load, mode and toolbar, asset loading.
  */
 
-import defaultMountainUrl from '../assets/images/mountain1.png';
 import cottageIconUrl from '../assets/images/cottage.png';
 import spriteSheetUrl from '../assets/images/SpriteSheet.png';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
@@ -15,6 +14,7 @@ import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, on
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
 import { renderGroomerTypeDropdown, getGroomerImageUrls } from './ui/groomers.js';
+import { updateMountainImage } from './mountain-images.js';
 
 function setMode(mode) {
   state.mode = mode;
@@ -138,6 +138,7 @@ function onImageSelected(e) {
   const file = e.target.files?.[0];
   if (!file) return;
   const url = URL.createObjectURL(file);
+  state.customMountainUrl = url;
   DOM.mountainImage.onload = () => {
     URL.revokeObjectURL(url);
     state.image = DOM.mountainImage;
@@ -186,6 +187,16 @@ export function init() {
   if (DOM.loadBtn && DOM.importInput) DOM.loadBtn.addEventListener('click', () => DOM.importInput.click());
   DOM.importInput.addEventListener('change', onConfigImported);
   window.onGameStateRestored = () => {
+    state.customMountainUrl = null;
+    state.displayedMountainThreshold = null;
+    state.mountainPendingThreshold = null;
+    state.mountainDaysAtPending = 0;
+    updateMountainImage();
+    const openBtn = document.getElementById('resortOpenBtn');
+    const closedBtn = document.getElementById('resortClosedBtn');
+    const open = state.resortOpen === true;
+    if (openBtn) { openBtn.classList.toggle('active', open); openBtn.setAttribute('aria-pressed', String(open)); }
+    if (closedBtn) { closedBtn.classList.toggle('active', !open); closedBtn.setAttribute('aria-pressed', String(!open)); }
     setMode(state.mode);
     renderLiftTypeDropdown({ skipPanelBlank: true });
     renderGroomerTypeDropdown({ skipPanelBlank: true });
@@ -198,6 +209,23 @@ export function init() {
   DOM.modeBtns.forEach((btn) => {
     btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
+
+  const resortOpenBtn = document.getElementById('resortOpenBtn');
+  const resortClosedBtn = document.getElementById('resortClosedBtn');
+  function updateResortButtons() {
+    const open = state.resortOpen === true;
+    if (resortOpenBtn) {
+      resortOpenBtn.classList.toggle('active', open);
+      resortOpenBtn.setAttribute('aria-pressed', String(open));
+    }
+    if (resortClosedBtn) {
+      resortClosedBtn.classList.toggle('active', !open);
+      resortClosedBtn.setAttribute('aria-pressed', String(!open));
+    }
+  }
+  if (resortOpenBtn) resortOpenBtn.addEventListener('click', () => { state.resortOpen = true; updateResortButtons(); });
+  if (resortClosedBtn) resortClosedBtn.addEventListener('click', () => { state.resortOpen = false; updateResortButtons(); });
+  updateResortButtons();
 
   if (DOM.simSpeedButtons) {
     DOM.simSpeedButtons.forEach((btn) => {
@@ -300,7 +328,7 @@ export function init() {
     state.image = DOM.mountainImage;
     syncCanvasSize();
   };
-  DOM.mountainImage.src = defaultMountainUrl;
+  updateMountainImage();
   DOM.canvas.classList.remove('no-image');
 
   window.addEventListener('resize', () => {
