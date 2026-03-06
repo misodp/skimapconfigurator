@@ -7,7 +7,7 @@ import { draw } from './draw.js';
 import { escapeHtml, formatCurrency, formatNumber } from './utils.js';
 import { getDailyVisitors } from './economics.js';
 import { getSlopePathLengthM, getLiftLengthM, fromNormalized } from './geometry.js';
-import { getTotalLiftCapacity, getTotalSlopeCapacity, getLiftWaitBucket, getSlopeCrowdBucket, getTotalGroomingDemand, getTotalGroomingCapacity, getSlopeQualityBucket } from './experience-simulator';
+import { getTotalLiftCapacity, getTotalSlopeCapacity, getTotalGroomingDemand, getTotalGroomingCapacity } from './experience-simulator';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
@@ -43,27 +43,51 @@ export function updateSnowDepthDisplay() {
   }
 }
 
-/** Update lift wait, slope crowd and slope quality bucket bars in the stats panel. */
+function experienceFillClass(value) {
+  if (value < 34) return 'experience-fill-low';
+  if (value < 67) return 'experience-fill-mid';
+  return 'experience-fill-high';
+}
+
+function experienceStateLabel(value) {
+  if (value < 34) return 'Bad';
+  if (value < 67) return 'Medium';
+  return 'Good';
+}
+
+function changeSymbol(change) {
+  if (change === 'up') return '↑';
+  if (change === 'down') return '↓';
+  return '−';
+}
+
+/** Update lift wait, slope crowd and slope quality. Lift/crowds: shorter bar = better; slope quality: longer bar = better. Single color by state (red/amber/green). */
 export function updateExperienceDisplay() {
-  const buckets = ['good', 'medium', 'bad'];
-  if (DOM.liftExperienceDisplay) {
-    buckets.forEach((b) => {
-      const seg = DOM.liftExperienceDisplay.querySelector(`[data-bucket="${b}"]`);
-      if (seg) seg.classList.toggle('active', state.liftExperienceBucket === b);
-    });
-  }
-  if (DOM.slopeExperienceDisplay) {
-    buckets.forEach((b) => {
-      const seg = DOM.slopeExperienceDisplay.querySelector(`[data-bucket="${b}"]`);
-      if (seg) seg.classList.toggle('active', state.slopeCrowdBucket === b);
-    });
-  }
-  if (DOM.slopeQualityDisplay) {
-    buckets.forEach((b) => {
-      const seg = DOM.slopeQualityDisplay.querySelector(`[data-bucket="${b}"]`);
-      if (seg) seg.classList.toggle('active', state.slopeQualityBucket === b);
-    });
-  }
+  const metrics = [
+    { el: DOM.liftExperienceDisplay, value: state.liftExperience, change: state.liftExperienceChange, inverted: true },
+    { el: DOM.slopeExperienceDisplay, value: state.slopeCrowdExperience, change: state.slopeCrowdChange, inverted: true },
+    { el: DOM.slopeQualityDisplay, value: state.slopeQualityExperience, change: state.slopeQualityChange, inverted: false },
+  ];
+  metrics.forEach(({ el, value, change, inverted }) => {
+    if (!el) return;
+    const metric = el.closest('.experience-metric');
+    const fill = el.querySelector('.experience-fill');
+    const changeEl = metric?.querySelector('.experience-change');
+    const stateLabelEl = metric?.querySelector('.experience-state-label');
+    const pct = Math.max(0, Math.min(100, value));
+    const fillPct = inverted ? 100 - pct : pct;
+    if (fill) {
+      fill.style.width = `${fillPct}%`;
+      fill.classList.remove('experience-fill-low', 'experience-fill-mid', 'experience-fill-high');
+      fill.classList.add(experienceFillClass(pct));
+    }
+    if (changeEl) {
+      changeEl.textContent = changeSymbol(change);
+      changeEl.classList.remove('change-up', 'change-down', 'change-stable');
+      changeEl.classList.add('change-' + change);
+    }
+    if (stateLabelEl) stateLabelEl.textContent = experienceStateLabel(pct);
+  });
 }
 
 /** Update overall satisfaction bar and percentage in the stats panel. Fill color reflects value (low=red, mid=amber, high=green). */
@@ -87,13 +111,6 @@ export function refresh() {
   draw();
   renderLists();
   state.dailyVisitors = getDailyVisitors();
-  const liftCap = getTotalLiftCapacity();
-  const slopeCap = getTotalSlopeCapacity();
-  state.liftExperienceBucket = getLiftWaitBucket(state.dailyVisitors, liftCap);
-  state.slopeCrowdBucket = getSlopeCrowdBucket(state.dailyVisitors, slopeCap);
-  const groomingDemand = getTotalGroomingDemand();
-  const groomingCapacity = getTotalGroomingCapacity();
-  state.slopeQualityBucket = getSlopeQualityBucket(groomingDemand, groomingCapacity);
   updateBudgetDisplay();
   updateVisitorsDisplay();
   updateExperienceDisplay();
@@ -216,9 +233,9 @@ export function exportConfig() {
     dailyTempLow: state.dailyTempLow,
     dailyTempHigh: state.dailyTempHigh,
     simulationSpeed: state.simulationSpeed,
-    liftExperienceBucket: state.liftExperienceBucket,
-    slopeCrowdBucket: state.slopeCrowdBucket,
-    slopeQualityBucket: state.slopeQualityBucket,
+    liftExperience: state.liftExperience,
+    slopeCrowdExperience: state.slopeCrowdExperience,
+    slopeQualityExperience: state.slopeQualityExperience,
     satisfaction: state.satisfaction,
     mode: state.mode,
     liftType: state.liftType,
@@ -300,10 +317,12 @@ export function onConfigImported(e) {
       if (config.dailyTempLow != null) state.dailyTempLow = config.dailyTempLow;
       if (config.dailyTempHigh != null) state.dailyTempHigh = config.dailyTempHigh;
       if (config.simulationSpeed != null) state.simulationSpeed = config.simulationSpeed;
-      const validBucket = ['good', 'medium', 'bad'];
-      if (validBucket.includes(config.liftExperienceBucket)) state.liftExperienceBucket = config.liftExperienceBucket;
-      if (validBucket.includes(config.slopeCrowdBucket)) state.slopeCrowdBucket = config.slopeCrowdBucket;
-      if (validBucket.includes(config.slopeQualityBucket)) state.slopeQualityBucket = config.slopeQualityBucket;
+      if (config.liftExperience != null) state.liftExperience = Math.max(0, Math.min(100, Number(config.liftExperience)));
+      else if (config.liftExperienceBucket != null) state.liftExperience = config.liftExperienceBucket === 'good' ? 80 : config.liftExperienceBucket === 'medium' ? 50 : 20;
+      if (config.slopeCrowdExperience != null) state.slopeCrowdExperience = Math.max(0, Math.min(100, Number(config.slopeCrowdExperience)));
+      else if (config.slopeCrowdBucket != null) state.slopeCrowdExperience = config.slopeCrowdBucket === 'good' ? 80 : config.slopeCrowdBucket === 'medium' ? 50 : 20;
+      if (config.slopeQualityExperience != null) state.slopeQualityExperience = Math.max(0, Math.min(100, Number(config.slopeQualityExperience)));
+      else if (config.slopeQualityBucket != null) state.slopeQualityExperience = config.slopeQualityBucket === 'good' ? 80 : config.slopeQualityBucket === 'medium' ? 50 : 20;
       if (config.satisfaction != null) state.satisfaction = Math.max(0, Math.min(100, config.satisfaction));
       const validMode = ['lift', 'slope', 'cottage', 'groomer'];
       if (validMode.includes(config.mode)) state.mode = config.mode;

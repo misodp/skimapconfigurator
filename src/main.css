@@ -501,12 +501,20 @@ body {
   background: var(--green);
 }
 
-/* Experience metrics: lift wait & slope crowds (good / medium / bad buckets) */
+/* Experience metrics: single color (red/amber/green) by state; lift/crowds shorter=better, quality longer=better */
 .experience-metric-row .experience-metric {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.4rem;
   width: 100%;
+}
+
+.experience-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-width: 0;
 }
 
 .experience-metric-label {
@@ -515,37 +523,72 @@ body {
   color: var(--text-muted);
 }
 
-.experience-bar {
-  display: flex;
+.experience-change {
+  font-size: 0.85rem;
+  font-weight: 600;
+  min-width: 1.2em;
+  text-align: center;
+  transition: color 0.2s ease;
+}
+
+.experience-change.change-up {
+  color: var(--green);
+}
+
+.experience-change.change-down {
+  color: var(--red);
+}
+
+.experience-change.change-stable {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.experience-bar-wrap {
   width: 100%;
-  height: 1.5rem;
+  min-width: 0;
+}
+
+.experience-bar.experience-bar-gradient {
+  width: 100%;
+  height: 0.45rem;
   border-radius: var(--radius);
   overflow: hidden;
   background: var(--border);
 }
 
-.experience-segment {
-  flex: 1;
+.experience-state-label {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text);
+  flex-shrink: 0;
+}
+
+.experience-track {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  background: var(--border);
+  border-radius: inherit;
+}
+
+.experience-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.35s ease, background 0.2s ease;
   min-width: 0;
-  transition: opacity 0.2s ease, box-shadow 0.2s ease;
-  opacity: 0.35;
 }
 
-.experience-segment.active {
-  opacity: 1;
-  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.4);
+.experience-fill-low {
+  background: var(--red);
 }
 
-.experience-segment.good {
-  background: var(--green);
-}
-
-.experience-segment.medium {
+.experience-fill-mid {
   background: #e6b800;
 }
 
-.experience-segment.bad {
-  background: var(--red);
+.experience-fill-high {
+  background: var(--green);
 }
 
 /* Tool sections live inside .toolbar-content (Invest tab) */

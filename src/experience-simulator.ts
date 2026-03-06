@@ -1,17 +1,13 @@
 /**
- * Visitor experience: lift wait times and slope crowds as a function of
- * visitors vs installed capacity. Bucketed into good / medium / bad.
+ * Visitor experience: lift wait, slope crowds, slope quality as drifting 0–100 scores.
+ * Each metric drifts toward a raw daily value; satisfaction is derived from the three scores.
  */
 
-import type { ExperienceBucket } from './types';
+import type { ExperienceChange } from './types';
 import { state, getSlopeType } from './state';
 import { fromNormalized, getSlopePathLengthM } from './geometry.js';
 
-export type { ExperienceBucket };
-
-/** Utilization thresholds: below goodMax = good, below badMin = medium, else bad. */
-const GOOD_UTILIZATION_MAX = 0.8;
-const BAD_UTILIZATION_MIN = 1.2;
+export type { ExperienceChange };
 
 /**
  * Total lift capacity (sum of each placed lift's type capacity).
@@ -45,27 +41,27 @@ export function getTotalSlopeCapacity(): number {
   return total;
 }
 
-/**
- * Lift wait experience from visitors vs lift capacity.
- * Low utilization = good, high = bad.
- */
-export function getLiftWaitBucket(visitors: number, liftCapacity: number): ExperienceBucket {
-  if (liftCapacity <= 0) return 'bad';
-  const utilization = visitors / liftCapacity;
-  if (utilization < GOOD_UTILIZATION_MAX) return 'good';
-  if (utilization >= BAD_UTILIZATION_MIN) return 'bad';
-  return 'medium';
+/** Utilization 0 → 100, 1 → 50, 2+ → 0. Low utilization = good (high score). */
+function utilizationToScore(utilization: number): number {
+  if (utilization <= 0) return 100;
+  if (utilization >= 2) return 0;
+  return Math.round(Math.max(0, Math.min(100, 100 - 50 * utilization)));
 }
 
 /**
- * Slope crowd experience from visitors vs slope capacity.
+ * Raw lift wait score 0–100 from visitors vs lift capacity.
  */
-export function getSlopeCrowdBucket(visitors: number, slopeCapacity: number): ExperienceBucket {
-  if (slopeCapacity <= 0) return visitors > 0 ? 'bad' : 'good';
-  const utilization = visitors / slopeCapacity;
-  if (utilization < GOOD_UTILIZATION_MAX) return 'good';
-  if (utilization >= BAD_UTILIZATION_MIN) return 'bad';
-  return 'medium';
+export function getLiftWaitRawScore(visitors: number, liftCapacity: number): number {
+  if (liftCapacity <= 0) return visitors > 0 ? 0 : 100;
+  return utilizationToScore(visitors / liftCapacity);
+}
+
+/**
+ * Raw slope crowd score 0–100 from visitors vs slope capacity.
+ */
+export function getSlopeCrowdRawScore(visitors: number, slopeCapacity: number): number {
+  if (slopeCapacity <= 0) return visitors > 0 ? 0 : 100;
+  return utilizationToScore(visitors / slopeCapacity);
 }
 
 /** 1 grooming_capacity point = 100 m of slope with grooming_load 1. */
@@ -81,8 +77,7 @@ const WEATHER_GROOMING_DEMAND_FACTOR: Record<string, number> = {
 };
 
 /**
- * Total grooming demand in capacity units: sum over slopes of (length_m / 100) * grooming_load,
- * multiplied by a weather factor (bad weather increases demand).
+ * Total grooming demand in capacity units.
  */
 export function getTotalGroomingDemand(): number {
   let total = 0;
@@ -117,59 +112,79 @@ function getSnowQualityFactor(snowDepthCm: number): number {
   if (depth < 20) return 0;
   if (depth < 50) return 0.6;
   if (depth <= 150) return 1.0;
-  return 1.4; 
+  return 1.4;
 }
 
 /**
- * Slope quality from grooming capacity vs demand, adjusted by snow depth.
- * Too little snow reduces quality; lots of snow improves it.
+ * Raw slope quality score 0–100 from grooming capacity vs demand, adjusted by snow.
  */
-export function getSlopeQualityBucket(demand: number, capacity: number): ExperienceBucket {
-  if (demand <= 0) return 'bad'; // no slopes → no terrain to ski, quality is bad
+export function getSlopeQualityRawScore(demand: number, capacity: number): number {
+  if (demand <= 0) return 0;
   const baseRatio = capacity / demand;
   const snowFactor = getSnowQualityFactor(state.snowDepth);
   const effectiveRatio = baseRatio * snowFactor;
-  if (effectiveRatio >= 1) return 'good';
-  if (effectiveRatio >= 0.5) return 'medium';
-  return 'bad';
+  return Math.round(Math.max(0, Math.min(100, 100 * effectiveRatio)));
 }
 
-export const EXPERIENCE_BUCKET_LABELS: Record<ExperienceBucket, string> = {
-  good: 'Good',
-  medium: 'Medium',
-  bad: 'Bad',
-};
+const EXPERIENCE_DRIFT_RATE = 0.14;
+const CHANGE_THRESHOLD = 0.5;
 
-/** Contribution per metric to target satisfaction. Bad is penalized so one "bad" pulls satisfaction down. */
-function bucketToScore(b: ExperienceBucket): number {
-  switch (b) {
-    case 'good': return 50;
-    case 'medium': return 15;
-    case 'bad': return -40;
-  }
+function driftValue(current: number, target: number, rate: number): number {
+  return Math.max(0, Math.min(100, current + rate * (target - current)));
+}
+
+function getChange(prev: number, next: number): ExperienceChange {
+  const d = next - prev;
+  if (d > CHANGE_THRESHOLD) return 'up';
+  if (d < -CHANGE_THRESHOLD) return 'down';
+  return 'stable';
 }
 
 /**
- * Target satisfaction 0–100 from the three experience buckets (lift wait, slope crowds, slope quality).
- * Any "bad" metric strongly lowers the target so satisfaction drifts down.
+ * Drift lift experience toward raw score and set change indicator. Call once per simulation day.
  */
-export function getTargetSatisfaction(
-  liftBucket: ExperienceBucket,
-  crowdBucket: ExperienceBucket,
-  qualityBucket: ExperienceBucket
+export function driftLiftExperience(rawScore: number): void {
+  const prev = state.liftExperience;
+  state.liftExperience = Math.round(driftValue(prev, rawScore, EXPERIENCE_DRIFT_RATE) * 10) / 10;
+  state.liftExperienceChange = getChange(prev, state.liftExperience);
+}
+
+/**
+ * Drift slope crowd experience toward raw score and set change indicator.
+ */
+export function driftSlopeCrowdExperience(rawScore: number): void {
+  const prev = state.slopeCrowdExperience;
+  state.slopeCrowdExperience = Math.round(driftValue(prev, rawScore, EXPERIENCE_DRIFT_RATE) * 10) / 10;
+  state.slopeCrowdChange = getChange(prev, state.slopeCrowdExperience);
+}
+
+/**
+ * Drift slope quality experience toward raw score and set change indicator.
+ */
+export function driftSlopeQualityExperience(rawScore: number): void {
+  const prev = state.slopeQualityExperience;
+  state.slopeQualityExperience = Math.round(driftValue(prev, rawScore, EXPERIENCE_DRIFT_RATE) * 10) / 10;
+  state.slopeQualityChange = getChange(prev, state.slopeQualityExperience);
+}
+
+/**
+ * Target satisfaction 0–100 from the three experience scores (drift towards the worst of the three).
+ */
+export function getTargetSatisfactionFromScores(
+  liftScore: number,
+  crowdScore: number,
+  qualityScore: number
 ): number {
-  const sum =
-    bucketToScore(liftBucket) + bucketToScore(crowdBucket) + bucketToScore(qualityBucket);
-  return Math.round(Math.max(0, Math.min(100, sum)));
+  const worst = Math.min(liftScore, crowdScore, qualityScore);
+  return Math.round(Math.max(0, Math.min(100, worst)));
 }
 
 /** Max satisfaction drift per day when visitor factor is 1 (0–1). */
 const SATISFACTION_DRIFT_RATE = 0.12;
 
 /**
- * Drift state.satisfaction toward the target implied by current experience buckets.
- * Scaled by visitors: no visitors → no change; more visitors (relative to lift capacity) → stronger drift.
- * Call once per simulation day.
+ * Drift state.satisfaction toward the target from the three experience scores.
+ * Scaled by visitors. Call once per simulation day after drifting the three metrics.
  */
 export function driftSatisfaction(): void {
   const visitors = state.dailyVisitors;
@@ -178,10 +193,10 @@ export function driftSatisfaction(): void {
     visitors === 0 ? 0 : capacity > 0 ? Math.min(1, visitors / capacity) : 1;
   if (visitorFactor <= 0) return;
 
-  const target = getTargetSatisfaction(
-    state.liftExperienceBucket,
-    state.slopeCrowdBucket,
-    state.slopeQualityBucket
+  const target = getTargetSatisfactionFromScores(
+    state.liftExperience,
+    state.slopeCrowdExperience,
+    state.slopeQualityExperience
   );
   const current = state.satisfaction;
   const effectiveRate = SATISFACTION_DRIFT_RATE * visitorFactor;

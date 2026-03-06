@@ -5,7 +5,7 @@
 
 import type {
   AppMode,
-  ExperienceBucket,
+  ExperienceChange,
   SlopeDrawMode,
   LiftType,
   SlopeType,
@@ -42,13 +42,19 @@ export interface AppState {
   dailyTempHigh: number;
   /** Simulation speed: 0 = paused, 1 = 1x, 2 = 2x, 3 = 3x days per tick. */
   simulationSpeed: number;
-  /** Lift wait experience bucket (good/medium/bad). */
-  liftExperienceBucket: ExperienceBucket;
-  /** Slope crowd experience bucket (good/medium/bad). */
-  slopeCrowdBucket: ExperienceBucket;
-  /** Slope quality experience bucket (grooming capacity vs demand). */
-  slopeQualityBucket: ExperienceBucket;
-  /** Overall visitor satisfaction 0–100%, drifts daily from experience buckets. */
+  /** Lift wait experience 0–100, drifts daily. */
+  liftExperience: number;
+  /** Slope crowd experience 0–100, drifts daily. */
+  slopeCrowdExperience: number;
+  /** Slope quality experience 0–100, drifts daily. */
+  slopeQualityExperience: number;
+  /** Change indicator for lift experience. */
+  liftExperienceChange: ExperienceChange;
+  /** Change indicator for slope crowd experience. */
+  slopeCrowdChange: ExperienceChange;
+  /** Change indicator for slope quality experience. */
+  slopeQualityChange: ExperienceChange;
+  /** Overall visitor satisfaction 0–100%, drifts daily from the three experience scores. */
   satisfaction: number;
   mode: AppMode;
   liftType: string | null;
@@ -101,9 +107,12 @@ export const state: AppState = {
   dailyTempLow: 0,
   dailyTempHigh: 0,
   simulationSpeed: 1,
-  liftExperienceBucket: 'good',
-  slopeCrowdBucket: 'good',
-  slopeQualityBucket: 'good',
+  liftExperience: 50,
+  slopeCrowdExperience: 50,
+  slopeQualityExperience: 50,
+  liftExperienceChange: 'stable',
+  slopeCrowdChange: 'stable',
+  slopeQualityChange: 'stable',
   satisfaction: 20,
   mode: 'lift',
   liftType: null,

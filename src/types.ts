@@ -83,8 +83,8 @@ export interface ImagePoint {
   norm?: NormalizedPoint;
 }
 
-/** Visitor experience bucket for lift wait / slope crowds. */
-export type ExperienceBucket = 'good' | 'medium' | 'bad';
+/** Visitor experience change indicator. */
+export type ExperienceChange = 'up' | 'down' | 'stable';
 
 /** Game simulation date: month 1–12, day 1–31. */
 export interface SimulationDate {
