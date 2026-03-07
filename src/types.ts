@@ -65,6 +65,10 @@ export interface PlacedLift {
   health?: number;
   /** Date when this lift was installed (for age-based degradation). */
   installedDate?: SimulationDate;
+  /** True when lift has broken down; effective capacity 0 until repaired. */
+  broken?: boolean;
+  /** Repair cost when broken (30–80% of initial investment); set at breakdown. */
+  repairCost?: number;
 }
 
 export interface PlacedSlope {

@@ -7,6 +7,7 @@ import type { SimulationDate } from './types';
 import { state } from './state';
 import type { WeatherType } from './weather-simulation';
 import { getTotalLiftCapacity } from './experience-simulator';
+import { fromNormalized, getLiftLengthM } from './geometry.js';
 
 /** Base degradation per day at 1.0 reliability, 0 age, 0 visitors, neutral weather. */
 const BASE_DEGRADATION_PER_DAY = 0.5;
@@ -97,12 +98,26 @@ export function getLiftHealthZone(health: number, reliability: number): LiftHeal
  * Effective capacity multiplier for a lift: 1.0 when health >= warning threshold;
  * below warning, scales down to 0.5 at 0 health (glitching/breakdowns reduce throughput).
  */
-export function getLiftEffectiveCapacityMultiplier(health: number, reliability: number): number {
+export function getLiftEffectiveCapacityMultiplier(health: number, reliability: number, broken: boolean): number {
+  if (broken) return 0;
   const { warning } = getLiftHealthThresholds(reliability);
   const h = Math.max(0, Math.min(100, health));
   if (h >= warning) return 1;
   if (warning <= 0) return 1;
   return 0.5 + 0.5 * (h / warning);
+}
+
+/** Daily breakdown chance when in critical health: 1–20%, lower when more reliable. */
+function getBreakdownChance(reliability: number): number {
+  const rel = Math.max(0.1, Math.min(1, reliability ?? 0.5));
+  const baseChance = 0.01 + 0.19 * (1 - rel);
+  return Math.max(0.01, Math.min(0.2, baseChance));
+}
+
+/** Repair cost when broken: 30–80% of initial investment (random at breakdown). */
+export function getRepairCostRange(initialInvestment: number): number {
+  const t = 0.3 + Math.random() * 0.5;
+  return Math.round(initialInvestment * t);
 }
 
 /**
@@ -130,7 +145,7 @@ export function getEffectiveLiftCapacity(): number {
     const rel = (type as { reliability?: number }).reliability != null
       ? Number((type as { reliability?: number }).reliability)
       : 0.85;
-    const mult = getLiftEffectiveCapacityMultiplier(lift.health ?? 100, rel);
+    const mult = getLiftEffectiveCapacityMultiplier(lift.health ?? 100, rel, lift.broken ?? false);
     total += cap * mult;
   }
   return total;
@@ -154,12 +169,14 @@ export function getGroomerDailyDegradation(
 
 /**
  * Apply one day of maintenance: update health for all lifts and groomers.
+ * Lifts in critical health can break down (1–20% daily chance by reliability); satisfaction −20.
  * Call once per simulation day.
  */
 export function updateMaintenance(): void {
   const visitors = state.dailyVisitors;
 
   for (const lift of state.lifts) {
+    if (lift.broken) continue;
     const type = state.liftTypes.find((t) => t.id === lift.type);
     const reliability = (type && (type as { reliability?: number }).reliability != null)
       ? Number((type as { reliability?: number }).reliability)
@@ -167,6 +184,22 @@ export function updateMaintenance(): void {
     const current = Math.max(0, Math.min(100, lift.health ?? 100));
     const degradation = getLiftDailyDegradation(lift.installedDate, reliability, visitors);
     lift.health = Math.max(0, Math.min(100, current - degradation));
+
+    const zone = getLiftHealthZone(lift.health ?? 0, reliability);
+    if (zone === 'critical') {
+      const chance = getBreakdownChance(reliability);
+      if (Math.random() < chance) {
+        lift.broken = true;
+        const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+        const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+        const lengthM = getLiftLengthM(a, b);
+        const baseCost = (type && (type as { base_cost?: number }).base_cost != null) ? Number((type as { base_cost?: number }).base_cost) : 0;
+        const costPerMeter = (type && (type as { cost_per_meter?: number }).cost_per_meter != null) ? Number((type as { cost_per_meter?: number }).cost_per_meter) : 0;
+        const initialInvestment = baseCost + costPerMeter * (lengthM || 0);
+        lift.repairCost = getRepairCostRange(initialInvestment);
+        state.satisfaction = Math.max(0, state.satisfaction - 20);
+      }
+    }
   }
 
   for (const groomer of state.groomers) {

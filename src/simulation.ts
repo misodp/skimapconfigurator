@@ -100,6 +100,7 @@ export function updateDateDisplay(): void {
 }
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
+let lastRenderedDropdownYear: number | null = null;
 
 function getIntervalMsFromSpeed(): number | null {
   const speed = Number.isFinite(state.simulationSpeed) ? Math.max(0, Math.min(3, state.simulationSpeed)) : 1;
@@ -129,8 +130,12 @@ function startLoopWithCurrentSpeed() {
     updateExperienceDisplay();
     updateSatisfactionDisplay();
     updateBudgetDisplay();
-    renderLiftTypeDropdown({ skipPanelBlank: true });
-    renderGroomerTypeDropdown({ skipPanelBlank: true });
+    const year = state.currentDate.year;
+    if (lastRenderedDropdownYear !== year) {
+      lastRenderedDropdownYear = year;
+      renderLiftTypeDropdown({ skipPanelBlank: true });
+      renderGroomerTypeDropdown({ skipPanelBlank: true });
+    }
     refreshLiftHoverPopupIfOpen();
   }, intervalMs);
 }

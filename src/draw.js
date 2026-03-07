@@ -218,19 +218,26 @@ function isOperateTabActive() {
 
 function drawLifts(ctx, scaleX, scaleY) {
   const showHealthDot = isOperateTabActive();
+  const brokenColor = LIFT_HEALTH_COLOR.critical;
   state.lifts.forEach((lift, i) => {
     const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
     const b = fromNormalized(lift.topStation.x, lift.topStation.y);
-    drawLine(ctx, scaleX, scaleY, a.x, a.y, b.x, b.y, liftColor);
+    const isBroken = showHealthDot && (lift.broken === true);
+    const lineColor = isBroken ? brokenColor : liftColor;
+    drawLine(ctx, scaleX, scaleY, a.x, a.y, b.x, b.y, lineColor);
     let bottomDotColor = liftColor;
-    if (showHealthDot) {
+    let topDotColor = liftColor;
+    if (isBroken) {
+      bottomDotColor = brokenColor;
+      topDotColor = brokenColor;
+    } else if (showHealthDot) {
       const liftType = state.liftTypes.find((t) => t.id === lift.type);
       const rel = (liftType && liftType.reliability != null) ? Number(liftType.reliability) : 0.85;
       const zone = getLiftHealthZone(Math.max(0, Math.min(100, lift.health ?? 100)), rel);
       bottomDotColor = LIFT_HEALTH_COLOR[zone] ?? liftColor;
     }
     drawLiftStationDot(ctx, scaleX, scaleY, a.x, a.y, bottomDotColor);
-    drawLiftStationDot(ctx, scaleX, scaleY, b.x, b.y, liftColor);
+    drawLiftStationDot(ctx, scaleX, scaleY, b.x, b.y, topDotColor);
     drawLiftLabel(ctx, scaleX, scaleY, lift.name || `Lift ${i + 1}`, a.x, a.y, b.x, b.y, liftColor);
   });
 

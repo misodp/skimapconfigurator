@@ -14,7 +14,7 @@ import { refresh, updateBudgetDisplay } from './config.js';
 import { formatCurrency, escapeHtml, formatNumber } from './utils.js';
 import { updateCancelLiftButton } from './ui/lifts.js';
 import { COLS, ROWS } from './constants';
-import { getLiftHealthZone, getLiftServiceCost } from './maintenance_simulator';
+import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier } from './maintenance_simulator';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
 
 const PEN_SMOOTH_SAMPLES = 24;
@@ -186,13 +186,13 @@ function getLiftIndexAtImage(px, py) {
 function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
   const name = escapeHtml(lift.name || 'Lift');
   const speedStr = liftType && liftType.speed != null ? formatNumber(liftType.speed) + ' m/s' : '—';
-  const capacity = liftType && liftType.capacity != null ? formatNumber(liftType.capacity) : '—';
   const lengthStr = lengthM != null ? formatNumber(lengthM) + ' m' : '—';
   const health = Math.max(0, Math.min(100, lift.health ?? 100));
   const healthPct = Math.round(health);
   const reliability = (liftType && liftType.reliability != null) ? Number(liftType.reliability) : 0.85;
   const zone = getLiftHealthZone(health, reliability);
-  const zoneClass = 'lift-hover-popup-health-fill--' + zone;
+  const isBroken = lift.broken === true;
+  const zoneClass = 'lift-hover-popup-health-fill--' + (isBroken ? 'critical' : zone);
   const sprite = state.spriteSheet;
   const src = sprite && sprite.src ? sprite.src : '';
   let iconStyle = 'background-color: rgba(255,255,255,0.06); border-radius: 4px;';
@@ -204,23 +204,32 @@ function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
   const baseCost = (liftType && liftType.base_cost != null) ? Number(liftType.base_cost) : 0;
   const costPerMeter = (liftType && liftType.cost_per_meter != null) ? Number(liftType.cost_per_meter) : 0;
   const initialInvestment = baseCost + costPerMeter * (lengthM || 0);
-  const serviceCost = health < 100 ? getLiftServiceCost(health, initialInvestment) : 0;
+  const repairCost = (isBroken && lift.repairCost != null) ? Number(lift.repairCost) : 0;
+  const serviceCost = !isBroken && health < 100 ? getLiftServiceCost(health, initialInvestment) : 0;
   let serviceRow = '';
-  if (health < 100 && serviceCost > 0) {
+  if (isBroken && repairCost > 0) {
+    serviceRow = '<div class="lift-hover-popup-service">' +
+      '<button type="button" class="lift-popup-service-btn" data-lift-index="' + String(liftIndex) + '" data-repair="true" title="Repair broken lift">Repair – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(repairCost)) + '</button></div>';
+  } else if (!isBroken && health < 100 && serviceCost > 0) {
     serviceRow = '<div class="lift-hover-popup-service">' +
       '<button type="button" class="lift-popup-service-btn" data-lift-index="' + String(liftIndex) + '" title="Restore lift to 100% health">Service – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(serviceCost)) + '</button></div>';
   }
+  const installedCap = (liftType && liftType.capacity != null) ? Number(liftType.capacity) : 0;
+  const effectiveMult = getLiftEffectiveCapacityMultiplier(health, reliability, isBroken);
+  const effectiveCap = Math.round(installedCap * effectiveMult);
+  const capacityStr = installedCap > 0 ? (formatNumber(effectiveCap) + ' / ' + formatNumber(installedCap)) : '—';
   return (
     '<button type="button" class="lift-popup-close-btn" aria-label="Close" title="Close">×</button>' +
     '<div class="lift-hover-popup-icon" style="' + iconStyle + '"></div>' +
-    '<div class="lift-hover-popup-name">' + name + '</div>' +
+    '<div class="lift-hover-popup-name lift-popup-name-editable" data-lift-index="' + String(liftIndex) + '" title="Click to rename">' + name + '</div>' +
+    (isBroken ? '<div class="lift-hover-popup-broken">Broken</div>' : '') +
     '<div class="lift-hover-popup-health" aria-label="Health ' + healthPct + '%">' +
     '<span class="lift-hover-popup-health-label">Health</span>' +
     '<div class="lift-hover-popup-health-track"><div class="lift-hover-popup-health-fill ' + zoneClass + '" style="width:' + healthPct + '%"></div></div>' +
     '<span class="lift-hover-popup-health-value">' + healthPct + '%</span></div>' +
     serviceRow +
     '<div class="lift-hover-popup-meta">Speed: ' + speedStr + '</div>' +
-    '<div class="lift-hover-popup-meta">Capacity: ' + capacity + '</div>' +
+    '<div class="lift-hover-popup-meta">Capacity: ' + capacityStr + '</div>' +
     '<div class="lift-hover-popup-meta">Length: ' + lengthStr + '</div>'
   );
 }
@@ -296,6 +305,24 @@ export function handleLiftPopupClick(e) {
     return;
   }
 
+  const nameEl = e.target && e.target.closest && e.target.closest('.lift-popup-name-editable');
+  if (nameEl) {
+    e.preventDefault();
+    e.stopPropagation();
+    const idx = parseInt(nameEl.getAttribute('data-lift-index'), 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < state.lifts.length) {
+      const lift = state.lifts[idx];
+      const current = (lift && (lift.name || `Lift ${idx + 1}`)) || `Lift ${idx + 1}`;
+      const newName = window.prompt('Lift name', current);
+      if (newName !== null && lift) {
+        lift.name = newName.trim() || `Lift ${idx + 1}`;
+        refresh();
+        refreshLiftHoverPopupIfOpen();
+      }
+    }
+    return;
+  }
+
   if (isInsidePopup) {
     e.preventDefault();
     e.stopPropagation();
@@ -310,22 +337,37 @@ export function handleLiftPopupClick(e) {
   const idx = parseInt(btn.getAttribute('data-lift-index'), 10);
   if (Number.isNaN(idx) || idx < 0 || idx >= state.lifts.length) return;
   const lift = state.lifts[idx];
-  const liftType = state.liftTypes.find((l) => l.id === lift.type) || state.liftTypes[0];
-  const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
-  const b = fromNormalized(lift.topStation.x, lift.topStation.y);
-  const lengthM = getLiftLengthM(a, b);
-  const baseCost = (liftType && liftType.base_cost != null) ? Number(liftType.base_cost) : 0;
-  const costPerMeter = (liftType && liftType.cost_per_meter != null) ? Number(liftType.cost_per_meter) : 0;
-  const initialInvestment = baseCost + costPerMeter * lengthM;
-  const health = Math.max(0, Math.min(100, lift.health ?? 100));
-  const cost = getLiftServiceCost(health, initialInvestment);
-  if (cost <= 0) return;
-  if (state.budget < cost) {
-    window.alert(`Not enough budget to service this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
-    return;
+  const isRepair = lift.broken === true;
+  let cost = 0;
+  if (isRepair) {
+    cost = (lift.repairCost != null) ? Number(lift.repairCost) : 0;
+    if (cost <= 0) return;
+    if (state.budget < cost) {
+      window.alert(`Not enough budget to repair this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      return;
+    }
+    state.budget -= cost;
+    lift.broken = false;
+    lift.repairCost = undefined;
+    lift.health = 100;
+  } else {
+    const liftType = state.liftTypes.find((l) => l.id === lift.type) || state.liftTypes[0];
+    const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+    const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+    const lengthM = getLiftLengthM(a, b);
+    const baseCost = (liftType && liftType.base_cost != null) ? Number(liftType.base_cost) : 0;
+    const costPerMeter = (liftType && liftType.cost_per_meter != null) ? Number(liftType.cost_per_meter) : 0;
+    const initialInvestment = baseCost + costPerMeter * lengthM;
+    const health = Math.max(0, Math.min(100, lift.health ?? 100));
+    cost = getLiftServiceCost(health, initialInvestment);
+    if (cost <= 0) return;
+    if (state.budget < cost) {
+      window.alert(`Not enough budget to service this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      return;
+    }
+    state.budget -= cost;
+    lift.health = 100;
   }
-  state.budget -= cost;
-  lift.health = 100;
   updateBudgetDisplay();
   isPopupPinned = false;
   popup.removeAttribute('data-pinned');

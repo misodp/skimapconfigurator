@@ -280,6 +280,8 @@ export function onConfigImported(e) {
         installedDate: l.installedDate && typeof l.installedDate.year === 'number'
           ? { year: l.installedDate.year, month: l.installedDate.month ?? 1, day: l.installedDate.day ?? 1 }
           : { ...state.currentDate },
+        broken: l.broken === true ? true : undefined,
+        repairCost: typeof l.repairCost === 'number' && l.repairCost > 0 ? l.repairCost : undefined,
       }));
       state.slopes = (config.slopes ?? []).map((s) => {
         const points = s.points ?? [];

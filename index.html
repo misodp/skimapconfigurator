@@ -26,25 +26,6 @@
             <img class="budget-icon" id="budgetIcon" src="" alt="" />
             <span id="budgetAmount">0</span>
           </div>
-          <div class="header-save-load" aria-label="Save and load game">
-            <button type="button" id="saveBtn" class="header-icon-btn" title="Save game" aria-label="Save game">
-              <svg class="header-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                <polyline points="17 21 17 13 7 13 7 21"/>
-                <polyline points="7 3 7 8 15 8"/>
-              </svg>
-              <span class="header-btn-label">Save</span>
-            </button>
-            <button type="button" id="loadBtn" class="header-icon-btn" title="Load game" aria-label="Load game">
-              <svg class="header-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              <span class="header-btn-label">Load</span>
-            </button>
-            <input type="file" id="importInput" accept=".json" hidden />
-          </div>
         </div>
       </header>
 
@@ -106,6 +87,29 @@
               <ul id="groomerList" class="item-list"></ul>
             </section>
 
+            <section class="tool-section save-load-section" aria-label="Save and load game">
+              <h2>Save / Load</h2>
+              <div class="save-load-buttons">
+                <button type="button" id="saveBtn" class="sidebar-icon-btn" title="Save game" aria-label="Save game">
+                  <svg class="sidebar-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
+                    <polyline points="17 21 17 13 7 13 7 21"/>
+                    <polyline points="7 3 7 8 15 8"/>
+                  </svg>
+                  <span class="sidebar-btn-label">Save</span>
+                </button>
+                <button type="button" id="loadBtn" class="sidebar-icon-btn" title="Load game" aria-label="Load game">
+                  <svg class="sidebar-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  <span class="sidebar-btn-label">Load</span>
+                </button>
+              </div>
+              <input type="file" id="importInput" accept=".json" hidden />
+            </section>
+
             <section class="tool-section">
               <h2>Mountain image</h2>
               <input type="file" id="imageInput" accept="image/*" />
@@ -118,8 +122,8 @@
             <section class="stats-section">
               <h2 class="stats-panel-title">Operate</h2>
               <div class="stat-row stat-row-resort">
-                <span class="stat-label">Resort</span>
                 <div class="resort-toggle" role="group" aria-label="Resort open or closed">
+                  <span class="resort-switch-thumb" aria-hidden="true"></span>
                   <button type="button" class="resort-btn active" id="resortOpenBtn" data-resort="open" aria-pressed="true">Open</button>
                   <button type="button" class="resort-btn" id="resortClosedBtn" data-resort="closed" aria-pressed="false">Closed</button>
                 </div>
