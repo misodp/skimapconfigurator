@@ -10,7 +10,7 @@ import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
 import { startSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
 import { updateWeatherDisplay } from './weather-icon';
-import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup } from './canvas.js';
+import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup, handleLiftPopupClick } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
 import { renderGroomerTypeDropdown, getGroomerImageUrls } from './ui/groomers.js';
@@ -280,9 +280,11 @@ export function init() {
   DOM.canvas.addEventListener('mouseup', onCanvasMouseUp);
   DOM.canvas.addEventListener('mouseleave', (e) => {
     if (state.mode === 'lift') state.mouseImage = null;
-    hideLiftHoverPopup();
+    const popup = document.getElementById('liftHoverPopup');
+    if (!popup || !popup.contains(e.relatedTarget)) hideLiftHoverPopup();
     onCanvasMouseUp(e);
   });
+  document.addEventListener('click', handleLiftPopupClick);
 
   document.getElementById('cancelSlopeBtn').addEventListener('click', cancelSlope);
   document.getElementById('cancelLiftBtn').addEventListener('click', cancelLift);

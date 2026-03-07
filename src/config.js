@@ -276,6 +276,10 @@ export function onConfigImported(e) {
         topStation: l.topStation,
         type: (state.liftTypes.some((lt) => lt.id === l.type) && l.type) ? l.type : defaultTypeId,
         name: l.name || `Lift ${i + 1}`,
+        health: Math.max(0, Math.min(100, l.health ?? 100)),
+        installedDate: l.installedDate && typeof l.installedDate.year === 'number'
+          ? { year: l.installedDate.year, month: l.installedDate.month ?? 1, day: l.installedDate.day ?? 1 }
+          : { ...state.currentDate },
       }));
       state.slopes = (config.slopes ?? []).map((s) => {
         const points = s.points ?? [];
@@ -295,6 +299,10 @@ export function onConfigImported(e) {
       state.groomers = (config.groomers ?? []).map((g) => ({
         position: g.position,
         groomerTypeId: (state.groomerTypes.some((t) => t.id === g.groomerTypeId) && g.groomerTypeId) ? g.groomerTypeId : defaultGroomerId,
+        health: Math.max(0, Math.min(100, g.health ?? 100)),
+        installedDate: g.installedDate && typeof g.installedDate.year === 'number'
+          ? { year: g.installedDate.year, month: g.installedDate.month ?? 1, day: g.installedDate.day ?? 1 }
+          : { ...state.currentDate },
       }));
 
       // Full game state (only when present, for backward compatibility with old saves)

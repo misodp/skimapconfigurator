@@ -7,11 +7,13 @@ import type { SimulationDate } from './types';
 import { getSeason, generateWeatherForSeason, getDailySnowfall, getDailyMelt, getTempRange } from './weather-simulation';
 import { updateWeatherDisplay } from './weather-icon';
 import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './economics.js';
-import { getTotalLiftCapacity, getTotalSlopeCapacity, getLiftWaitRawScore, getSlopeCrowdRawScore, getTotalGroomingDemand, getTotalGroomingCapacity, getSlopeQualityRawScore, driftLiftExperience, driftSlopeCrowdExperience, driftSlopeQualityExperience, driftSatisfaction } from './experience-simulator';
+import { getTotalSlopeCapacity, getLiftWaitRawScore, getSlopeCrowdRawScore, getTotalGroomingDemand, getTotalGroomingCapacity, getSlopeQualityRawScore, driftLiftExperience, driftSlopeCrowdExperience, driftSlopeQualityExperience, driftSatisfaction } from './experience-simulator';
 import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay } from './config.js';
 import { renderLiftTypeDropdown } from './ui/lifts.js';
 import { renderGroomerTypeDropdown } from './ui/groomers.js';
 import { updateMountainImage } from './mountain-images.js';
+import { updateMaintenance, getEffectiveLiftCapacity } from './maintenance_simulator';
+import { refreshLiftHoverPopupIfOpen } from './canvas.js';
 
 const BASE_TICK_MS = 3000; // one game day per 3 seconds at 1x
 
@@ -54,14 +56,15 @@ function advanceDay(): void {
   const dailyMelt = getDailyMelt(season, state.currentWeather);
   state.snowDepth = Math.max(0, Math.min(450, state.snowDepth + dailySnowfall - dailyMelt));
   state.dailyVisitors = getDailyVisitors();
-  const liftCap = getTotalLiftCapacity();
+  const effectiveLiftCap = getEffectiveLiftCapacity();
   const slopeCap = getTotalSlopeCapacity();
   const groomingDemand = getTotalGroomingDemand();
   const groomingCapacity = getTotalGroomingCapacity();
-  driftLiftExperience(getLiftWaitRawScore(state.dailyVisitors, liftCap));
+  driftLiftExperience(getLiftWaitRawScore(state.dailyVisitors, effectiveLiftCap));
   driftSlopeCrowdExperience(getSlopeCrowdRawScore(state.dailyVisitors, slopeCap));
   driftSlopeQualityExperience(getSlopeQualityRawScore(groomingDemand, groomingCapacity));
   driftSatisfaction();
+  updateMaintenance();
   state.dailySales = state.dailyVisitors * TICKET_PRICE;
   state.dailyCost = getDailyOperatingCost();
   state.dailyProfit = state.dailySales - state.dailyCost;
@@ -126,6 +129,7 @@ function startLoopWithCurrentSpeed() {
     updateBudgetDisplay();
     renderLiftTypeDropdown({ skipPanelBlank: true });
     renderGroomerTypeDropdown({ skipPanelBlank: true });
+    refreshLiftHoverPopupIfOpen();
   }, intervalMs);
 }
 
@@ -142,11 +146,11 @@ export function startSimulation(): void {
   state.dailyTempLow = tLow;
   state.dailyTempHigh = tHigh;
   state.dailyVisitors = getDailyVisitors();
-  const liftCap = getTotalLiftCapacity();
+  const effectiveLiftCap = getEffectiveLiftCapacity();
   const slopeCap = getTotalSlopeCapacity();
   const groomingDemand = getTotalGroomingDemand();
   const groomingCapacity = getTotalGroomingCapacity();
-  state.liftExperience = getLiftWaitRawScore(state.dailyVisitors, liftCap);
+  state.liftExperience = getLiftWaitRawScore(state.dailyVisitors, effectiveLiftCap);
   state.slopeCrowdExperience = getSlopeCrowdRawScore(state.dailyVisitors, slopeCap);
   state.slopeQualityExperience = getSlopeQualityRawScore(groomingDemand, groomingCapacity);
   state.liftExperienceChange = state.slopeCrowdChange = state.slopeQualityChange = 'stable';

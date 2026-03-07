@@ -214,7 +214,10 @@
 
       <main class="canvas-area">
         <div class="canvas-wrapper">
-          <img id="mountainImage" src="" alt="Mountain" class="mountain-img" />
+          <div class="mountain-image-wrap">
+            <img id="mountainImage" src="" alt="Mountain" class="mountain-img" />
+            <img id="mountainImageDissolve" class="mountain-img mountain-img-dissolve" aria-hidden="true" alt="" />
+          </div>
           <canvas id="drawCanvas"></canvas>
           <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
           <div id="liftHoverPopup" class="lift-hover-popup" role="tooltip" aria-hidden="true" hidden></div>

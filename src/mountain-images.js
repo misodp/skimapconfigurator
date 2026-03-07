@@ -1,14 +1,13 @@
 /**
  * Snow-based mountain background images.
  * Images in assets/images/mountain/ are named mountain1_N.png where N is the snow depth (cm) at which that image is active.
- * We switch images only after the new threshold has been the target for 3 consecutive days, and use a fade transition.
+ * We switch images only after the new threshold has been the target for 3 consecutive days, and use a dissolve (crossfade) transition.
  */
 
 import { state, DOM } from './state';
 import { syncCanvasSize } from './canvas.js';
 
 const mountainModules = import.meta.glob('../assets/images/mountain/*.png', { eager: true, import: 'default' });
-const FADE_MS = 350;
 const DAYS_AT_THRESHOLD_BEFORE_SWITCH = 3;
 
 /** @type { { threshold: number, url: string }[] } sorted by threshold ascending */
@@ -53,27 +52,34 @@ export function getMountainUrlForSnowDepth(snowDepth) {
   return getUrlForThreshold(getThresholdForSnowDepth(snowDepth));
 }
 
+/** Which img is currently visible (the one state.image points to). We alternate so we never reassign src on the visible image. */
+let currentVisibleMountainImg = null;
+
 /**
- * Switches the mountain image with a fade-out → change src → fade-in. Updates state and syncs canvas on load.
+ * Switches the mountain image with a single dissolve (crossfade): new image fades in while current fades out.
+ * Uses two layers and alternates between them so we never reload the visible image (avoids double blink).
  */
 function setMountainImageWithTransition(url) {
-  const img = DOM.mountainImage;
-  if (!img || !url) return;
-  img.style.opacity = '0';
-  setTimeout(() => {
-    img.onload = () => {
-      state.image = img;
-      syncCanvasSize();
-      img.style.opacity = '1';
-    };
-    img.src = url;
-    img.classList.remove('no-image');
-  }, FADE_MS);
+  const primary = DOM.mountainImage;
+  const overlay = document.getElementById('mountainImageDissolve');
+  if (!primary || !overlay || !url) return;
+  if (currentVisibleMountainImg === null) currentVisibleMountainImg = primary;
+  const outgoing = currentVisibleMountainImg;
+  const incoming = outgoing === primary ? overlay : primary;
+  incoming.onload = () => {
+    outgoing.style.opacity = '0';
+    incoming.style.opacity = '1';
+    state.image = incoming;
+    syncCanvasSize();
+    currentVisibleMountainImg = incoming;
+    incoming.classList.remove('no-image');
+  };
+  incoming.src = url;
 }
 
 /**
  * Sets the header mountain image based on snow depth. Uses a 3-day rule: switch only after the new
- * threshold has been the target for 3 consecutive days. Applies a fade transition when switching.
+ * threshold has been the target for 3 consecutive days. Applies a dissolve (crossfade) when switching.
  * No-op if a custom mountain image is set (state.customMountainUrl).
  */
 export function updateMountainImage() {
@@ -86,6 +92,9 @@ export function updateMountainImage() {
 
   if (state.displayedMountainThreshold === null) {
     state.displayedMountainThreshold = targetThreshold;
+    currentVisibleMountainImg = DOM.mountainImage;
+    const overlay = document.getElementById('mountainImageDissolve');
+    if (overlay) overlay.style.opacity = '0';
     const url = getUrlForThreshold(targetThreshold);
     if (url) {
       DOM.mountainImage.onload = () => {

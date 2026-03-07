@@ -19,6 +19,8 @@ export interface LiftType {
   frame: number;
   /** Year when this lift becomes available (from tech tree). */
   unlock_year?: number;
+  /** Reliability 0–1; higher = slower health degradation (from tech tree). */
+  reliability?: number;
 }
 
 export interface SlopeType {
@@ -45,6 +47,8 @@ export interface GroomerType {
   description?: string;
   /** Year when this groomer becomes available (from tech tree). */
   unlock_year?: number;
+  /** Reliability 0–1; higher = slower health degradation (from tech tree). */
+  reliability?: number;
 }
 
 export interface NormalizedPoint {
@@ -57,6 +61,10 @@ export interface PlacedLift {
   topStation: NormalizedPoint;
   type: string;
   name: string;
+  /** Health 0–100; degrades over time. */
+  health?: number;
+  /** Date when this lift was installed (for age-based degradation). */
+  installedDate?: SimulationDate;
 }
 
 export interface PlacedSlope {
@@ -75,6 +83,10 @@ export interface PlacedCottage {
 export interface PlacedGroomer {
   position: NormalizedPoint;
   groomerTypeId: string;
+  /** Health 0–100; degrades over time. */
+  health?: number;
+  /** Date when this groomer was installed (for age-based degradation). */
+  installedDate?: SimulationDate;
 }
 
 export interface ImagePoint {
