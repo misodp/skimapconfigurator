@@ -209,11 +209,13 @@ body {
   color: var(--red);
 }
 
-.daily-change.profit {
+.daily-change .profit,
+.stat-finance-row .profit {
   color: var(--green);
 }
 
-.daily-change.loss {
+.daily-change .loss,
+.stat-finance-row .loss {
   color: var(--red);
 }
 
@@ -447,13 +449,29 @@ body {
 }
 
 .stat-row-speed {
+  display: flex;
+  align-items: center;
   padding-top: 0.5rem;
   margin-top: 0.25rem;
   border-top: 1px solid var(--border);
 }
 
 .stat-row-speed .header-speed {
+  display: inline-flex;
   flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.25rem;
+}
+
+.stat-row-speed .header-speed-label {
+  line-height: 1;
+}
+
+.stat-row-speed .sim-speed-btn {
+  margin: 0;
+  line-height: 1;
+  padding: 0.2rem 0.45rem;
+  vertical-align: baseline;
 }
 
 .stat-finance-row {
