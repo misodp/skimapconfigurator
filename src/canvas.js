@@ -29,6 +29,12 @@ function isInvestTabActive() {
   return panel ? panel.classList.contains('active') : true;
 }
 
+/** True when Operate (Statistics) tab is active. Lift hover popup only works in this tab. */
+function isOperateTabActive() {
+  const panel = document.getElementById('statisticsPanel');
+  return panel ? panel.classList.contains('active') : false;
+}
+
 export function syncCanvasSize() {
   if (!state.image) return;
   const img = state.image;
@@ -227,6 +233,7 @@ let isPopupPinned = false;
 function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   const popup = document.getElementById('liftHoverPopup');
   if (!popup) return;
+  if (!isOperateTabActive()) return;
   if (liftIndex == null || liftIndex < 0 || liftIndex >= state.lifts.length) {
     if (!isPopupPinned) {
       popup.hidden = true;
@@ -246,18 +253,19 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   popup.innerHTML = getLiftPopupHtml(lift, liftType, lengthM, liftIndex);
   popup.hidden = false;
   popup.removeAttribute('aria-hidden');
-  if (isPopupPinned) return;
-  const offsetX = 4;
-  const offsetY = 16;
-  popup.style.left = (clientX + offsetX) + 'px';
-  popup.style.top = (clientY + offsetY) + 'px';
-  const rect = popup.getBoundingClientRect();
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  if (rect.right > vw) popup.style.left = (clientX - rect.width - offsetX) + 'px';
-  if (rect.bottom > vh) popup.style.top = (clientY - rect.height - offsetY) + 'px';
-  if (rect.left < 0) popup.style.left = offsetX + 'px';
-  if (rect.top < 0) popup.style.top = offsetY + 'px';
+  if (!isPopupPinned) {
+    const offsetX = 4;
+    const offsetY = 16;
+    popup.style.left = (clientX + offsetX) + 'px';
+    popup.style.top = (clientY + offsetY) + 'px';
+    const rect = popup.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (rect.right > vw) popup.style.left = (clientX - rect.width - offsetX) + 'px';
+    if (rect.bottom > vh) popup.style.top = (clientY - rect.height - offsetY) + 'px';
+    if (rect.left < 0) popup.style.left = offsetX + 'px';
+    if (rect.top < 0) popup.style.top = offsetY + 'px';
+  }
 }
 
 /**
@@ -274,7 +282,7 @@ export function refreshLiftHoverPopupIfOpen() {
  */
 export function handleLiftPopupClick(e) {
   const popup = document.getElementById('liftHoverPopup');
-  if (!popup || popup.hidden) return;
+  if (!popup || popup.hidden || !isOperateTabActive()) return;
   const isInsidePopup = popup.contains(e.target);
 
   if (e.target && e.target.closest && e.target.closest('.lift-popup-close-btn')) {
@@ -311,16 +319,39 @@ export function handleLiftPopupClick(e) {
   const initialInvestment = baseCost + costPerMeter * lengthM;
   const health = Math.max(0, Math.min(100, lift.health ?? 100));
   const cost = getLiftServiceCost(health, initialInvestment);
-  if (cost <= 0 || state.budget < cost) return;
+  if (cost <= 0) return;
+  if (state.budget < cost) {
+    window.alert(`Not enough budget to service this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+    return;
+  }
   state.budget -= cost;
   lift.health = 100;
   updateBudgetDisplay();
-  refreshLiftHoverPopupIfOpen();
+  isPopupPinned = false;
+  popup.removeAttribute('data-pinned');
+  popup.hidden = true;
+  popup.setAttribute('aria-hidden', 'true');
+  lastHoveredLiftIndex = null;
+}
+
+/**
+ * Pin the lift popup so it stops following the cursor. Call when the cursor enters the popup
+ * so the user can click the Service button without the menu moving away.
+ */
+export function pinLiftPopup() {
+  const popup = document.getElementById('liftHoverPopup');
+  if (popup && !popup.hidden && lastHoveredLiftIndex != null) {
+    isPopupPinned = true;
+    popup.setAttribute('data-pinned', 'true');
+  }
 }
 
 export function hideLiftHoverPopup() {
   const popup = document.getElementById('liftHoverPopup');
-  if (popup && !isPopupPinned) {
+  if (!popup) return;
+  if (!isOperateTabActive() || !isPopupPinned) {
+    isPopupPinned = false;
+    popup.removeAttribute('data-pinned');
     popup.hidden = true;
     popup.setAttribute('aria-hidden', 'true');
     lastHoveredLiftIndex = null;
@@ -358,6 +389,10 @@ export function onCanvasMouseMove(e) {
     }
     state.slopePoints.push({ x: pt.x, y: pt.y });
     refresh();
+    return;
+  }
+  if (!isOperateTabActive()) {
+    hideLiftHoverPopup();
     return;
   }
   if (isPopupPinned) return;
@@ -417,9 +452,24 @@ export function onCanvasMouseUp() {
 
 export function onCanvasClick(e) {
   if (!state.image) return;
+  const { x, y } = getCanvasPoint(e);
+
+  if (isOperateTabActive()) {
+    const popup = document.getElementById('liftHoverPopup');
+    if (popup && !popup.hidden && !isPopupPinned) {
+      const pt = canvasToImage(x, y);
+      const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
+      const placingLiftTop = state.mode === 'lift' && state.liftBottom && !state.liftTop;
+      if (liftIdx >= 0 && !placingLiftTop) {
+        isPopupPinned = true;
+        popup.setAttribute('data-pinned', 'true');
+        return;
+      }
+    }
+  }
+
   const isBuildMode = state.mode === 'lift' || state.mode === 'cottage' || state.mode === 'groomer' || (state.mode === 'slope' && state.slopeDrawMode === 'points');
   if (isBuildMode && !isInvestTabActive()) return;
-  const { x, y } = getCanvasPoint(e);
 
   if (state.mode === 'lift') {
     const pt = canvasToImage(x, y);

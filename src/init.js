@@ -256,6 +256,9 @@ export function init() {
       if (statisticsPanel) {
         statisticsPanel.classList.toggle('active', tabName === 'statistics');
       }
+      if (tabName === 'invest') {
+        hideLiftHoverPopup();
+      }
       if (tabName === 'statistics') {
         if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
         if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();

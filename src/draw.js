@@ -6,6 +6,7 @@
 import { state, DOM, getSlopeType, getDiffColor } from './state';
 import { fromNormalized, getLiftLengthM, getSlopePathLengthM, getSlopeCost } from './geometry.js';
 import { formatNumber, formatCurrency } from './utils.js';
+import { getLiftHealthZone } from './maintenance_simulator';
 
 const LIFT_LINE_WIDTH = 3;
 const LIFT_DOT_RADIUS = 5;
@@ -204,12 +205,31 @@ function drawSlopes(ctx, scaleX, scaleY) {
 
 const liftColor = '#1a1a1a';
 
+const LIFT_HEALTH_COLOR = {
+  healthy: '#22c55e',
+  warning: '#eab308',
+  critical: '#dc2626',
+};
+
+function isOperateTabActive() {
+  const panel = document.getElementById('statisticsPanel');
+  return panel ? panel.classList.contains('active') : false;
+}
+
 function drawLifts(ctx, scaleX, scaleY) {
+  const showHealthDot = isOperateTabActive();
   state.lifts.forEach((lift, i) => {
     const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
     const b = fromNormalized(lift.topStation.x, lift.topStation.y);
     drawLine(ctx, scaleX, scaleY, a.x, a.y, b.x, b.y, liftColor);
-    drawLiftStationDot(ctx, scaleX, scaleY, a.x, a.y, liftColor);
+    let bottomDotColor = liftColor;
+    if (showHealthDot) {
+      const liftType = state.liftTypes.find((t) => t.id === lift.type);
+      const rel = (liftType && liftType.reliability != null) ? Number(liftType.reliability) : 0.85;
+      const zone = getLiftHealthZone(Math.max(0, Math.min(100, lift.health ?? 100)), rel);
+      bottomDotColor = LIFT_HEALTH_COLOR[zone] ?? liftColor;
+    }
+    drawLiftStationDot(ctx, scaleX, scaleY, a.x, a.y, bottomDotColor);
     drawLiftStationDot(ctx, scaleX, scaleY, b.x, b.y, liftColor);
     drawLiftLabel(ctx, scaleX, scaleY, lift.name || `Lift ${i + 1}`, a.x, a.y, b.x, b.y, liftColor);
   });

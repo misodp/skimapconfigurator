@@ -14,6 +14,7 @@ import { renderGroomerTypeDropdown } from './ui/groomers.js';
 import { updateMountainImage } from './mountain-images.js';
 import { updateMaintenance, getEffectiveLiftCapacity } from './maintenance_simulator';
 import { refreshLiftHoverPopupIfOpen } from './canvas.js';
+import { draw } from './draw.js';
 
 const BASE_TICK_MS = 3000; // one game day per 3 seconds at 1x
 
@@ -63,9 +64,10 @@ function advanceDay(): void {
   driftLiftExperience(getLiftWaitRawScore(state.dailyVisitors, effectiveLiftCap));
   driftSlopeCrowdExperience(getSlopeCrowdRawScore(state.dailyVisitors, slopeCap));
   driftSlopeQualityExperience(getSlopeQualityRawScore(groomingDemand, groomingCapacity));
-  driftSatisfaction();
-  updateMaintenance();
-  state.dailySales = state.dailyVisitors * TICKET_PRICE;
+    driftSatisfaction();
+    updateMaintenance();
+    draw();
+    state.dailySales = state.dailyVisitors * TICKET_PRICE;
   state.dailyCost = getDailyOperatingCost();
   state.dailyProfit = state.dailySales - state.dailyCost;
   state.budget = Math.max(0, state.budget + state.dailyProfit);
