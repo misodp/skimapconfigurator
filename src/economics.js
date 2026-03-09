@@ -13,7 +13,8 @@ export const TICKET_PRICE = 1.0;
  * Total daily operating cost for all built lifts and groomers.
  * Lifts: base_operating_cost + (length in m × op_cost_per_meter).
  * Groomers: base_operating_cost each.
- * When resort is closed, cost is 30% of normal.
+ * Broken equipment costs 30% of normal (reduced maintenance while out of service).
+ * When resort is closed, working equipment costs 30% of normal; broken equipment stays at 30% (unchanged).
  */
 export function getDailyOperatingCost() {
   let total = 0;
@@ -25,15 +26,24 @@ export function getDailyOperatingCost() {
     const lengthM = getLiftLengthM(bottomImage, topImage);
     const base = Number(type.base_operating_cost) || 0;
     const perM = Number(type.op_cost_per_meter) || 0;
-    total += base + lengthM * perM;
+    const cost = base + lengthM * perM;
+    if (lift.broken) {
+      total += cost * 0.3;
+    } else {
+      total += state.resortOpen !== false ? cost : cost * 0.3;
+    }
   }
   for (const g of state.groomers) {
     const type = state.groomerTypes.find((t) => t.id === g.groomerTypeId);
     if (!type) continue;
-    total += Number(type.base_operating_cost) || 0;
+    const cost = Number(type.base_operating_cost) || 0;
+    if (g.broken) {
+      total += cost * 0.3;
+    } else {
+      total += state.resortOpen !== false ? cost : cost * 0.3;
+    }
   }
-  if (state.resortOpen !== false) return Math.round(total);
-  return Math.round(total * 0.3);
+  return Math.round(total);
 }
 
 /** Randomness: ±10% multiplier (0.9 to 1.1). */
