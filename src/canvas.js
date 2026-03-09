@@ -13,6 +13,7 @@ import {
 import { refresh, updateBudgetDisplay } from './config.js';
 import { formatCurrency, escapeHtml, formatNumber } from './utils.js';
 import { updateCancelLiftButton } from './ui/lifts.js';
+import { getGroomerImageUrl } from './ui/groomers.js';
 import { COLS, ROWS } from './constants';
 import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier, getGroomerHealthZone, getGroomerServiceCost, getGroomerEffectiveCapacityMultiplier } from './maintenance_simulator';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
@@ -220,31 +221,39 @@ function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
   const initialInvestment = baseCost + costPerMeter * (lengthM || 0);
   const repairCost = (isBroken && lift.repairCost != null) ? Number(lift.repairCost) : 0;
   const serviceCost = !isBroken && health < 100 ? getLiftServiceCost(health, initialInvestment) : 0;
-  let serviceRow = '';
+  const saleValue = !isBroken ? Math.round(0.15 * initialInvestment * (health / 100)) : 0;
+  const scrapCost = Math.round(0.1 * initialInvestment);
+  let serviceRow = '<div class="lift-hover-popup-service">';
   if (isBroken && repairCost > 0) {
-    serviceRow = '<div class="lift-hover-popup-service">' +
-      '<button type="button" class="lift-popup-service-btn" data-lift-index="' + String(liftIndex) + '" data-repair="true" title="Repair broken lift">Repair – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(repairCost)) + '</button></div>';
+    serviceRow += '<button type="button" class="lift-popup-service-btn" data-lift-index="' + String(liftIndex) + '" data-repair="true" title="Repair broken lift">Repair: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(repairCost)) + '</button>';
   } else if (!isBroken && health < 100 && serviceCost > 0) {
-    serviceRow = '<div class="lift-hover-popup-service">' +
-      '<button type="button" class="lift-popup-service-btn" data-lift-index="' + String(liftIndex) + '" title="Restore lift to 100% health">Service – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(serviceCost)) + '</button></div>';
+    serviceRow += '<button type="button" class="lift-popup-service-btn" data-lift-index="' + String(liftIndex) + '" title="Restore lift to 100% health">Service: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(serviceCost)) + '</button>';
   }
+  if (!isBroken) {
+    serviceRow += '<button type="button" class="lift-popup-sell-btn" data-lift-index="' + String(liftIndex) + '" title="Sell lift (value scales with health)">Sell: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(Math.max(0, saleValue))) + '</button>';
+  } else {
+    serviceRow += '<button type="button" class="lift-popup-scrap-btn" data-lift-index="' + String(liftIndex) + '" title="Scrap broken lift (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
+  }
+  serviceRow += '</div>';
   const installedCap = (liftType && liftType.capacity != null) ? Number(liftType.capacity) : 0;
   const effectiveMult = getLiftEffectiveCapacityMultiplier(health, reliability, isBroken);
   const effectiveCap = Math.round(installedCap * effectiveMult);
   const capacityStr = installedCap > 0 ? (formatNumber(effectiveCap) + ' / ' + formatNumber(installedCap)) : '—';
+  const purchaseYear = (lift.installedDate && typeof lift.installedDate.year === 'number') ? String(lift.installedDate.year) : '—';
   return (
     '<button type="button" class="lift-popup-close-btn" aria-label="Close" title="Close">×</button>' +
     '<div class="lift-hover-popup-icon" style="' + iconStyle + '"></div>' +
     '<div class="lift-hover-popup-name lift-popup-name-editable" data-lift-index="' + String(liftIndex) + '" title="Click to rename">' + name + '</div>' +
     (isBroken ? '<div class="lift-hover-popup-broken">Broken</div>' : '') +
     '<div class="lift-hover-popup-health" aria-label="Health ' + healthPct + '%">' +
-    '<span class="lift-hover-popup-health-label">Health</span>' +
+    '<span class="lift-hover-popup-health-label">Health:</span>' +
     '<div class="lift-hover-popup-health-track"><div class="lift-hover-popup-health-fill ' + zoneClass + '" style="width:' + healthPct + '%"></div></div>' +
     '<span class="lift-hover-popup-health-value">' + healthPct + '%</span></div>' +
-    serviceRow +
+    '<div class="lift-hover-popup-meta">Purchased: ' + purchaseYear + '</div>' +
     '<div class="lift-hover-popup-meta">Speed: ' + speedStr + '</div>' +
     '<div class="lift-hover-popup-meta">Capacity: ' + capacityStr + '</div>' +
-    '<div class="lift-hover-popup-meta">Length: ' + lengthStr + '</div>'
+    '<div class="lift-hover-popup-meta">Length: ' + lengthStr + '</div>' +
+    serviceRow
   );
 }
 
@@ -256,31 +265,45 @@ function getGroomerPopupHtml(groomer, groomerType, groomerIndex) {
   const zone = getGroomerHealthZone(health, reliability);
   const isBroken = groomer.broken === true;
   const zoneClass = 'lift-hover-popup-health-fill--' + (isBroken ? 'critical' : zone);
+  let iconStyle = 'background-color: rgba(255,255,255,0.06); border-radius: 4px;';
+  const imgUrl = groomerType ? getGroomerImageUrl(groomerType) : '';
+  if (imgUrl) {
+    iconStyle = 'background-image: url(' + escapeHtml(imgUrl) + '); background-size: contain; background-position: center; background-repeat: no-repeat; background-color: rgba(255,255,255,0.06); border-radius: 4px;';
+  }
   const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
   const repairCost = (isBroken && groomer.repairCost != null) ? Number(groomer.repairCost) : 0;
   const serviceCost = !isBroken && health < 100 ? getGroomerServiceCost(health, purchaseCost) : 0;
-  let serviceRow = '';
+  const saleValue = !isBroken ? Math.round(0.15 * purchaseCost * (health / 100)) : 0;
+  const scrapCost = Math.round(0.1 * purchaseCost);
+  let serviceRow = '<div class="lift-hover-popup-service">';
   if (isBroken && repairCost > 0) {
-    serviceRow = '<div class="lift-hover-popup-service">' +
-      '<button type="button" class="groomer-popup-service-btn" data-groomer-index="' + String(groomerIndex) + '" data-repair="true" title="Repair broken groomer">Repair – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(repairCost)) + '</button></div>';
+    serviceRow += '<button type="button" class="groomer-popup-service-btn" data-groomer-index="' + String(groomerIndex) + '" data-repair="true" title="Repair broken groomer">Repair: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(repairCost)) + '</button>';
   } else if (!isBroken && health < 100 && serviceCost > 0) {
-    serviceRow = '<div class="lift-hover-popup-service">' +
-      '<button type="button" class="groomer-popup-service-btn" data-groomer-index="' + String(groomerIndex) + '" title="Restore groomer to 100% health">Service – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(serviceCost)) + '</button></div>';
+    serviceRow += '<button type="button" class="groomer-popup-service-btn" data-groomer-index="' + String(groomerIndex) + '" title="Restore groomer to 100% health">Service: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(serviceCost)) + '</button>';
   }
+  if (!isBroken) {
+    serviceRow += '<button type="button" class="groomer-popup-sell-btn" data-groomer-index="' + String(groomerIndex) + '" title="Sell groomer (value scales with health)">Sell: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(Math.max(0, saleValue))) + '</button>';
+  } else {
+    serviceRow += '<button type="button" class="groomer-popup-scrap-btn" data-groomer-index="' + String(groomerIndex) + '" title="Scrap broken groomer (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
+  }
+  serviceRow += '</div>';
   const capacity = (groomerType && groomerType.grooming_capacity != null) ? Number(groomerType.grooming_capacity) : 0;
   const effectiveMult = getGroomerEffectiveCapacityMultiplier(health, reliability, isBroken);
   const effectiveCap = Math.round(capacity * effectiveMult);
   const capacityStr = capacity > 0 ? (formatNumber(effectiveCap) + ' / ' + formatNumber(capacity)) : '—';
+  const purchaseYear = (groomer.installedDate && typeof groomer.installedDate.year === 'number') ? String(groomer.installedDate.year) : '—';
   return (
     '<button type="button" class="lift-popup-close-btn groomer-popup-close-btn" aria-label="Close" title="Close">×</button>' +
-    '<div class="lift-hover-popup-name groomer-popup-name-editable" data-groomer-index="' + String(groomerIndex) + '" title="Click to rename">' + name + '</div>' +
+    '<div class="lift-hover-popup-icon groomer-popup-icon" style="' + iconStyle + '"></div>' +
+    '<div class="lift-hover-popup-name lift-popup-name-editable groomer-popup-name-editable" data-groomer-index="' + String(groomerIndex) + '" title="Click to rename">' + name + '</div>' +
     (isBroken ? '<div class="lift-hover-popup-broken">Broken</div>' : '') +
     '<div class="lift-hover-popup-health" aria-label="Health ' + healthPct + '%">' +
-    '<span class="lift-hover-popup-health-label">Health</span>' +
+    '<span class="lift-hover-popup-health-label">Health:</span>' +
     '<div class="lift-hover-popup-health-track"><div class="lift-hover-popup-health-fill ' + zoneClass + '" style="width:' + healthPct + '%"></div></div>' +
     '<span class="lift-hover-popup-health-value">' + healthPct + '%</span></div>' +
-    serviceRow +
-    '<div class="lift-hover-popup-meta">Capacity: ' + capacityStr + '</div>'
+    '<div class="lift-hover-popup-meta">Purchased: ' + purchaseYear + '</div>' +
+    '<div class="lift-hover-popup-meta">Capacity: ' + capacityStr + '</div>' +
+    serviceRow
   );
 }
 
@@ -305,9 +328,12 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
     }
     return;
   }
-  if (!isGroomerPopupPinned) {
-    const groomerPopup = document.getElementById('groomerHoverPopup');
-    if (groomerPopup) { groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); lastHoveredGroomerIndex = null; }
+  const groomerPopupEl = document.getElementById('groomerHoverPopup');
+  if (groomerPopupEl) {
+    groomerPopupEl.hidden = true;
+    groomerPopupEl.setAttribute('aria-hidden', 'true');
+    lastHoveredGroomerIndex = null;
+    isGroomerPopupPinned = false;
   }
   lastHoveredLiftIndex = liftIndex;
   lastHoveredClientX = clientX;
@@ -347,9 +373,12 @@ function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
     }
     return;
   }
-  if (!isPopupPinned) {
-    const liftPopup = document.getElementById('liftHoverPopup');
-    if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
+  const liftPopupEl = document.getElementById('liftHoverPopup');
+  if (liftPopupEl) {
+    liftPopupEl.hidden = true;
+    liftPopupEl.setAttribute('aria-hidden', 'true');
+    lastHoveredLiftIndex = null;
+    isPopupPinned = false;
   }
   lastHoveredGroomerIndex = groomerIndex;
   lastHoveredGroomerClientX = clientX;
@@ -397,7 +426,21 @@ export function refreshLiftHoverPopupIfOpen() {
  */
 export function handleLiftPopupClick(e) {
   const popup = document.getElementById('liftHoverPopup');
-  if (!popup || popup.hidden || !isOperateTabActive()) return;
+  const groomerPopup = document.getElementById('groomerHoverPopup');
+  if (!isOperateTabActive()) return;
+  const insideLiftPopup = popup && popup.contains(e.target);
+  const insideGroomerPopup = groomerPopup && groomerPopup.contains(e.target);
+  const clickOnMapArea = e.target && e.target.closest && (e.target.closest('#drawCanvas') || e.target.closest('.canvas-wrapper'));
+  if (!insideLiftPopup && !insideGroomerPopup && !clickOnMapArea) {
+    isPopupPinned = false;
+    isGroomerPopupPinned = false;
+    if (popup) { popup.removeAttribute('data-pinned'); popup.hidden = true; popup.setAttribute('aria-hidden', 'true'); }
+    if (groomerPopup) { groomerPopup.removeAttribute('data-pinned'); groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); }
+    lastHoveredLiftIndex = null;
+    lastHoveredGroomerIndex = null;
+    return;
+  }
+  if (!popup || popup.hidden) return;
   const isInsidePopup = popup.contains(e.target);
 
   if (e.target && e.target.closest && e.target.closest('.lift-popup-close-btn')) {
@@ -436,6 +479,69 @@ export function handleLiftPopupClick(e) {
       isPopupPinned = true;
       popup.setAttribute('data-pinned', 'true');
     }
+  }
+
+  const sellBtn = e.target && e.target.closest && e.target.closest('.lift-popup-sell-btn');
+  if (sellBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const idx = parseInt(sellBtn.getAttribute('data-lift-index'), 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < state.lifts.length) {
+      const lift = state.lifts[idx];
+      const liftType = state.liftTypes.find((l) => l.id === lift.type) || state.liftTypes[0];
+      const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+      const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+      const lengthM = getLiftLengthM(a, b);
+      const baseCost = (liftType && liftType.base_cost != null) ? Number(liftType.base_cost) : 0;
+      const costPerMeter = (liftType && liftType.cost_per_meter != null) ? Number(liftType.cost_per_meter) : 0;
+      const initialInvestment = baseCost + costPerMeter * lengthM;
+      const health = Math.max(0, Math.min(100, lift.health ?? 100));
+      const saleValue = Math.round(0.15 * initialInvestment * (health / 100));
+      if (!window.confirm(`Sell this lift for ${formatCurrency(saleValue)}?`)) return;
+      state.budget += saleValue;
+      state.lifts.splice(idx, 1);
+      updateBudgetDisplay();
+      isPopupPinned = false;
+      popup.removeAttribute('data-pinned');
+      popup.hidden = true;
+      popup.setAttribute('aria-hidden', 'true');
+      lastHoveredLiftIndex = null;
+      refresh();
+    }
+    return;
+  }
+
+  const scrapBtn = e.target && e.target.closest && e.target.closest('.lift-popup-scrap-btn');
+  if (scrapBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const idx = parseInt(scrapBtn.getAttribute('data-lift-index'), 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < state.lifts.length) {
+      const lift = state.lifts[idx];
+      const liftType = state.liftTypes.find((l) => l.id === lift.type) || state.liftTypes[0];
+      const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+      const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+      const lengthM = getLiftLengthM(a, b);
+      const baseCost = (liftType && liftType.base_cost != null) ? Number(liftType.base_cost) : 0;
+      const costPerMeter = (liftType && liftType.cost_per_meter != null) ? Number(liftType.cost_per_meter) : 0;
+      const initialInvestment = baseCost + costPerMeter * lengthM;
+      const scrapCost = Math.round(0.1 * initialInvestment);
+      if (state.budget < scrapCost) {
+        window.alert(`Not enough budget to scrap this lift. Disposal cost: ${formatCurrency(scrapCost)}. Available: ${formatCurrency(state.budget)}.`);
+        return;
+      }
+      if (!window.confirm(`Scrap this broken lift? You will pay ${formatCurrency(scrapCost)} for disposal.`)) return;
+      state.budget -= scrapCost;
+      state.lifts.splice(idx, 1);
+      updateBudgetDisplay();
+      isPopupPinned = false;
+      popup.removeAttribute('data-pinned');
+      popup.hidden = true;
+      popup.setAttribute('aria-hidden', 'true');
+      lastHoveredLiftIndex = null;
+      refresh();
+    }
+    return;
   }
 
   const btn = e.target && e.target.closest && e.target.closest('.lift-popup-service-btn');
@@ -480,6 +586,7 @@ export function handleLiftPopupClick(e) {
   popup.hidden = true;
   popup.setAttribute('aria-hidden', 'true');
   lastHoveredLiftIndex = null;
+  refresh();
 }
 
 /**
@@ -487,7 +594,21 @@ export function handleLiftPopupClick(e) {
  */
 export function handleGroomerPopupClick(e) {
   const popup = document.getElementById('groomerHoverPopup');
-  if (!popup || popup.hidden || !isOperateTabActive()) return;
+  const liftPopup = document.getElementById('liftHoverPopup');
+  if (!isOperateTabActive()) return;
+  const insideLiftPopup = liftPopup && liftPopup.contains(e.target);
+  const insideGroomerPopup = popup && popup.contains(e.target);
+  const clickOnMapArea = e.target && e.target.closest && (e.target.closest('#drawCanvas') || e.target.closest('.canvas-wrapper'));
+  if (!insideLiftPopup && !insideGroomerPopup && !clickOnMapArea) {
+    isPopupPinned = false;
+    isGroomerPopupPinned = false;
+    if (liftPopup) { liftPopup.removeAttribute('data-pinned'); liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); }
+    if (popup) { popup.removeAttribute('data-pinned'); popup.hidden = true; popup.setAttribute('aria-hidden', 'true'); }
+    lastHoveredLiftIndex = null;
+    lastHoveredGroomerIndex = null;
+    return;
+  }
+  if (!popup || popup.hidden) return;
 
   if (e.target && e.target.closest && e.target.closest('.groomer-popup-close-btn')) {
     e.preventDefault();
@@ -526,6 +647,59 @@ export function handleGroomerPopupClick(e) {
       isGroomerPopupPinned = true;
       popup.setAttribute('data-pinned', 'true');
     }
+  }
+
+  const sellBtn = e.target && e.target.closest && e.target.closest('.groomer-popup-sell-btn');
+  if (sellBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const idx = parseInt(sellBtn.getAttribute('data-groomer-index'), 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < state.groomers.length) {
+      const groomer = state.groomers[idx];
+      const groomerType = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId);
+      const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
+      const health = Math.max(0, Math.min(100, groomer.health ?? 100));
+      const saleValue = Math.round(0.15 * purchaseCost * (health / 100));
+      if (!window.confirm(`Sell this groomer for ${formatCurrency(saleValue)}?`)) return;
+      state.budget += saleValue;
+      state.groomers.splice(idx, 1);
+      updateBudgetDisplay();
+      isGroomerPopupPinned = false;
+      popup.removeAttribute('data-pinned');
+      popup.hidden = true;
+      popup.setAttribute('aria-hidden', 'true');
+      lastHoveredGroomerIndex = null;
+      refresh();
+    }
+    return;
+  }
+
+  const scrapBtn = e.target && e.target.closest && e.target.closest('.groomer-popup-scrap-btn');
+  if (scrapBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const idx = parseInt(scrapBtn.getAttribute('data-groomer-index'), 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < state.groomers.length) {
+      const groomer = state.groomers[idx];
+      const groomerType = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId);
+      const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
+      const scrapCost = Math.round(0.1 * purchaseCost);
+      if (state.budget < scrapCost) {
+        window.alert(`Not enough budget to scrap this groomer. Disposal cost: ${formatCurrency(scrapCost)}. Available: ${formatCurrency(state.budget)}.`);
+        return;
+      }
+      if (!window.confirm(`Scrap this broken groomer? You will pay ${formatCurrency(scrapCost)} for disposal.`)) return;
+      state.budget -= scrapCost;
+      state.groomers.splice(idx, 1);
+      updateBudgetDisplay();
+      isGroomerPopupPinned = false;
+      popup.removeAttribute('data-pinned');
+      popup.hidden = true;
+      popup.setAttribute('aria-hidden', 'true');
+      lastHoveredGroomerIndex = null;
+      refresh();
+    }
+    return;
   }
 
   const btn = e.target && e.target.closest && e.target.closest('.groomer-popup-service-btn');
@@ -718,21 +892,25 @@ export function onCanvasClick(e) {
   if (isOperateTabActive()) {
     const pt = canvasToImage(x, y);
     const groomerIdx = getGroomerIndexAtImage(pt.x, pt.y);
+    const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
+    const placingLiftTop = state.mode === 'lift' && state.liftBottom && !state.liftTop;
     const groomerPopup = document.getElementById('groomerHoverPopup');
     if (groomerPopup && !groomerPopup.hidden && !isGroomerPopupPinned && groomerIdx >= 0) {
       isGroomerPopupPinned = true;
       groomerPopup.setAttribute('data-pinned', 'true');
+      e.stopPropagation();
       return;
     }
     const popup = document.getElementById('liftHoverPopup');
-    if (popup && !popup.hidden && !isPopupPinned) {
-      const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
-      const placingLiftTop = state.mode === 'lift' && state.liftBottom && !state.liftTop;
-      if (liftIdx >= 0 && !placingLiftTop) {
-        isPopupPinned = true;
-        popup.setAttribute('data-pinned', 'true');
-        return;
-      }
+    if (popup && !popup.hidden && !isPopupPinned && liftIdx >= 0 && !placingLiftTop) {
+      isPopupPinned = true;
+      popup.setAttribute('data-pinned', 'true');
+      e.stopPropagation();
+      return;
+    }
+    if (liftIdx < 0 && groomerIdx < 0) {
+      hideLiftHoverPopup();
+      hideGroomerHoverPopup();
     }
   }
 

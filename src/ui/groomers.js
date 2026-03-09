@@ -17,7 +17,7 @@ const GROOMER_IMAGE_URLS = {
   'PistenBully_170.png': groomerPb170,
 };
 
-function getGroomerImageUrl(groomer) {
+export function getGroomerImageUrl(groomer) {
   const filename = groomer && groomer.image;
   return (filename && GROOMER_IMAGE_URLS[filename]) || '';
 }

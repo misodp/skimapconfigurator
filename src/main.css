@@ -980,8 +980,13 @@ button:hover {
   cursor: pointer;
 }
 
-.lift-hover-popup .lift-popup-name-editable:hover {
+.lift-hover-popup .lift-popup-name-editable:hover,
+.lift-hover-popup .groomer-popup-name-editable:hover {
   text-decoration: underline;
+}
+
+.lift-hover-popup .groomer-popup-name-editable {
+  cursor: pointer;
 }
 
 .lift-hover-popup .lift-hover-popup-meta {
@@ -1056,7 +1061,7 @@ button:hover {
 }
 
 .lift-hover-popup .lift-hover-popup-service {
-  margin: 0.35rem 0 0.2rem;
+  margin: 0.35rem 0 0;
 }
 
 .lift-hover-popup .lift-popup-service-btn {
@@ -1072,11 +1077,34 @@ button:hover {
 }
 
 .lift-hover-popup .lift-popup-service-btn:hover,
-.lift-hover-popup .groomer-popup-service-btn:hover {
+.lift-hover-popup .groomer-popup-service-btn:hover,
+.lift-hover-popup .lift-popup-sell-btn:hover,
+.lift-hover-popup .lift-popup-scrap-btn:hover,
+.lift-hover-popup .groomer-popup-sell-btn:hover,
+.lift-hover-popup .groomer-popup-scrap-btn:hover {
   background: var(--surface-hover, rgba(255, 255, 255, 0.12));
 }
 
-.lift-hover-popup .groomer-popup-service-btn {
+.lift-hover-popup .lift-popup-sell-btn,
+.lift-hover-popup .lift-popup-scrap-btn {
+  width: 100%;
+  padding: 0.25rem 0.4rem;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: var(--text);
+  background: var(--surface-elevated, rgba(255, 255, 255, 0.08));
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+.lift-hover-popup .groomer-popup-service-btn,
+.lift-hover-popup .groomer-popup-sell-btn,
+.lift-hover-popup .groomer-popup-scrap-btn {
   width: 100%;
   padding: 0.25rem 0.4rem;
   font-size: 0.7rem;
@@ -1092,11 +1120,21 @@ button:hover {
   gap: 0.2rem;
 }
 
-.lift-hover-popup .groomer-popup-service-btn .lift-popup-skidollar-icon {
+.lift-hover-popup .groomer-popup-service-btn .lift-popup-skidollar-icon,
+.lift-hover-popup .lift-popup-sell-btn .lift-popup-skidollar-icon,
+.lift-hover-popup .lift-popup-scrap-btn .lift-popup-skidollar-icon,
+.lift-hover-popup .groomer-popup-sell-btn .lift-popup-skidollar-icon,
+.lift-hover-popup .groomer-popup-scrap-btn .lift-popup-skidollar-icon {
   width: 0.9em;
   height: 0.9em;
   vertical-align: -0.15em;
   margin: 0 0.1em;
+}
+
+.lift-hover-popup .lift-hover-popup-service {
+  display: flex;
+  flex-direction: column;
+  gap: 0.12rem;
 }
 
 .mountain-image-wrap {
