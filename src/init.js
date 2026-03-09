@@ -5,6 +5,10 @@
 import cottageIconUrl from '../assets/images/cottage.png';
 import spriteSheetUrl from '../assets/images/SpriteSheet.png';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
+import animalsH1Url from '../assets/images/skiers/animals_h1.png';
+import animalsH2Url from '../assets/images/skiers/animals_h2.png';
+import animalsA1Url from '../assets/images/skiers/animals_a1.png';
+import animalsA2Url from '../assets/images/skiers/animals_a2.png';
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
@@ -15,6 +19,7 @@ import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './u
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
 import { renderGroomerTypeDropdown, getGroomerImageUrls } from './ui/groomers.js';
 import { updateMountainImage } from './mountain-images.js';
+import { initNewsFeed } from './news-feed.js';
 
 function setMode(mode) {
   state.mode = mode;
@@ -318,6 +323,7 @@ export function init() {
   loadSpriteSheet();
   loadCottageIcon();
   loadGroomerImages();
+  initNewsFeed([animalsH1Url, animalsH2Url], [animalsA1Url, animalsA2Url]);
   renderLiftTypeDropdown();
   renderSlopeTypeButtons();
   renderGroomerTypeDropdown();

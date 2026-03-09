@@ -15,6 +15,7 @@ import { updateMountainImage } from './mountain-images.js';
 import { updateMaintenance, getEffectiveLiftCapacity, getEffectiveGroomingCapacity } from './maintenance_simulator';
 import { refreshLiftHoverPopupIfOpen, refreshGroomerHoverPopupIfOpen } from './canvas.js';
 import { draw } from './draw.js';
+import { updateNewsFeed } from './news-feed.js';
 
 const BASE_TICK_MS = 3000; // one game day per 3 seconds at 1x
 
@@ -101,6 +102,7 @@ export function updateDateDisplay(): void {
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
 let lastRenderedDropdownYear: number | null = null;
+let simulationTickCount = 0;
 
 function getIntervalMsFromSpeed(): number | null {
   const speed = Number.isFinite(state.simulationSpeed) ? Math.max(0, Math.min(3, state.simulationSpeed)) : 1;
@@ -121,6 +123,7 @@ function startLoopWithCurrentSpeed() {
   if (intervalMs == null) return; // paused
   intervalId = setInterval(() => {
     advanceDay(); // always one in‑game day per tick
+    simulationTickCount += 1;
     updateDateDisplay();
     updateWeatherDisplay();
     updateMountainImage();
@@ -130,6 +133,7 @@ function startLoopWithCurrentSpeed() {
     updateExperienceDisplay();
     updateSatisfactionDisplay();
     updateBudgetDisplay();
+    updateNewsFeed(simulationTickCount);
     const year = state.currentDate.year;
     if (lastRenderedDropdownYear !== year) {
       lastRenderedDropdownYear = year;
