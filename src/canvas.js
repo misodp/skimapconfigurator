@@ -14,7 +14,7 @@ import { refresh, updateBudgetDisplay } from './config.js';
 import { formatCurrency, escapeHtml, formatNumber } from './utils.js';
 import { updateCancelLiftButton } from './ui/lifts.js';
 import { COLS, ROWS } from './constants';
-import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier } from './maintenance_simulator';
+import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier, getGroomerHealthZone, getGroomerServiceCost, getGroomerEffectiveCapacityMultiplier } from './maintenance_simulator';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
 
 const PEN_SMOOTH_SAMPLES = 24;
@@ -22,6 +22,8 @@ const PEN_MIN_DIST_SQ = 16;
 const SNAP_DIST_SQ = 50 * 50;
 /** Image-space distance threshold (px) to consider cursor over a lift line. */
 const LIFT_HOVER_THRESHOLD_SQ = 24 * 24;
+/** Image-space radius (px) to consider cursor over a groomer icon. */
+const GROOMER_HOVER_RADIUS_SQ = 35 * 35;
 
 /** True when Invest tab is active; false when Operate (Statistics) tab is active. Building is only allowed in Invest. */
 function isInvestTabActive() {
@@ -183,6 +185,18 @@ function getLiftIndexAtImage(px, py) {
   return bestIdx;
 }
 
+/** Return index of groomer at image point (px, py), or -1 if none within radius. */
+function getGroomerIndexAtImage(px, py) {
+  for (let i = 0; i < state.groomers.length; i++) {
+    const g = state.groomers[i];
+    const pos = fromNormalized(g.position.x, g.position.y);
+    const dx = px - pos.x;
+    const dy = py - pos.y;
+    if (dx * dx + dy * dy <= GROOMER_HOVER_RADIUS_SQ) return i;
+  }
+  return -1;
+}
+
 function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
   const name = escapeHtml(lift.name || 'Lift');
   const speedStr = liftType && liftType.speed != null ? formatNumber(liftType.speed) + ' m/s' : '—';
@@ -234,10 +248,50 @@ function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
   );
 }
 
+function getGroomerPopupHtml(groomer, groomerType, groomerIndex) {
+  const name = escapeHtml(groomer.name || groomerType?.name || 'Groomer');
+  const health = Math.max(0, Math.min(100, groomer.health ?? 100));
+  const healthPct = Math.round(health);
+  const reliability = (groomerType && groomerType.reliability != null) ? Number(groomerType.reliability) : 0.9;
+  const zone = getGroomerHealthZone(health, reliability);
+  const isBroken = groomer.broken === true;
+  const zoneClass = 'lift-hover-popup-health-fill--' + (isBroken ? 'critical' : zone);
+  const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
+  const repairCost = (isBroken && groomer.repairCost != null) ? Number(groomer.repairCost) : 0;
+  const serviceCost = !isBroken && health < 100 ? getGroomerServiceCost(health, purchaseCost) : 0;
+  let serviceRow = '';
+  if (isBroken && repairCost > 0) {
+    serviceRow = '<div class="lift-hover-popup-service">' +
+      '<button type="button" class="groomer-popup-service-btn" data-groomer-index="' + String(groomerIndex) + '" data-repair="true" title="Repair broken groomer">Repair – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(repairCost)) + '</button></div>';
+  } else if (!isBroken && health < 100 && serviceCost > 0) {
+    serviceRow = '<div class="lift-hover-popup-service">' +
+      '<button type="button" class="groomer-popup-service-btn" data-groomer-index="' + String(groomerIndex) + '" title="Restore groomer to 100% health">Service – <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(serviceCost)) + '</button></div>';
+  }
+  const capacity = (groomerType && groomerType.grooming_capacity != null) ? Number(groomerType.grooming_capacity) : 0;
+  const effectiveMult = getGroomerEffectiveCapacityMultiplier(health, reliability, isBroken);
+  const effectiveCap = Math.round(capacity * effectiveMult);
+  const capacityStr = capacity > 0 ? (formatNumber(effectiveCap) + ' / ' + formatNumber(capacity)) : '—';
+  return (
+    '<button type="button" class="lift-popup-close-btn groomer-popup-close-btn" aria-label="Close" title="Close">×</button>' +
+    '<div class="lift-hover-popup-name groomer-popup-name-editable" data-groomer-index="' + String(groomerIndex) + '" title="Click to rename">' + name + '</div>' +
+    (isBroken ? '<div class="lift-hover-popup-broken">Broken</div>' : '') +
+    '<div class="lift-hover-popup-health" aria-label="Health ' + healthPct + '%">' +
+    '<span class="lift-hover-popup-health-label">Health</span>' +
+    '<div class="lift-hover-popup-health-track"><div class="lift-hover-popup-health-fill ' + zoneClass + '" style="width:' + healthPct + '%"></div></div>' +
+    '<span class="lift-hover-popup-health-value">' + healthPct + '%</span></div>' +
+    serviceRow +
+    '<div class="lift-hover-popup-meta">Capacity: ' + capacityStr + '</div>'
+  );
+}
+
 let lastHoveredLiftIndex = null;
+let lastHoveredGroomerIndex = null;
 let lastHoveredClientX = 0;
 let lastHoveredClientY = 0;
+let lastHoveredGroomerClientX = 0;
+let lastHoveredGroomerClientY = 0;
 let isPopupPinned = false;
+let isGroomerPopupPinned = false;
 
 function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   const popup = document.getElementById('liftHoverPopup');
@@ -250,6 +304,10 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
       lastHoveredLiftIndex = null;
     }
     return;
+  }
+  if (!isGroomerPopupPinned) {
+    const groomerPopup = document.getElementById('groomerHoverPopup');
+    if (groomerPopup) { groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); lastHoveredGroomerIndex = null; }
   }
   lastHoveredLiftIndex = liftIndex;
   lastHoveredClientX = clientX;
@@ -275,6 +333,54 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
     if (rect.left < 0) popup.style.left = offsetX + 'px';
     if (rect.top < 0) popup.style.top = offsetY + 'px';
   }
+}
+
+function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
+  const popup = document.getElementById('groomerHoverPopup');
+  if (!popup) return;
+  if (!isOperateTabActive()) return;
+  if (groomerIndex == null || groomerIndex < 0 || groomerIndex >= state.groomers.length) {
+    if (!isGroomerPopupPinned) {
+      popup.hidden = true;
+      popup.setAttribute('aria-hidden', 'true');
+      lastHoveredGroomerIndex = null;
+    }
+    return;
+  }
+  if (!isPopupPinned) {
+    const liftPopup = document.getElementById('liftHoverPopup');
+    if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
+  }
+  lastHoveredGroomerIndex = groomerIndex;
+  lastHoveredGroomerClientX = clientX;
+  lastHoveredGroomerClientY = clientY;
+  const groomer = state.groomers[groomerIndex];
+  const groomerType = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId) || state.groomerTypes[0];
+  popup.innerHTML = getGroomerPopupHtml(groomer, groomerType, groomerIndex);
+  popup.hidden = false;
+  popup.removeAttribute('aria-hidden');
+  if (!isGroomerPopupPinned) {
+    const offsetX = 4;
+    const offsetY = 16;
+    popup.style.left = (clientX + offsetX) + 'px';
+    popup.style.top = (clientY + offsetY) + 'px';
+    const rect = popup.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (rect.right > vw) popup.style.left = (clientX - rect.width - offsetX) + 'px';
+    if (rect.bottom > vh) popup.style.top = (clientY - rect.height - offsetY) + 'px';
+    if (rect.left < 0) popup.style.left = offsetX + 'px';
+    if (rect.top < 0) popup.style.top = offsetY + 'px';
+  }
+}
+
+/**
+ * Refresh the groomer hover popup content if it is currently visible.
+ */
+export function refreshGroomerHoverPopupIfOpen() {
+  const popup = document.getElementById('groomerHoverPopup');
+  if (!popup || popup.hidden || lastHoveredGroomerIndex == null) return;
+  updateGroomerHoverPopup(lastHoveredGroomerIndex, lastHoveredGroomerClientX, lastHoveredGroomerClientY);
 }
 
 /**
@@ -377,6 +483,92 @@ export function handleLiftPopupClick(e) {
 }
 
 /**
+ * Handle click on groomer popup (close, rename, service, repair). Use event delegation from document.
+ */
+export function handleGroomerPopupClick(e) {
+  const popup = document.getElementById('groomerHoverPopup');
+  if (!popup || popup.hidden || !isOperateTabActive()) return;
+
+  if (e.target && e.target.closest && e.target.closest('.groomer-popup-close-btn')) {
+    e.preventDefault();
+    e.stopPropagation();
+    isGroomerPopupPinned = false;
+    popup.removeAttribute('data-pinned');
+    popup.hidden = true;
+    popup.setAttribute('aria-hidden', 'true');
+    lastHoveredGroomerIndex = null;
+    return;
+  }
+
+  const nameEl = e.target && e.target.closest && e.target.closest('.groomer-popup-name-editable');
+  if (nameEl) {
+    e.preventDefault();
+    e.stopPropagation();
+    const idx = parseInt(nameEl.getAttribute('data-groomer-index'), 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < state.groomers.length) {
+      const groomer = state.groomers[idx];
+      const typeLabel = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId)?.name || 'Groomer';
+      const current = groomer.name || typeLabel + ' ' + (idx + 1);
+      const newName = window.prompt('Groomer name', current);
+      if (newName !== null && groomer) {
+        groomer.name = newName.trim() || (typeLabel + ' ' + (idx + 1));
+        refresh();
+        refreshGroomerHoverPopupIfOpen();
+      }
+    }
+    return;
+  }
+
+  if (popup.contains(e.target)) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isGroomerPopupPinned) {
+      isGroomerPopupPinned = true;
+      popup.setAttribute('data-pinned', 'true');
+    }
+  }
+
+  const btn = e.target && e.target.closest && e.target.closest('.groomer-popup-service-btn');
+  if (!btn) return;
+  const idx = parseInt(btn.getAttribute('data-groomer-index'), 10);
+  if (Number.isNaN(idx) || idx < 0 || idx >= state.groomers.length) return;
+  const groomer = state.groomers[idx];
+  const groomerType = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId);
+  const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
+  const isRepair = groomer.broken === true;
+  let cost = 0;
+  if (isRepair) {
+    cost = (groomer.repairCost != null) ? Number(groomer.repairCost) : 0;
+    if (cost <= 0) return;
+    if (state.budget < cost) {
+      window.alert(`Not enough budget to repair this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      return;
+    }
+    state.budget -= cost;
+    groomer.broken = false;
+    groomer.repairCost = undefined;
+    groomer.health = 100;
+  } else {
+    const health = Math.max(0, Math.min(100, groomer.health ?? 100));
+    cost = getGroomerServiceCost(health, purchaseCost);
+    if (cost <= 0) return;
+    if (state.budget < cost) {
+      window.alert(`Not enough budget to service this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      return;
+    }
+    state.budget -= cost;
+    groomer.health = 100;
+  }
+  updateBudgetDisplay();
+  isGroomerPopupPinned = false;
+  popup.removeAttribute('data-pinned');
+  popup.hidden = true;
+  popup.setAttribute('aria-hidden', 'true');
+  lastHoveredGroomerIndex = null;
+  refresh();
+}
+
+/**
  * Pin the lift popup so it stops following the cursor. Call when the cursor enters the popup
  * so the user can click the Service button without the menu moving away.
  */
@@ -397,6 +589,18 @@ export function hideLiftHoverPopup() {
     popup.hidden = true;
     popup.setAttribute('aria-hidden', 'true');
     lastHoveredLiftIndex = null;
+  }
+}
+
+export function hideGroomerHoverPopup() {
+  const popup = document.getElementById('groomerHoverPopup');
+  if (!popup) return;
+  if (!isOperateTabActive() || !isGroomerPopupPinned) {
+    isGroomerPopupPinned = false;
+    popup.removeAttribute('data-pinned');
+    popup.hidden = true;
+    popup.setAttribute('aria-hidden', 'true');
+    lastHoveredGroomerIndex = null;
   }
 }
 
@@ -435,11 +639,26 @@ export function onCanvasMouseMove(e) {
   }
   if (!isOperateTabActive()) {
     hideLiftHoverPopup();
+    hideGroomerHoverPopup();
     return;
   }
-  if (isPopupPinned) return;
+  if (isPopupPinned && isGroomerPopupPinned) return;
+  const groomerIdx = getGroomerIndexAtImage(pt.x, pt.y);
+  if (groomerIdx >= 0 && !isGroomerPopupPinned) {
+    updateGroomerHoverPopup(groomerIdx, e.clientX, e.clientY);
+    if (!isPopupPinned) {
+      const liftPopup = document.getElementById('liftHoverPopup');
+      if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
+    }
+    return;
+  }
+  if (isGroomerPopupPinned) return;
   const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
   updateLiftHoverPopup(liftIdx, e.clientX, e.clientY);
+  if (liftIdx < 0 && !isPopupPinned) {
+    const groomerPopup = document.getElementById('groomerHoverPopup');
+    if (groomerPopup) { groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); lastHoveredGroomerIndex = null; }
+  }
 }
 
 export function onCanvasMouseUp() {
@@ -497,9 +716,16 @@ export function onCanvasClick(e) {
   const { x, y } = getCanvasPoint(e);
 
   if (isOperateTabActive()) {
+    const pt = canvasToImage(x, y);
+    const groomerIdx = getGroomerIndexAtImage(pt.x, pt.y);
+    const groomerPopup = document.getElementById('groomerHoverPopup');
+    if (groomerPopup && !groomerPopup.hidden && !isGroomerPopupPinned && groomerIdx >= 0) {
+      isGroomerPopupPinned = true;
+      groomerPopup.setAttribute('data-pinned', 'true');
+      return;
+    }
     const popup = document.getElementById('liftHoverPopup');
     if (popup && !popup.hidden && !isPopupPinned) {
-      const pt = canvasToImage(x, y);
       const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
       const placingLiftTop = state.mode === 'lift' && state.liftBottom && !state.liftTop;
       if (liftIdx >= 0 && !placingLiftTop) {
@@ -572,9 +798,11 @@ export function onCanvasClick(e) {
       return;
     }
     state.budget -= cost;
+    const nextNum = state.groomers.length + 1;
     state.groomers.push({
       position: norm,
       groomerTypeId: typeId,
+      name: `Groomer ${nextNum}`,
       health: 100,
       installedDate: { ...state.currentDate },
     });

@@ -6,7 +6,7 @@
 import { state, DOM, getSlopeType, getDiffColor } from './state';
 import { fromNormalized, getLiftLengthM, getSlopePathLengthM, getSlopeCost } from './geometry.js';
 import { formatNumber, formatCurrency } from './utils.js';
-import { getLiftHealthZone } from './maintenance_simulator';
+import { getLiftHealthZone, getGroomerHealthZone } from './maintenance_simulator';
 
 const LIFT_LINE_WIDTH = 3;
 const LIFT_DOT_RADIUS = 5;
@@ -318,8 +318,16 @@ function drawCottages(ctx, scaleX, scaleY) {
   });
 }
 
+const GROOMER_HEALTH_DOT_RADIUS = 5;
+const GROOMER_HEALTH_COLOR = {
+  healthy: '#22c55e',
+  warning: '#eab308',
+  critical: '#dc2626',
+};
+
 function drawGroomers(ctx, scaleX, scaleY) {
   const groomerImages = state.groomerImages;
+  const showHealthDot = isOperateTabActive();
   state.groomers.forEach((groomer) => {
     const pos = fromNormalized(groomer.position.x, groomer.position.y);
     const cx = pos.x * scaleX;
@@ -331,6 +339,29 @@ function drawGroomers(ctx, scaleX, scaleY) {
       const w = GROOMER_ICON_SIZE;
       const h = (img.naturalHeight / img.naturalWidth) * w;
       ctx.drawImage(img, -w / 2, -h / 2, w, h);
+      if (showHealthDot) {
+        const groomerType = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId);
+        const rel = (groomerType && groomerType.reliability != null) ? Number(groomerType.reliability) : 0.9;
+        const zone = getGroomerHealthZone(Math.max(0, Math.min(100, groomer.health ?? 100)), rel);
+        const dotColor = groomer.broken ? GROOMER_HEALTH_COLOR.critical : (GROOMER_HEALTH_COLOR[zone] ?? GROOMER_HEALTH_COLOR.healthy);
+        const dotY = -h / 2 - GROOMER_HEALTH_DOT_RADIUS - 2;
+        ctx.fillStyle = dotColor;
+        ctx.beginPath();
+        ctx.arc(0, dotY, GROOMER_HEALTH_DOT_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+        if (groomer.broken) {
+          const r = GROOMER_HEALTH_DOT_RADIUS * 0.75;
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 1.5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-r, dotY - r);
+          ctx.lineTo(r, dotY + r);
+          ctx.moveTo(r, dotY - r);
+          ctx.lineTo(-r, dotY + r);
+          ctx.stroke();
+        }
+      }
       ctx.restore();
     } else {
       ctx.save();
@@ -340,6 +371,29 @@ function drawGroomers(ctx, scaleX, scaleY) {
       ctx.lineWidth = 2;
       ctx.fillRect(-12, -10, 24, 20);
       ctx.strokeRect(-12, -10, 24, 20);
+      if (showHealthDot) {
+        const groomerType = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId);
+        const rel = (groomerType && groomerType.reliability != null) ? Number(groomerType.reliability) : 0.9;
+        const zone = getGroomerHealthZone(Math.max(0, Math.min(100, groomer.health ?? 100)), rel);
+        const dotColor = groomer.broken ? GROOMER_HEALTH_COLOR.critical : (GROOMER_HEALTH_COLOR[zone] ?? GROOMER_HEALTH_COLOR.healthy);
+        const dotY = -14;
+        ctx.fillStyle = dotColor;
+        ctx.beginPath();
+        ctx.arc(0, dotY, GROOMER_HEALTH_DOT_RADIUS, 0, Math.PI * 2);
+        ctx.fill();
+        if (groomer.broken) {
+          const r = GROOMER_HEALTH_DOT_RADIUS * 0.75;
+          ctx.strokeStyle = '#000';
+          ctx.lineWidth = 1.5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-r, dotY - r);
+          ctx.lineTo(r, dotY + r);
+          ctx.moveTo(r, dotY - r);
+          ctx.lineTo(-r, dotY + r);
+          ctx.stroke();
+        }
+      }
       ctx.restore();
     }
   });

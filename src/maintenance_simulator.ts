@@ -151,29 +151,96 @@ export function getEffectiveLiftCapacity(): number {
   return total;
 }
 
+/** Groomer health zones (same display as lifts). */
+export type GroomerHealthZone = 'healthy' | 'warning' | 'critical';
+
 /**
- * Daily health degradation for a groomer (same formula, different visitor scaling if desired).
+ * Warning and critical health thresholds for groomers (same formula as lifts).
+ */
+export function getGroomerHealthThresholds(reliability: number): { warning: number; critical: number } {
+  const rel = Math.max(0.1, Math.min(1, reliability ?? 0.9));
+  const warning = Math.max(50, Math.min(85, 70 + (0.85 - rel) * (20 / 0.13)));
+  const critical = Math.max(10, Math.min(50, 35 + (0.85 - rel) * (25 / 0.13)));
+  return { warning, critical };
+}
+
+export function getGroomerHealthZone(health: number, reliability: number): GroomerHealthZone {
+  const { warning, critical } = getGroomerHealthThresholds(reliability);
+  if (health >= warning) return 'healthy';
+  if (health >= critical) return 'warning';
+  return 'critical';
+}
+
+/**
+ * Effective grooming capacity multiplier: 0 when broken; otherwise scales with health like lifts.
+ */
+export function getGroomerEffectiveCapacityMultiplier(health: number, reliability: number, broken: boolean): number {
+  if (broken) return 0;
+  const { warning } = getGroomerHealthThresholds(reliability);
+  const h = Math.max(0, Math.min(100, health));
+  if (h >= warning) return 1;
+  if (warning <= 0) return 1;
+  return 0.5 + 0.5 * (h / warning);
+}
+
+/**
+ * Total effective grooming capacity (for slope quality and load-based wear).
+ */
+export function getEffectiveGroomingCapacity(): number {
+  let total = 0;
+  for (const g of state.groomers) {
+    const type = state.groomerTypes.find((t) => t.id === g.groomerTypeId);
+    if (!type || type.grooming_capacity == null) continue;
+    const cap = Number(type.grooming_capacity) || 0;
+    const rel = (type as { reliability?: number }).reliability != null
+      ? Number((type as { reliability?: number }).reliability)
+      : 0.9;
+    const mult = getGroomerEffectiveCapacityMultiplier(g.health ?? 100, rel, g.broken ?? false);
+    total += cap * mult;
+  }
+  return total;
+}
+
+/**
+ * Service cost to restore a groomer to 100% health (same formula as lifts).
+ */
+export function getGroomerServiceCost(health: number, initialInvestment: number): number {
+  const h = Math.max(0, Math.min(100, health));
+  if (h >= 100) return 0;
+  const wear = (100 - h) / 100;
+  return Math.round(0.5 * initialInvestment * wear);
+}
+
+/**
+ * Daily health degradation for a groomer: age, reliability, weather, and load factor.
+ * When slopes demand exceeds effective groomer capacity (loadFactor > 1), wear increases.
  */
 export function getGroomerDailyDegradation(
   installedDate: SimulationDate | undefined,
   reliability: number,
-  _dailyVisitors: number
+  loadFactor: number
 ): number {
   const rel = Math.max(0.1, Math.min(1, reliability || 0.9));
   const reliabilityFactor = 1 / rel;
   const ageDays = installedDate ? daysBetween(installedDate, state.currentDate) : 0;
   const ageFactor = 1 + ageDays / 3650;
   const weatherFactor = WEATHER_DEGRADATION_FACTOR[state.currentWeather] ?? 1;
-  return BASE_DEGRADATION_PER_DAY * reliabilityFactor * ageFactor * weatherFactor;
+  const load = Math.max(0.5, Math.min(3, loadFactor));
+  return BASE_DEGRADATION_PER_DAY * reliabilityFactor * ageFactor * weatherFactor * load;
 }
 
 /**
  * Apply one day of maintenance: update health for all lifts and groomers.
- * Lifts in critical health can break down (1–20% daily chance by reliability); satisfaction −20.
+ * Lifts/groomers in critical health can break down; satisfaction −20.
+ * groomingDemand: total grooming demand (from experience-simulator); used for groomer load factor.
  * Call once per simulation day.
  */
-export function updateMaintenance(): void {
+export function updateMaintenance(groomingDemand?: number): void {
   const visitors = state.dailyVisitors;
+  const effectiveGroomingCap = getEffectiveGroomingCapacity();
+  const groomerLoadFactor = (groomingDemand != null && effectiveGroomingCap > 0)
+    ? groomingDemand / effectiveGroomingCap
+    : 1;
 
   for (const lift of state.lifts) {
     if (lift.broken) continue;
@@ -203,12 +270,25 @@ export function updateMaintenance(): void {
   }
 
   for (const groomer of state.groomers) {
+    if (groomer.broken) continue;
     const type = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId);
     const reliability = (type && (type as { reliability?: number }).reliability != null)
       ? Number((type as { reliability?: number }).reliability)
       : 0.9;
+    const purchaseCost = (type && (type as { purchase_cost?: number }).purchase_cost != null)
+      ? Number((type as { purchase_cost?: number }).purchase_cost)
+      : 0;
     const current = Math.max(0, Math.min(100, groomer.health ?? 100));
-    const degradation = getGroomerDailyDegradation(groomer.installedDate, reliability, visitors);
+    const degradation = getGroomerDailyDegradation(groomer.installedDate, reliability, groomerLoadFactor);
     groomer.health = Math.max(0, Math.min(100, current - degradation));
+
+    const zone = getGroomerHealthZone(groomer.health ?? 0, reliability);
+    if (zone === 'critical') {
+      const chance = getBreakdownChance(reliability);
+      if (Math.random() < chance) {
+        groomer.broken = true;
+        groomer.repairCost = getRepairCostRange(purchaseCost);
+      }
+    }
   }
 }

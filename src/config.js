@@ -168,7 +168,8 @@ export function renderLists() {
       .map(
         (g, i) => {
           const typeLabel = (state.groomerTypes.find((t) => t.id === g.groomerTypeId) || {}).name || g.groomerTypeId || 'Groomer';
-          return `<li><span class="groomer-list-name" title="${escapeHtml(typeLabel)}">${escapeHtml(typeLabel)} ${i + 1}</span> <button type="button" class="remove-btn" data-type="groomer" data-idx="${i}">Remove</button></li>`;
+          const displayName = g.name || `${typeLabel} ${i + 1}`;
+          return `<li><span class="groomer-list-name" title="${escapeHtml(displayName)}">${escapeHtml(displayName)}</span> <button type="button" class="remove-btn" data-type="groomer" data-idx="${i}">Remove</button></li>`;
         }
       )
       .join('');
@@ -298,13 +299,16 @@ export function onConfigImported(e) {
         name: c.name || `Cottage ${i + 1}`,
       }));
       const defaultGroomerId = state.groomerTypes[0] ? state.groomerTypes[0].id : null;
-      state.groomers = (config.groomers ?? []).map((g) => ({
+      state.groomers = (config.groomers ?? []).map((g, i) => ({
         position: g.position,
         groomerTypeId: (state.groomerTypes.some((t) => t.id === g.groomerTypeId) && g.groomerTypeId) ? g.groomerTypeId : defaultGroomerId,
+        name: g.name || `Groomer ${i + 1}`,
         health: Math.max(0, Math.min(100, g.health ?? 100)),
         installedDate: g.installedDate && typeof g.installedDate.year === 'number'
           ? { year: g.installedDate.year, month: g.installedDate.month ?? 1, day: g.installedDate.day ?? 1 }
           : { ...state.currentDate },
+        broken: g.broken === true ? true : undefined,
+        repairCost: typeof g.repairCost === 'number' && g.repairCost > 0 ? g.repairCost : undefined,
       }));
 
       // Full game state (only when present, for backward compatibility with old saves)

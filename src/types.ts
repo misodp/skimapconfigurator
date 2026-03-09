@@ -87,10 +87,15 @@ export interface PlacedCottage {
 export interface PlacedGroomer {
   position: NormalizedPoint;
   groomerTypeId: string;
+  name?: string;
   /** Health 0–100; degrades over time. */
   health?: number;
   /** Date when this groomer was installed (for age-based degradation). */
   installedDate?: SimulationDate;
+  /** True when groomer has broken down; effective capacity 0 until repaired. */
+  broken?: boolean;
+  /** Repair cost when broken; set at breakdown. */
+  repairCost?: number;
 }
 
 export interface ImagePoint {

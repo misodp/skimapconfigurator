@@ -177,6 +177,7 @@
         "purchase_cost": 12000,
         "base_operating_cost": 120,
         "grooming_capacity": 10,
+        "reliability": 0.82,
         "speed": 12,
         "description": "Majhen in okreten. Idealen za ozke gozdne poti in začetniške proge."
       },
@@ -189,6 +190,7 @@
         "purchase_cost": 18500,
         "base_operating_cost": 160,
         "grooming_capacity": 18,
+        "reliability": 0.88,
         "speed": 15,
         "description": "Švicarska vzdržljivost. Odličen za delo v ekstremnem mrazu in srednje zahtevne terene."
       },
@@ -201,6 +203,7 @@
         "purchase_cost": 28000,
         "base_operating_cost": 240,
         "grooming_capacity": 32,
+        "reliability": 0.94,
         "speed": 18,
         "description": "Stroj, ki je spremenil vse. Prva izbira za hitro urejanje glavnih smučišč."
       },
@@ -213,6 +216,7 @@
         "purchase_cost": 36000,
         "base_operating_cost": 310,
         "grooming_capacity": 45,
+        "reliability": 0.90,
         "speed": 22,
         "description": "Vrhunska moč. Hidrostatični pogon omogoča urejanje najtežjih črnih prog."
       }

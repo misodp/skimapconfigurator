@@ -7,13 +7,13 @@ import type { SimulationDate } from './types';
 import { getSeason, generateWeatherForSeason, getDailySnowfall, getDailyMelt, getTempRange } from './weather-simulation';
 import { updateWeatherDisplay } from './weather-icon';
 import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './economics.js';
-import { getTotalSlopeCapacity, getLiftWaitRawScore, getSlopeCrowdRawScore, getTotalGroomingDemand, getTotalGroomingCapacity, getSlopeQualityRawScore, driftLiftExperience, driftSlopeCrowdExperience, driftSlopeQualityExperience, driftSatisfaction } from './experience-simulator';
+import { getTotalSlopeCapacity, getLiftWaitRawScore, getSlopeCrowdRawScore, getTotalGroomingDemand, getSlopeQualityRawScore, driftLiftExperience, driftSlopeCrowdExperience, driftSlopeQualityExperience, driftSatisfaction } from './experience-simulator';
 import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay } from './config.js';
 import { renderLiftTypeDropdown } from './ui/lifts.js';
 import { renderGroomerTypeDropdown } from './ui/groomers.js';
 import { updateMountainImage } from './mountain-images.js';
-import { updateMaintenance, getEffectiveLiftCapacity } from './maintenance_simulator';
-import { refreshLiftHoverPopupIfOpen } from './canvas.js';
+import { updateMaintenance, getEffectiveLiftCapacity, getEffectiveGroomingCapacity } from './maintenance_simulator';
+import { refreshLiftHoverPopupIfOpen, refreshGroomerHoverPopupIfOpen } from './canvas.js';
 import { draw } from './draw.js';
 
 const BASE_TICK_MS = 3000; // one game day per 3 seconds at 1x
@@ -60,12 +60,12 @@ function advanceDay(): void {
   const effectiveLiftCap = getEffectiveLiftCapacity();
   const slopeCap = getTotalSlopeCapacity();
   const groomingDemand = getTotalGroomingDemand();
-  const groomingCapacity = getTotalGroomingCapacity();
+  const effectiveGroomingCap = getEffectiveGroomingCapacity();
   driftLiftExperience(getLiftWaitRawScore(state.dailyVisitors, effectiveLiftCap));
   driftSlopeCrowdExperience(getSlopeCrowdRawScore(state.dailyVisitors, slopeCap));
-  driftSlopeQualityExperience(getSlopeQualityRawScore(groomingDemand, groomingCapacity));
-    driftSatisfaction();
-    updateMaintenance();
+  driftSlopeQualityExperience(getSlopeQualityRawScore(groomingDemand, effectiveGroomingCap));
+  driftSatisfaction();
+  updateMaintenance(groomingDemand);
     draw();
     state.dailySales = state.dailyVisitors * TICKET_PRICE;
   state.dailyCost = getDailyOperatingCost();
@@ -137,6 +137,7 @@ function startLoopWithCurrentSpeed() {
       renderGroomerTypeDropdown({ skipPanelBlank: true });
     }
     refreshLiftHoverPopupIfOpen();
+    refreshGroomerHoverPopupIfOpen();
   }, intervalMs);
 }
 
@@ -156,10 +157,10 @@ export function startSimulation(): void {
   const effectiveLiftCap = getEffectiveLiftCapacity();
   const slopeCap = getTotalSlopeCapacity();
   const groomingDemand = getTotalGroomingDemand();
-  const groomingCapacity = getTotalGroomingCapacity();
+  const effectiveGroomingCap = getEffectiveGroomingCapacity();
   state.liftExperience = getLiftWaitRawScore(state.dailyVisitors, effectiveLiftCap);
   state.slopeCrowdExperience = getSlopeCrowdRawScore(state.dailyVisitors, slopeCap);
-  state.slopeQualityExperience = getSlopeQualityRawScore(groomingDemand, groomingCapacity);
+  state.slopeQualityExperience = getSlopeQualityRawScore(groomingDemand, effectiveGroomingCap);
   state.liftExperienceChange = state.slopeCrowdChange = state.slopeQualityChange = 'stable';
   updateDateDisplay();
   updateWeatherDisplay();
