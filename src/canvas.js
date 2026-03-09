@@ -220,7 +220,7 @@ function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
   const costPerMeter = (liftType && liftType.cost_per_meter != null) ? Number(liftType.cost_per_meter) : 0;
   const initialInvestment = baseCost + costPerMeter * (lengthM || 0);
   const repairCost = (isBroken && lift.repairCost != null) ? Number(lift.repairCost) : 0;
-  const serviceCost = !isBroken && health < 100 ? getLiftServiceCost(health, initialInvestment) : 0;
+  const serviceCost = !isBroken && health < 100 ? getLiftServiceCost(health, initialInvestment, reliability) : 0;
   const saleValue = !isBroken ? Math.round(0.15 * initialInvestment * (health / 100)) : 0;
   const scrapCost = Math.round(0.1 * initialInvestment);
   let serviceRow = '<div class="lift-hover-popup-service">';
@@ -232,7 +232,7 @@ function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
   if (!isBroken) {
     serviceRow += '<button type="button" class="lift-popup-sell-btn" data-lift-index="' + String(liftIndex) + '" title="Sell lift (value scales with health)">Sell: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(Math.max(0, saleValue))) + '</button>';
   } else {
-    serviceRow += '<button type="button" class="lift-popup-scrap-btn" data-lift-index="' + String(liftIndex) + '" title="Scrap broken lift (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
+    serviceRow += '<button type="button" class="lift-popup-scrap-btn" data-lift-index="' + String(liftIndex) + '" title="Scrap broken lift (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> −' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
   }
   serviceRow += '</div>';
   const installedCap = (liftType && liftType.capacity != null) ? Number(liftType.capacity) : 0;
@@ -272,7 +272,7 @@ function getGroomerPopupHtml(groomer, groomerType, groomerIndex) {
   }
   const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
   const repairCost = (isBroken && groomer.repairCost != null) ? Number(groomer.repairCost) : 0;
-  const serviceCost = !isBroken && health < 100 ? getGroomerServiceCost(health, purchaseCost) : 0;
+  const serviceCost = !isBroken && health < 100 ? getGroomerServiceCost(health, purchaseCost, reliability) : 0;
   const saleValue = !isBroken ? Math.round(0.15 * purchaseCost * (health / 100)) : 0;
   const scrapCost = Math.round(0.1 * purchaseCost);
   let serviceRow = '<div class="lift-hover-popup-service">';
@@ -284,7 +284,7 @@ function getGroomerPopupHtml(groomer, groomerType, groomerIndex) {
   if (!isBroken) {
     serviceRow += '<button type="button" class="groomer-popup-sell-btn" data-groomer-index="' + String(groomerIndex) + '" title="Sell groomer (value scales with health)">Sell: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(Math.max(0, saleValue))) + '</button>';
   } else {
-    serviceRow += '<button type="button" class="groomer-popup-scrap-btn" data-groomer-index="' + String(groomerIndex) + '" title="Scrap broken groomer (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
+    serviceRow += '<button type="button" class="groomer-popup-scrap-btn" data-groomer-index="' + String(groomerIndex) + '" title="Scrap broken groomer (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> −' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
   }
   serviceRow += '</div>';
   const capacity = (groomerType && groomerType.grooming_capacity != null) ? Number(groomerType.grooming_capacity) : 0;
@@ -571,7 +571,8 @@ export function handleLiftPopupClick(e) {
     const costPerMeter = (liftType && liftType.cost_per_meter != null) ? Number(liftType.cost_per_meter) : 0;
     const initialInvestment = baseCost + costPerMeter * lengthM;
     const health = Math.max(0, Math.min(100, lift.health ?? 100));
-    cost = getLiftServiceCost(health, initialInvestment);
+    const reliability = (liftType && liftType.reliability != null) ? Number(liftType.reliability) : 0.85;
+    cost = getLiftServiceCost(health, initialInvestment, reliability);
     if (cost <= 0) return;
     if (state.budget < cost) {
       window.alert(`Not enough budget to service this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
@@ -724,7 +725,8 @@ export function handleGroomerPopupClick(e) {
     groomer.health = 100;
   } else {
     const health = Math.max(0, Math.min(100, groomer.health ?? 100));
-    cost = getGroomerServiceCost(health, purchaseCost);
+    const reliability = (groomerType && groomerType.reliability != null) ? Number(groomerType.reliability) : 0.9;
+    cost = getGroomerServiceCost(health, purchaseCost, reliability);
     if (cost <= 0) return;
     if (state.budget < cost) {
       window.alert(`Not enough budget to service this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);

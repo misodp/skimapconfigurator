@@ -121,14 +121,16 @@ export function getRepairCostRange(initialInvestment: number): number {
 }
 
 /**
- * Service cost to restore a lift to 100% health. Scales with wear:
- * at health 0, cost = 50% of initial investment; at health 100, cost = 0.
+ * Service cost to restore a lift to 100% health. Scales with wear and reliability:
+ * base multiplier 0.4, multiplied by (2 - reliability) so less reliable lifts cost more to service.
+ * At health 100, cost = 0.
  */
-export function getLiftServiceCost(health: number, initialInvestment: number): number {
+export function getLiftServiceCost(health: number, initialInvestment: number, reliability: number): number {
   const h = Math.max(0, Math.min(100, health));
   if (h >= 100) return 0;
+  const rel = Math.max(0.1, Math.min(1, reliability ?? 0.5));
   const wear = (100 - h) / 100;
-  return Math.round(0.5 * initialInvestment * wear);
+  return Math.round(0.4 * (2 - rel) * initialInvestment * wear);
 }
 
 /**
@@ -202,13 +204,15 @@ export function getEffectiveGroomingCapacity(): number {
 }
 
 /**
- * Service cost to restore a groomer to 100% health (same formula as lifts).
+ * Service cost to restore a groomer to 100% health. Same as lifts: base multiplier 0.4,
+ * multiplied by (2 - reliability) so less reliable groomers cost more to service.
  */
-export function getGroomerServiceCost(health: number, initialInvestment: number): number {
+export function getGroomerServiceCost(health: number, initialInvestment: number, reliability: number): number {
   const h = Math.max(0, Math.min(100, health));
   if (h >= 100) return 0;
+  const rel = Math.max(0.1, Math.min(1, reliability ?? 0.5));
   const wear = (100 - h) / 100;
-  return Math.round(0.5 * initialInvestment * wear);
+  return Math.round(0.4 * (2 - rel) * initialInvestment * wear);
 }
 
 /**
