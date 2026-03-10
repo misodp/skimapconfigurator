@@ -5,6 +5,7 @@
 import { state } from './state';
 import { fromNormalized, getLiftLengthM } from './geometry.js';
 import { WEATHER_VISITOR_MODIFIERS, SEASON_VISITOR_MODIFIERS, getSeason } from './weather-simulation';
+import { getEffectiveSatisfaction } from './achievements.js';
 
 /** Ticket price in ski dollars per visitor per day. */
 export const TICKET_PRICE = 1.0;
@@ -49,9 +50,9 @@ export function getDailyOperatingCost() {
 /** Randomness: ±10% multiplier (0.9 to 1.1). */
 const VISITOR_RANDOMNESS = 0.1;
 
-/** Satisfaction modifier: 0% → 0.6× visitors, 100% → 1.4× visitors. */
+/** Satisfaction modifier: 0% → 0.6× visitors, 100% → 1.4× visitors. Uses effective satisfaction (capped by unlocked badges). */
 function getSatisfactionVisitorFactor() {
-  const s = Math.max(0, Math.min(100, state.satisfaction));
+  const s = Math.max(0, Math.min(100, getEffectiveSatisfaction()));
   return 0.6 + (s / 100) * 0.8;
 }
 

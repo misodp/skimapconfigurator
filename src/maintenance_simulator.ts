@@ -268,7 +268,9 @@ export function updateMaintenance(groomingDemand?: number): void {
         const costPerMeter = (type && (type as { cost_per_meter?: number }).cost_per_meter != null) ? Number((type as { cost_per_meter?: number }).cost_per_meter) : 0;
         const initialInvestment = baseCost + costPerMeter * (lengthM || 0);
         lift.repairCost = getRepairCostRange(initialInvestment);
-        state.satisfaction = Math.max(0, state.satisfaction - 20);
+        if (state.resortOpen) {
+          state.satisfaction = Math.max(0, state.satisfaction - 20);
+        }
       }
     }
   }

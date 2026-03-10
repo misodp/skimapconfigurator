@@ -8,7 +8,7 @@ import { escapeHtml, formatCurrency, formatNumber } from './utils.js';
 import { getDailyVisitors } from './economics.js';
 import { getSlopePathLengthM, getLiftLengthM, fromNormalized } from './geometry.js';
 import { getTotalLiftCapacity, getTotalSlopeCapacity, getTotalGroomingDemand, getTotalGroomingCapacity } from './experience-simulator';
-import { updateAchievementBadges } from './achievements.js';
+import { updateAchievementBadges, getEffectiveSatisfaction } from './achievements.js';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
@@ -91,17 +91,18 @@ export function updateExperienceDisplay() {
   });
 }
 
-/** Update overall satisfaction bar and percentage in the stats panel. Fill color reflects value (low=red, mid=amber, high=green). */
+/** Update overall satisfaction bar and percentage in the stats panel. Uses effective satisfaction (capped by unlocked badges). */
 export function updateSatisfactionDisplay() {
   if (!DOM.satisfactionDisplay) return;
+  const effective = getEffectiveSatisfaction();
   const fill = DOM.satisfactionDisplay.querySelector('.satisfaction-fill');
   const valueEl = DOM.satisfactionDisplay.querySelector('.satisfaction-value');
-  const pct = Math.round(state.satisfaction);
+  const pct = Math.round(effective);
   if (fill) {
-    fill.style.width = `${state.satisfaction}%`;
+    fill.style.width = `${effective}%`;
     fill.classList.remove('satisfaction-fill-low', 'satisfaction-fill-mid', 'satisfaction-fill-high');
-    if (state.satisfaction < 34) fill.classList.add('satisfaction-fill-low');
-    else if (state.satisfaction < 67) fill.classList.add('satisfaction-fill-mid');
+    if (effective < 34) fill.classList.add('satisfaction-fill-low');
+    else if (effective < 67) fill.classList.add('satisfaction-fill-mid');
     else fill.classList.add('satisfaction-fill-high');
   }
   if (valueEl) valueEl.textContent = `${pct}%`;

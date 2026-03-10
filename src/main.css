@@ -91,12 +91,39 @@ body {
   object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
+  opacity: 0.2;
+  pointer-events: auto;
+  transition: opacity 0.2s ease;
+}
+.mountain-badge:hover {
+  opacity: 1;
 }
 
 /* Hidden until unlock logic is implemented; remove .mountain-badges--locked to show. */
 .mountain-badges.mountain-badges--locked {
   visibility: hidden;
   pointer-events: none;
+}
+
+/* Badge unlock animation: big badge in center drifts to corner. */
+.badge-unlock-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 300;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.badge-unlock-overlay[hidden] {
+  display: none;
+}
+.badge-unlock-flyer {
+  position: fixed;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.5));
+  transition: left 1.2s ease-out, top 1.2s ease-out, width 1.2s ease-out, height 1.2s ease-out;
 }
 
 .header-news {

@@ -9,8 +9,8 @@ import { getSlopePathLengthM, fromNormalized } from './geometry.js';
 /** Lift type ids that count as two-seater (duo or agamatic) for Family achievement. */
 const TWO_SEATER_LIFT_IDS = ['graffer_double', 'agamatic_duo'];
 
-/** Normalized y: top of image = 0, bottom = 1. Top third = y < 1/3. */
-const TOP_THIRD_Y = 1 / 3;
+/** Normalized y: top of image = 0, bottom = 1. Top half = y < 0.5 (for High Alpine). */
+const TOP_HALF_Y = 0.5;
 /** Top 1/5th for Top of the World: lift top station y < 0.2. */
 const TOP_FIFTH_Y = 0.2;
 
@@ -52,19 +52,17 @@ function checkFamily() {
   return true;
 }
 
-/** High Alpine: at least one lift and one slope in the top third of the image. */
+/** High Alpine: at least 3 lifts and 3 slopes with at least one point in the top half of the image. */
 function checkHighAlpine() {
-  const liftInTopThird = state.lifts.some((lift) => {
-    const topY = lift.topStation.y;
-    const bottomY = lift.bottomStation.y;
-    const minY = Math.min(topY, bottomY);
-    return minY < TOP_THIRD_Y;
+  const liftsInTopHalf = state.lifts.filter((lift) => {
+    const minY = Math.min(lift.topStation.y, lift.bottomStation.y);
+    return minY < TOP_HALF_Y;
   });
-  if (!liftInTopThird) return false;
-  const slopeInTopThird = state.slopes.some((slope) =>
-    slope.points.some((p) => p.y < TOP_THIRD_Y)
+  if (liftsInTopHalf.length < 3) return false;
+  const slopesInTopHalf = state.slopes.filter((slope) =>
+    slope.points.some((p) => p.y < TOP_HALF_Y)
   );
-  return slopeInTopThird;
+  return slopesInTopHalf.length >= 3;
 }
 
 /** Freeride: >3000m of freeride slopes and at least two different (freeride) slopes. */
@@ -76,6 +74,19 @@ function checkFreeride() {
 /** Top of the World: at least one lift whose top station is in the top 1/5th of the image. */
 function checkTopOfWorld() {
   return state.lifts.some((lift) => lift.topStation.y < TOP_FIFTH_Y);
+}
+
+/** Max satisfaction (0–100) by number of unlocked badges: 0→20, 1→40, 2→60, 3→80, 4→100. */
+export function getSatisfactionCap() {
+  const n = [state.achievements.family, state.achievements.highAlpine, state.achievements.freeride, state.achievements.topOfWorld].filter(Boolean).length;
+  return [20, 40, 60, 80, 100][n];
+}
+
+/** Raw satisfaction (0–100) from experience, normalized into 0–cap for display and visitors. */
+export function getEffectiveSatisfaction() {
+  const raw = Math.max(0, Math.min(100, state.satisfaction));
+  const cap = getSatisfactionCap();
+  return (raw / 100) * cap;
 }
 
 /**
@@ -97,9 +108,98 @@ const BADGE_IDS = {
   topOfWorld: 'badgeTopWorld',
 };
 
+/** Previous achievement state to detect newly unlocked. */
+let previousAchievements = { family: false, highAlpine: false, freeride: false, topOfWorld: false };
+/** Skip animation on first run (e.g. load save with existing achievements). */
+let hasUpdatedAchievementsOnce = false;
+
+const FLYER_SIZE_PX = 400;
+const FLYER_DURATION_MS = 1200;
+const CENTER_PAUSE_MS = 2000;
+
+/**
+ * Run one badge fly animation, then call onDone.
+ */
+function playOneBadgeAnimation(key, onDone) {
+  const badgeId = BADGE_IDS[key];
+  const cornerEl = document.getElementById(badgeId);
+  const overlay = document.getElementById('badgeUnlockOverlay');
+  const flyer = document.getElementById('badgeUnlockFlyer');
+  const mountainEl = document.querySelector('.canvas-wrapper');
+  if (!cornerEl || !overlay || !flyer || !cornerEl.src) {
+    if (onDone) onDone();
+    return;
+  }
+
+  const targetRect = cornerEl.getBoundingClientRect();
+  flyer.src = cornerEl.src;
+  flyer.alt = key + ' achievement';
+  cornerEl.style.visibility = 'hidden';
+  cornerEl.style.opacity = '0';
+
+  overlay.hidden = false;
+  overlay.setAttribute('aria-hidden', 'false');
+
+  const mountainRect = mountainEl ? mountainEl.getBoundingClientRect() : null;
+  const startX = mountainRect ? mountainRect.left + mountainRect.width / 2 : window.innerWidth / 2;
+  const startY = mountainRect ? mountainRect.top + mountainRect.height / 2 : window.innerHeight / 2;
+
+  flyer.style.transition = 'none';
+  flyer.style.left = startX + 'px';
+  flyer.style.top = startY + 'px';
+  flyer.style.width = FLYER_SIZE_PX + 'px';
+  flyer.style.height = FLYER_SIZE_PX + 'px';
+  flyer.offsetHeight;
+
+  const goToCorner = () => {
+    flyer.style.transition = `left ${FLYER_DURATION_MS / 1000}s ease-out, top ${FLYER_DURATION_MS / 1000}s ease-out, width ${FLYER_DURATION_MS / 1000}s ease-out, height ${FLYER_DURATION_MS / 1000}s ease-out`;
+    const endX = targetRect.left + targetRect.width / 2;
+    const endY = targetRect.top + targetRect.height / 2;
+    flyer.style.left = endX + 'px';
+    flyer.style.top = endY + 'px';
+    flyer.style.width = targetRect.width + 'px';
+    flyer.style.height = targetRect.height + 'px';
+  };
+
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => setTimeout(goToCorner, CENTER_PAUSE_MS));
+  });
+
+  let finished = false;
+  const onEnd = () => {
+    if (finished) return;
+    finished = true;
+    flyer.removeEventListener('transitionend', onEnd);
+    overlay.hidden = true;
+    overlay.setAttribute('aria-hidden', 'true');
+    cornerEl.style.visibility = 'visible';
+    cornerEl.style.opacity = '';
+    if (onDone) onDone();
+  };
+  flyer.addEventListener('transitionend', onEnd);
+  setTimeout(onEnd, CENTER_PAUSE_MS + FLYER_DURATION_MS + 200);
+}
+
+/**
+ * Play unlock animations for newly unlocked keys, one after another.
+ */
+function playBadgeUnlockAnimations(newlyUnlocked) {
+  if (newlyUnlocked.length === 0) return;
+  let i = 0;
+  const runNext = () => {
+    if (i >= newlyUnlocked.length) return;
+    playOneBadgeAnimation(newlyUnlocked[i], () => {
+      i += 1;
+      runNext();
+    });
+  };
+  runNext();
+}
+
 /**
  * Update badge visibility from state.achievements. Unlocked badges are shown;
  * locked ones hidden. Container loses --locked if at least one badge is unlocked.
+ * Newly unlocked badges play a center-to-corner animation.
  */
 export function updateAchievementBadges() {
   computeAchievements();
@@ -114,11 +214,21 @@ export function updateAchievementBadges() {
 
   container.classList.toggle('mountain-badges--locked', !anyUnlocked);
 
+  const newlyUnlocked = [];
   for (const [key, id] of Object.entries(BADGE_IDS)) {
     const el = document.getElementById(id);
     if (el) {
-      el.style.visibility = state.achievements[key] ? 'visible' : 'hidden';
-      el.style.display = state.achievements[key] ? '' : 'none';
+      const unlocked = state.achievements[key];
+      if (unlocked && !previousAchievements[key]) newlyUnlocked.push(key);
+      el.style.visibility = unlocked ? 'visible' : 'hidden';
+      el.style.display = unlocked ? '' : 'none';
     }
+  }
+  previousAchievements = { ...state.achievements };
+
+  if (!hasUpdatedAchievementsOnce) {
+    hasUpdatedAchievementsOnce = true;
+  } else {
+    playBadgeUnlockAnimations(newlyUnlocked);
   }
 }
