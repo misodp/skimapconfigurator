@@ -9,6 +9,10 @@ import animalsH1Url from '../assets/images/skiers/animals_h1.png';
 import animalsH2Url from '../assets/images/skiers/animals_h2.png';
 import animalsA1Url from '../assets/images/skiers/animals_a1.png';
 import animalsA2Url from '../assets/images/skiers/animals_a2.png';
+import badgeTopWorldUrl from '../assets/images/badges/top_world_at.png';
+import badgeFamilyUrl from '../assets/images/badges/family_friendly_at.png';
+import badgeAlpineUrl from '../assets/images/badges/high_alpine_at.png';
+import badgeFreerideUrl from '../assets/images/badges/freeride_paradise_at.png';
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
@@ -337,6 +341,15 @@ export function init() {
   document.querySelectorAll('.stat-skidollar-icon').forEach((img) => {
     img.src = skidollarg2mUrl;
   });
+
+  const badgeTopWorld = document.getElementById('badgeTopWorld');
+  const badgeFamily = document.getElementById('badgeFamily');
+  const badgeAlpine = document.getElementById('badgeAlpine');
+  const badgeFreeride = document.getElementById('badgeFreeride');
+  if (badgeTopWorld) badgeTopWorld.src = badgeTopWorldUrl;
+  if (badgeFamily) badgeFamily.src = badgeFamilyUrl;
+  if (badgeAlpine) badgeAlpine.src = badgeAlpineUrl;
+  if (badgeFreeride) badgeFreeride.src = badgeFreerideUrl;
 
   DOM.mountainImage.onload = () => {
     state.image = DOM.mountainImage;

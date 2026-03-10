@@ -21,6 +21,12 @@
           <div class="header-news-text" id="newsFeedText">Welcome to the resort!</div>
         </div>
         <div class="header-meta">
+          <div class="header-badges" aria-label="Resort achievements">
+            <div class="header-badge header-badge--top-world" aria-hidden="true"></div>
+            <div class="header-badge header-badge--family" aria-hidden="true"></div>
+            <div class="header-badge header-badge--alpine" aria-hidden="true"></div>
+            <div class="header-badge header-badge--freeride" aria-hidden="true"></div>
+          </div>
           <div class="header-date-block">
             <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
             <div class="header-season" id="seasonDisplay" aria-label="Season">Winter</div>
@@ -227,6 +233,12 @@
             <img id="mountainImageDissolve" class="mountain-img mountain-img-dissolve" aria-hidden="true" alt="" />
           </div>
           <canvas id="drawCanvas"></canvas>
+          <div class="mountain-badges mountain-badges--locked" aria-hidden="true" data-badges="locked">
+            <img class="mountain-badge" id="badgeFamily" alt="" />
+            <img class="mountain-badge" id="badgeAlpine" alt="" />
+            <img class="mountain-badge" id="badgeFreeride" alt="" />
+            <img class="mountain-badge" id="badgeTopWorld" alt="" />
+          </div>
           <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
           <div id="liftHoverPopup" class="lift-hover-popup" role="tooltip" aria-hidden="true" hidden></div>
           <div id="groomerHoverPopup" class="lift-hover-popup groomer-hover-popup" role="tooltip" aria-hidden="true" hidden></div>
