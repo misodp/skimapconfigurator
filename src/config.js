@@ -8,6 +8,7 @@ import { escapeHtml, formatCurrency, formatNumber } from './utils.js';
 import { getDailyVisitors } from './economics.js';
 import { getSlopePathLengthM, getLiftLengthM, fromNormalized } from './geometry.js';
 import { getTotalLiftCapacity, getTotalSlopeCapacity, getTotalGroomingDemand, getTotalGroomingCapacity } from './experience-simulator';
+import { updateAchievementBadges } from './achievements.js';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
@@ -115,6 +116,7 @@ export function refresh() {
   updateVisitorsDisplay();
   updateExperienceDisplay();
   updateSatisfactionDisplay();
+  updateAchievementBadges();
 }
 
 export function renderLists() {

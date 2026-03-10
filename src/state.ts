@@ -91,6 +91,8 @@ export interface AppState {
   mountainPendingThreshold: number | null;
   /** Consecutive days the pending threshold has been the target. */
   mountainDaysAtPending: number;
+  /** Unlocked achievement badges (computed from lifts/slopes). */
+  achievements: { family: boolean; highAlpine: boolean; freeride: boolean; topOfWorld: boolean };
 }
 
 const START_DATE: SimulationDate = { year: 1960, month: 11, day: 1 };
@@ -144,6 +146,7 @@ export const state: AppState = {
   displayedMountainThreshold: null,
   mountainPendingThreshold: null,
   mountainDaysAtPending: 0,
+  achievements: { family: false, highAlpine: false, freeride: false, topOfWorld: false },
 };
 
 export const DOM: DOMRefs = {
