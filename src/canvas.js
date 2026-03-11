@@ -2,7 +2,7 @@
  * Canvas size, coordinate conversion, and mouse/click handlers.
  */
 
-import { state, DOM, getSlopeType } from './state';
+import { state, DOM, getSlopeType, getDiffColor } from './state';
 import {
   toNormalized,
   fromNormalized,
@@ -14,6 +14,7 @@ import { refresh, updateBudgetDisplay } from './config.js';
 import { formatCurrency, escapeHtml, formatNumber } from './utils.js';
 import { updateCancelLiftButton } from './ui/lifts.js';
 import { getGroomerImageUrl } from './ui/groomers.js';
+import { getSlopeSpritePositionStyle } from './ui/slopes.js';
 import { COLS, ROWS } from './constants';
 import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier, getGroomerHealthZone, getGroomerServiceCost, getGroomerEffectiveCapacityMultiplier } from './maintenance_simulator';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
@@ -25,6 +26,8 @@ const SNAP_DIST_SQ = 50 * 50;
 const LIFT_HOVER_THRESHOLD_SQ = 24 * 24;
 /** Image-space radius (px) to consider cursor over a groomer icon. */
 const GROOMER_HOVER_RADIUS_SQ = 35 * 35;
+/** Image-space distance squared (px) to consider cursor over a slope line. */
+const SLOPE_HOVER_THRESHOLD_SQ = 24 * 24;
 
 /** True when Invest tab is active; false when Operate (Statistics) tab is active. Building is only allowed in Invest. */
 function isInvestTabActive() {
@@ -39,9 +42,11 @@ function isOperateTabActive() {
 }
 
 export function syncCanvasSize() {
-  if (!state.image) return;
+  if (!state.image || !DOM.canvas) return;
   const img = state.image;
   const rect = img.getBoundingClientRect();
+  const wrapper = DOM.canvas.parentElement;
+  const wrapperRect = wrapper ? wrapper.getBoundingClientRect() : null;
   const dpr = window.devicePixelRatio || 1;
   state.imageWidth = img.naturalWidth;
   state.imageHeight = img.naturalHeight;
@@ -50,6 +55,10 @@ export function syncCanvasSize() {
   DOM.canvas.height = rect.height * dpr;
   DOM.canvas.style.width = rect.width + 'px';
   DOM.canvas.style.height = rect.height + 'px';
+  if (wrapperRect) {
+    DOM.canvas.style.left = (rect.left - wrapperRect.left) + 'px';
+    DOM.canvas.style.top = (rect.top - wrapperRect.top) + 'px';
+  }
   DOM.ctx.scale(dpr, dpr);
   refresh();
 }
@@ -165,17 +174,30 @@ export function findSnapPoint(px, py) {
   return best;
 }
 
-/** Return index of lift at image point (px, py), or null if none within threshold. */
+/** Lift label offset from midpoint (image px); must match draw.js drawLiftLabel. */
+const LIFT_LABEL_OFFSET = 10;
+
+/** Return image position of the lift number/label (circle/diamond indicator) for a lift. */
+function getLiftLabelPosition(lift) {
+  const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+  const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+  const midX = (a.x + b.x) / 2;
+  const midY = (a.y + b.y) / 2;
+  const angle = Math.atan2(b.y - a.y, b.x - a.x);
+  const perpX = -Math.sin(angle) * LIFT_LABEL_OFFSET;
+  const perpY = Math.cos(angle) * LIFT_LABEL_OFFSET;
+  return { x: midX + perpX, y: midY + perpY };
+}
+
+/** Return index of lift at image point (px, py), or null if none. Only hits when over the lift label (number indicator). */
 function getLiftIndexAtImage(px, py) {
   let bestIdx = null;
   let bestDistSq = LIFT_HOVER_THRESHOLD_SQ;
 
   state.lifts.forEach((lift, idx) => {
-    const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
-    const b = fromNormalized(lift.topStation.x, lift.topStation.y);
-    const p = closestPointOnSegment(px, py, a.x, a.y, b.x, b.y);
-    const dx = px - p.x;
-    const dy = py - p.y;
+    const pos = getLiftLabelPosition(lift);
+    const dx = px - pos.x;
+    const dy = py - pos.y;
     const d2 = dx * dx + dy * dy;
     if (d2 < bestDistSq) {
       bestDistSq = d2;
@@ -196,6 +218,91 @@ function getGroomerIndexAtImage(px, py) {
     if (dx * dx + dy * dy <= GROOMER_HOVER_RADIUS_SQ) return i;
   }
   return -1;
+}
+
+/** Return image position of the slope number indicator (circle/diamond) for a slope. */
+function getSlopeNumberPosition(slope) {
+  if (!slope.points || slope.points.length === 0) return null;
+  if (slope.points.length === 1) {
+    const only = slope.points[0];
+    const p = fromNormalized(only.x, only.y);
+    return { x: p.x, y: p.y };
+  }
+  const pts = slope.points.map((p) => fromNormalized(p.x, p.y));
+  const segLengths = [];
+  let totalLen = 0;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const dx = pts[i + 1].x - pts[i].x;
+    const dy = pts[i + 1].y - pts[i].y;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    segLengths.push(len);
+    totalLen += len;
+  }
+  if (!totalLen) {
+    const p0 = pts[0];
+    return { x: p0.x, y: p0.y };
+  }
+  const target = totalLen * 0.5;
+  let acc = 0;
+  for (let i = 0; i < segLengths.length; i++) {
+    const nextAcc = acc + segLengths[i];
+    if (target <= nextAcc) {
+      const t = (target - acc) / segLengths[i];
+      const ax = pts[i].x;
+      const ay = pts[i].y;
+      const bx = pts[i + 1].x;
+      const by = pts[i + 1].y;
+      return {
+        x: ax + t * (bx - ax),
+        y: ay + t * (by - ay),
+      };
+    }
+    acc = nextAcc;
+  }
+  const plast = pts[pts.length - 1];
+  return { x: plast.x, y: plast.y };
+}
+
+/** Return index of slope at image point (px, py), or -1 if none. Only hits when over the slope number indicator. */
+function getSlopeIndexAtImage(px, py) {
+  let bestIdx = -1;
+  let bestDistSq = SLOPE_HOVER_THRESHOLD_SQ;
+  state.slopes.forEach((slope, idx) => {
+    const pos = getSlopeNumberPosition(slope);
+    if (!pos) return;
+    const dx = px - pos.x;
+    const dy = py - pos.y;
+    const d2 = dx * dx + dy * dy;
+    if (d2 < bestDistSq) {
+      bestDistSq = d2;
+      bestIdx = idx;
+    }
+  });
+  return bestIdx;
+}
+
+function getSlopePopupHtml(slope, slopeType, lengthM, capacity, slopeIndex) {
+  const difficulty = (slopeType && slopeType.difficulty) ? escapeHtml(slopeType.difficulty) : 'Slope';
+  const name = difficulty + ' ' + (slopeIndex + 1);
+  const lengthStr = lengthM != null ? formatNumber(lengthM) + ' m' : '—';
+  const capacityStr = capacity != null ? formatNumber(capacity) : '—';
+  const costPerMeter = (slopeType && slopeType.cost_per_meter != null) ? Number(slopeType.cost_per_meter) : 0;
+  const buildCost = (lengthM != null && lengthM > 0) ? Math.round(lengthM * costPerMeter) : 0;
+  const scrapCost = Math.round(0.1 * buildCost);
+  const iconStyle = slopeType ? getSlopeSpritePositionStyle(slopeType) : '';
+  const iconClass = 'lift-hover-popup-icon slope-popup-icon slope-type-icon';
+  const serviceRow = '<div class="lift-hover-popup-service">' +
+    '<button type="button" class="lift-popup-scrap-btn slope-popup-scrap-btn" data-slope-index="' + String(slopeIndex) + '" title="Scrap slope (pay 10% of build cost for disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(scrapCost)) + '</button>' +
+    '</div>';
+  return (
+    '<button type="button" class="lift-popup-close-btn slope-popup-close-btn" aria-label="Close" title="Close">×</button>' +
+    '<div class="' + iconClass + '" style="' + escapeHtml(iconStyle) + '"></div>' +
+    '<div class="lift-hover-popup-name slope-popup-name">' + name + '</div>' +
+    '<div class="lift-hover-popup-meta">Difficulty: ' + difficulty + '</div>' +
+    '<div class="lift-hover-popup-meta">Capacity: ' + capacityStr + '</div>' +
+    '<div class="lift-hover-popup-meta">Length: ' + lengthStr + '</div>' +
+    serviceRow
+  );
 }
 
 function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
@@ -309,12 +416,16 @@ function getGroomerPopupHtml(groomer, groomerType, groomerIndex) {
 
 let lastHoveredLiftIndex = null;
 let lastHoveredGroomerIndex = null;
+let lastHoveredSlopeIndex = null;
 let lastHoveredClientX = 0;
 let lastHoveredClientY = 0;
 let lastHoveredGroomerClientX = 0;
 let lastHoveredGroomerClientY = 0;
+let lastHoveredSlopeClientX = 0;
+let lastHoveredSlopeClientY = 0;
 let isPopupPinned = false;
 let isGroomerPopupPinned = false;
+let isSlopePopupPinned = false;
 
 function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   const popup = document.getElementById('liftHoverPopup');
@@ -329,11 +440,18 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
     return;
   }
   const groomerPopupEl = document.getElementById('groomerHoverPopup');
+  const slopePopupEl = document.getElementById('slopeHoverPopup');
   if (groomerPopupEl) {
     groomerPopupEl.hidden = true;
     groomerPopupEl.setAttribute('aria-hidden', 'true');
     lastHoveredGroomerIndex = null;
     isGroomerPopupPinned = false;
+  }
+  if (slopePopupEl) {
+    slopePopupEl.hidden = true;
+    slopePopupEl.setAttribute('aria-hidden', 'true');
+    lastHoveredSlopeIndex = null;
+    isSlopePopupPinned = false;
   }
   lastHoveredLiftIndex = liftIndex;
   lastHoveredClientX = clientX;
@@ -374,11 +492,18 @@ function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
     return;
   }
   const liftPopupEl = document.getElementById('liftHoverPopup');
+  const slopePopupEl = document.getElementById('slopeHoverPopup');
   if (liftPopupEl) {
     liftPopupEl.hidden = true;
     liftPopupEl.setAttribute('aria-hidden', 'true');
     lastHoveredLiftIndex = null;
     isPopupPinned = false;
+  }
+  if (slopePopupEl) {
+    slopePopupEl.hidden = true;
+    slopePopupEl.setAttribute('aria-hidden', 'true');
+    lastHoveredSlopeIndex = null;
+    isSlopePopupPinned = false;
   }
   lastHoveredGroomerIndex = groomerIndex;
   lastHoveredGroomerClientX = clientX;
@@ -389,6 +514,61 @@ function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
   popup.hidden = false;
   popup.removeAttribute('aria-hidden');
   if (!isGroomerPopupPinned) {
+    const offsetX = 4;
+    const offsetY = 16;
+    popup.style.left = (clientX + offsetX) + 'px';
+    popup.style.top = (clientY + offsetY) + 'px';
+    const rect = popup.getBoundingClientRect();
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    if (rect.right > vw) popup.style.left = (clientX - rect.width - offsetX) + 'px';
+    if (rect.bottom > vh) popup.style.top = (clientY - rect.height - offsetY) + 'px';
+    if (rect.left < 0) popup.style.left = offsetX + 'px';
+    if (rect.top < 0) popup.style.top = offsetY + 'px';
+  }
+}
+
+function updateSlopeHoverPopup(slopeIndex, clientX, clientY) {
+  const popup = document.getElementById('slopeHoverPopup');
+  if (!popup) return;
+  if (!isOperateTabActive()) return;
+  if (slopeIndex == null || slopeIndex < 0 || slopeIndex >= state.slopes.length) {
+    if (!isSlopePopupPinned) {
+      popup.hidden = true;
+      popup.setAttribute('aria-hidden', 'true');
+      lastHoveredSlopeIndex = null;
+    }
+    return;
+  }
+  const liftPopupEl = document.getElementById('liftHoverPopup');
+  const groomerPopupEl = document.getElementById('groomerHoverPopup');
+  if (liftPopupEl) {
+    liftPopupEl.hidden = true;
+    liftPopupEl.setAttribute('aria-hidden', 'true');
+    lastHoveredLiftIndex = null;
+    isPopupPinned = false;
+  }
+  if (groomerPopupEl) {
+    groomerPopupEl.hidden = true;
+    groomerPopupEl.setAttribute('aria-hidden', 'true');
+    lastHoveredGroomerIndex = null;
+    isGroomerPopupPinned = false;
+  }
+  lastHoveredSlopeIndex = slopeIndex;
+  lastHoveredSlopeClientX = clientX;
+  lastHoveredSlopeClientY = clientY;
+  const slope = state.slopes[slopeIndex];
+  const slopeType = getSlopeType(slope);
+  const imagePoints = slope.points.map((p) => fromNormalized(p.x, p.y));
+  const lengthM = getSlopePathLengthM(imagePoints);
+  let capacity = slope.capacity;
+  if (capacity == null && slopeType && slopeType.capacity_per_meter != null) {
+    capacity = Math.round(lengthM * Number(slopeType.capacity_per_meter));
+  }
+  popup.innerHTML = getSlopePopupHtml(slope, slopeType, lengthM, capacity, slopeIndex);
+  popup.hidden = false;
+  popup.removeAttribute('aria-hidden');
+  if (!isSlopePopupPinned) {
     const offsetX = 4;
     const offsetY = 16;
     popup.style.left = (clientX + offsetX) + 'px';
@@ -422,22 +602,48 @@ export function refreshLiftHoverPopupIfOpen() {
 }
 
 /**
+ * Refresh the slope hover popup content if it is currently visible.
+ */
+export function refreshSlopeHoverPopupIfOpen() {
+  const popup = document.getElementById('slopeHoverPopup');
+  if (!popup || popup.hidden || lastHoveredSlopeIndex == null) return;
+  updateSlopeHoverPopup(lastHoveredSlopeIndex, lastHoveredSlopeClientX, lastHoveredSlopeClientY);
+}
+
+export function hideSlopeHoverPopup() {
+  const popup = document.getElementById('slopeHoverPopup');
+  if (!popup) return;
+  if (!isOperateTabActive() || !isSlopePopupPinned) {
+    isSlopePopupPinned = false;
+    popup.removeAttribute('data-pinned');
+    popup.hidden = true;
+    popup.setAttribute('aria-hidden', 'true');
+    lastHoveredSlopeIndex = null;
+  }
+}
+
+/**
  * Handle click on lift popup (close button, pin, or Service button). Use event delegation from document.
  */
 export function handleLiftPopupClick(e) {
   const popup = document.getElementById('liftHoverPopup');
   const groomerPopup = document.getElementById('groomerHoverPopup');
+  const slopePopup = document.getElementById('slopeHoverPopup');
   if (!isOperateTabActive()) return;
   const insideLiftPopup = popup && popup.contains(e.target);
   const insideGroomerPopup = groomerPopup && groomerPopup.contains(e.target);
+  const insideSlopePopup = slopePopup && slopePopup.contains(e.target);
   const clickOnMapArea = e.target && e.target.closest && (e.target.closest('#drawCanvas') || e.target.closest('.canvas-wrapper'));
-  if (!insideLiftPopup && !insideGroomerPopup && !clickOnMapArea) {
+  if (!insideLiftPopup && !insideGroomerPopup && !insideSlopePopup && !clickOnMapArea) {
     isPopupPinned = false;
     isGroomerPopupPinned = false;
+    isSlopePopupPinned = false;
     if (popup) { popup.removeAttribute('data-pinned'); popup.hidden = true; popup.setAttribute('aria-hidden', 'true'); }
     if (groomerPopup) { groomerPopup.removeAttribute('data-pinned'); groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); }
+    if (slopePopup) { slopePopup.removeAttribute('data-pinned'); slopePopup.hidden = true; slopePopup.setAttribute('aria-hidden', 'true'); }
     lastHoveredLiftIndex = null;
     lastHoveredGroomerIndex = null;
+    lastHoveredSlopeIndex = null;
     return;
   }
   if (!popup || popup.hidden) return;
@@ -597,16 +803,21 @@ export function handleGroomerPopupClick(e) {
   const popup = document.getElementById('groomerHoverPopup');
   const liftPopup = document.getElementById('liftHoverPopup');
   if (!isOperateTabActive()) return;
+  const slopePopup = document.getElementById('slopeHoverPopup');
   const insideLiftPopup = liftPopup && liftPopup.contains(e.target);
   const insideGroomerPopup = popup && popup.contains(e.target);
+  const insideSlopePopup = slopePopup && slopePopup.contains(e.target);
   const clickOnMapArea = e.target && e.target.closest && (e.target.closest('#drawCanvas') || e.target.closest('.canvas-wrapper'));
-  if (!insideLiftPopup && !insideGroomerPopup && !clickOnMapArea) {
+  if (!insideLiftPopup && !insideGroomerPopup && !insideSlopePopup && !clickOnMapArea) {
     isPopupPinned = false;
     isGroomerPopupPinned = false;
+    isSlopePopupPinned = false;
     if (liftPopup) { liftPopup.removeAttribute('data-pinned'); liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); }
     if (popup) { popup.removeAttribute('data-pinned'); popup.hidden = true; popup.setAttribute('aria-hidden', 'true'); }
+    if (slopePopup) { slopePopup.removeAttribute('data-pinned'); slopePopup.hidden = true; slopePopup.setAttribute('aria-hidden', 'true'); }
     lastHoveredLiftIndex = null;
     lastHoveredGroomerIndex = null;
+    lastHoveredSlopeIndex = null;
     return;
   }
   if (!popup || popup.hidden) return;
@@ -745,6 +956,66 @@ export function handleGroomerPopupClick(e) {
 }
 
 /**
+ * Handle click on slope popup (close button or pin). Use event delegation from document.
+ */
+export function handleSlopePopupClick(e) {
+  const popup = document.getElementById('slopeHoverPopup');
+  if (!popup || popup.hidden) return;
+  if (!isOperateTabActive()) return;
+  const insideSlopePopup = popup && popup.contains(e.target);
+  if (!insideSlopePopup) return;
+
+  if (e.target && e.target.closest && e.target.closest('.slope-popup-close-btn')) {
+    e.preventDefault();
+    e.stopPropagation();
+    isSlopePopupPinned = false;
+    popup.removeAttribute('data-pinned');
+    popup.hidden = true;
+    popup.setAttribute('aria-hidden', 'true');
+    lastHoveredSlopeIndex = null;
+    return;
+  }
+
+  const scrapBtn = e.target && e.target.closest && e.target.closest('.slope-popup-scrap-btn');
+  if (scrapBtn) {
+    e.preventDefault();
+    e.stopPropagation();
+    const idx = parseInt(scrapBtn.getAttribute('data-slope-index'), 10);
+    if (!Number.isNaN(idx) && idx >= 0 && idx < state.slopes.length) {
+      const slope = state.slopes[idx];
+      const slopeType = getSlopeType(slope);
+      const imagePoints = slope.points.map((p) => fromNormalized(p.x, p.y));
+      const lengthM = getSlopePathLengthM(imagePoints);
+      const costPerMeter = (slopeType && slopeType.cost_per_meter != null) ? Number(slopeType.cost_per_meter) : 0;
+      const buildCost = (lengthM != null && lengthM > 0) ? Math.round(lengthM * costPerMeter) : 0;
+      const scrapCost = Math.round(0.1 * buildCost);
+      if (state.budget < scrapCost) {
+        window.alert('Not enough budget to scrap this slope. Disposal cost: ' + formatCurrency(scrapCost) + '. Available: ' + formatCurrency(state.budget) + '.');
+        return;
+      }
+      if (!window.confirm('Scrap this slope? You will pay ' + formatCurrency(scrapCost) + ' for disposal (10% of build cost).')) return;
+      state.budget -= scrapCost;
+      state.slopes.splice(idx, 1);
+      updateBudgetDisplay();
+      isSlopePopupPinned = false;
+      popup.removeAttribute('data-pinned');
+      popup.hidden = true;
+      popup.setAttribute('aria-hidden', 'true');
+      lastHoveredSlopeIndex = null;
+      refresh();
+    }
+    return;
+  }
+
+  e.preventDefault();
+  e.stopPropagation();
+  if (!isSlopePopupPinned) {
+    isSlopePopupPinned = true;
+    popup.setAttribute('data-pinned', 'true');
+  }
+}
+
+/**
  * Pin the lift popup so it stops following the cursor. Call when the cursor enters the popup
  * so the user can click the Service button without the menu moving away.
  */
@@ -816,9 +1087,10 @@ export function onCanvasMouseMove(e) {
   if (!isOperateTabActive()) {
     hideLiftHoverPopup();
     hideGroomerHoverPopup();
+    hideSlopeHoverPopup();
     return;
   }
-  if (isPopupPinned && isGroomerPopupPinned) return;
+  if (isPopupPinned && isGroomerPopupPinned && isSlopePopupPinned) return;
   const groomerIdx = getGroomerIndexAtImage(pt.x, pt.y);
   if (groomerIdx >= 0 && !isGroomerPopupPinned) {
     updateGroomerHoverPopup(groomerIdx, e.clientX, e.clientY);
@@ -826,11 +1098,29 @@ export function onCanvasMouseMove(e) {
       const liftPopup = document.getElementById('liftHoverPopup');
       if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
     }
+    const slopePopupEl = document.getElementById('slopeHoverPopup');
+    if (slopePopupEl) { slopePopupEl.hidden = true; slopePopupEl.setAttribute('aria-hidden', 'true'); lastHoveredSlopeIndex = null; }
     return;
   }
   if (isGroomerPopupPinned) return;
+  const slopeIdx = getSlopeIndexAtImage(pt.x, pt.y);
+  if (slopeIdx >= 0 && !isSlopePopupPinned) {
+    updateSlopeHoverPopup(slopeIdx, e.clientX, e.clientY);
+    const liftPopup = document.getElementById('liftHoverPopup');
+    if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
+    return;
+  }
+  if (isSlopePopupPinned) return;
   const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
   updateLiftHoverPopup(liftIdx, e.clientX, e.clientY);
+  const slopePopupEl = document.getElementById('slopeHoverPopup');
+  if (!isPopupPinned && slopePopupEl) {
+    isSlopePopupPinned = false;
+    slopePopupEl.removeAttribute('data-pinned');
+    slopePopupEl.hidden = true;
+    slopePopupEl.setAttribute('aria-hidden', 'true');
+    lastHoveredSlopeIndex = null;
+  }
   if (liftIdx < 0 && !isPopupPinned) {
     const groomerPopup = document.getElementById('groomerHoverPopup');
     if (groomerPopup) { groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); lastHoveredGroomerIndex = null; }
@@ -894,12 +1184,20 @@ export function onCanvasClick(e) {
   if (isOperateTabActive()) {
     const pt = canvasToImage(x, y);
     const groomerIdx = getGroomerIndexAtImage(pt.x, pt.y);
+    const slopeIdx = getSlopeIndexAtImage(pt.x, pt.y);
     const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
     const placingLiftTop = state.mode === 'lift' && state.liftBottom && !state.liftTop;
     const groomerPopup = document.getElementById('groomerHoverPopup');
     if (groomerPopup && !groomerPopup.hidden && !isGroomerPopupPinned && groomerIdx >= 0) {
       isGroomerPopupPinned = true;
       groomerPopup.setAttribute('data-pinned', 'true');
+      e.stopPropagation();
+      return;
+    }
+    const slopePopup = document.getElementById('slopeHoverPopup');
+    if (slopePopup && !slopePopup.hidden && !isSlopePopupPinned && slopeIdx >= 0) {
+      isSlopePopupPinned = true;
+      slopePopup.setAttribute('data-pinned', 'true');
       e.stopPropagation();
       return;
     }
@@ -910,9 +1208,10 @@ export function onCanvasClick(e) {
       e.stopPropagation();
       return;
     }
-    if (liftIdx < 0 && groomerIdx < 0) {
+    if (liftIdx < 0 && groomerIdx < 0 && slopeIdx < 0) {
       hideLiftHoverPopup();
       hideGroomerHoverPopup();
+      hideSlopeHoverPopup();
     }
   }
 

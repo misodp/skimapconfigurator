@@ -34,11 +34,13 @@ body {
 #app {
   display: grid;
   grid-template-columns: 300px 1fr;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   grid-template-areas:
     "header header"
-    "sidebar canvas";
-  min-height: 100vh;
+    "sidebar canvas"
+    "status status";
+  height: 100vh;
+  overflow: hidden;
 }
 
 .header {
@@ -95,6 +97,7 @@ body {
   pointer-events: auto;
   transition: opacity 0.2s ease;
 }
+
 .mountain-badge:hover {
   opacity: 1;
 }
@@ -115,9 +118,11 @@ body {
   align-items: center;
   justify-content: center;
 }
+
 .badge-unlock-overlay[hidden] {
   display: none;
 }
+
 .badge-unlock-flyer {
   position: fixed;
   transform: translate(-50%, -50%);
@@ -372,11 +377,77 @@ body {
   display: block;
 }
 
+/* Status bar at bottom: save/load (left), simulation speed (right) */
+.status-bar {
+  grid-area: status;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1rem;
+  height: 28px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+.status-bar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 0.5rem;
+}
+.status-bar-save-load {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.status-bar-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0.2rem 0.35rem;
+  line-height: 1;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font: inherit;
+}
+.status-bar-icon-btn:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--text);
+}
+.status-bar-icon-btn-svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+.status-bar-speed {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+}
+.status-bar-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  margin-right: 0.1rem;
+}
+.status-bar-speed .sim-speed-btn {
+  margin: 0;
+  line-height: 1;
+  padding: 0.12rem 0.35rem;
+  font-size: 0.75rem;
+}
+
 /* Combined left sidebar with Invest / Statistics tabs */
 .sidebar {
   grid-area: sidebar;
   display: flex;
   flex-direction: column;
+  min-height: 0;
   background: var(--surface);
   border-right: 1px solid var(--border);
   min-width: 0;
@@ -860,11 +931,32 @@ body {
   white-space: nowrap;
 }
 
-.diff-btn[data-difficulty-key="green"].selected { border-color: var(--green); background: rgba(52, 168, 83, 0.2); }
-.diff-btn[data-difficulty-key="blue"].selected { border-color: var(--blue); background: rgba(66, 133, 244, 0.2); }
-.diff-btn[data-difficulty-key="red"].selected { border-color: var(--red); background: rgba(234, 67, 53, 0.2); }
-.diff-btn[data-difficulty-key="black"].selected { border-color: var(--black); background: rgba(31, 31, 31, 0.5); color: #fff; }
-.diff-btn[data-difficulty-key="freeride"].selected { border-color: var(--freeride); background: rgba(45, 27, 78, 0.4); color: #e8e0f0; }
+.diff-btn[data-difficulty-key="green"].selected {
+  border-color: var(--green);
+  background: rgba(52, 168, 83, 0.2);
+}
+
+.diff-btn[data-difficulty-key="blue"].selected {
+  border-color: var(--blue);
+  background: rgba(66, 133, 244, 0.2);
+}
+
+.diff-btn[data-difficulty-key="red"].selected {
+  border-color: var(--red);
+  background: rgba(234, 67, 53, 0.2);
+}
+
+.diff-btn[data-difficulty-key="black"].selected {
+  border-color: var(--black);
+  background: rgba(31, 31, 31, 0.5);
+  color: #fff;
+}
+
+.diff-btn[data-difficulty-key="freeride"].selected {
+  border-color: var(--freeride);
+  background: rgba(45, 27, 78, 0.4);
+  color: #e8e0f0;
+}
 
 .hint {
   margin: 0.5rem 0 0;
@@ -872,8 +964,13 @@ body {
   color: var(--text-muted);
 }
 
-.hint.small { margin-top: 0.25rem; }
-.hidden { display: none !important; }
+.hint.small {
+  margin-top: 0.25rem;
+}
+
+.hidden {
+  display: none !important;
+}
 
 .cancel-slope-btn,
 .cancel-lift-btn {
@@ -921,7 +1018,9 @@ button:hover {
   gap: 0.5rem;
 }
 
-.item-list li:last-child { border-bottom: none; }
+.item-list li:last-child {
+  border-bottom: none;
+}
 
 .item-list .remove-btn {
   padding: 0.2rem 0.4rem;
@@ -985,22 +1084,30 @@ button:hover {
 .editable-lift-name {
   cursor: pointer;
 }
+
 .editable-lift-name:hover {
   text-decoration: underline;
 }
 
 .canvas-area {
   grid-area: canvas;
+  min-height: 0;
   padding: 1rem;
-  overflow: auto;
+  overflow: hidden;
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
 }
 
 .canvas-wrapper {
   position: relative;
-  display: inline-block;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
   border-radius: var(--radius);
   overflow: visible;
@@ -1062,6 +1169,10 @@ button:hover {
   flex-shrink: 0;
 }
 
+.slope-hover-popup .slope-popup-icon--diamond {
+  transform: rotate(45deg);
+}
+
 .lift-hover-popup .lift-hover-popup-name {
   font-weight: 600;
   color: var(--text);
@@ -1089,7 +1200,7 @@ button:hover {
   display: block;
 }
 
-.lift-hover-popup .lift-hover-popup-meta + .lift-hover-popup-meta {
+.lift-hover-popup .lift-hover-popup-meta+.lift-hover-popup-meta {
   margin-top: 0.1rem;
 }
 
@@ -1218,7 +1329,8 @@ button:hover {
 .lift-hover-popup .lift-popup-sell-btn .lift-popup-skidollar-icon,
 .lift-hover-popup .lift-popup-scrap-btn .lift-popup-skidollar-icon,
 .lift-hover-popup .groomer-popup-sell-btn .lift-popup-skidollar-icon,
-.lift-hover-popup .groomer-popup-scrap-btn .lift-popup-skidollar-icon {
+.lift-hover-popup .groomer-popup-scrap-btn .lift-popup-skidollar-icon,
+.lift-hover-popup .slope-popup-scrap-btn .lift-popup-skidollar-icon {
   width: 0.9em;
   height: 0.9em;
   vertical-align: -0.15em;
@@ -1233,14 +1345,26 @@ button:hover {
 
 .mountain-image-wrap {
   position: relative;
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100%;
   line-height: 0;
 }
 
 .mountain-img {
   display: block;
   max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
+  object-fit: contain;
   transition: opacity 0.5s ease;
 }
 
@@ -1368,7 +1492,7 @@ button:hover {
   height: 0;
   padding-bottom: 100%;
   background-repeat: no-repeat;
-  background-color: var(--surface-alt, rgba(255,255,255,0.06));
+  background-color: var(--surface-alt, rgba(255, 255, 255, 0.06));
   border-radius: 6px;
   background-size: 300% 200%;
 }
@@ -1378,7 +1502,7 @@ button:hover {
   height: 0;
   padding-bottom: 100%;
   background-repeat: no-repeat;
-  background-color: var(--surface-alt, rgba(255,255,255,0.06));
+  background-color: var(--surface-alt, rgba(255, 255, 255, 0.06));
   border-radius: 6px;
   background-size: 300% 200%;
 }
@@ -1484,7 +1608,7 @@ button:hover {
   height: 48px;
   flex-shrink: 0;
   background-repeat: no-repeat;
-  background-color: var(--surface-alt, rgba(255,255,255,0.06));
+  background-color: var(--surface-alt, rgba(255, 255, 255, 0.06));
   border-radius: 4px;
 }
 
@@ -1573,7 +1697,7 @@ button:hover {
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  background-color: var(--surface-alt, rgba(255,255,255,0.06));
+  background-color: var(--surface-alt, rgba(255, 255, 255, 0.06));
   border-radius: 4px;
 }
 
@@ -1592,7 +1716,7 @@ button:hover {
   background-repeat: no-repeat;
   background-position: center;
   background-size: contain;
-  background-color: var(--surface-alt, rgba(255,255,255,0.06));
+  background-color: var(--surface-alt, rgba(255, 255, 255, 0.06));
   border-radius: 6px;
 }
 
