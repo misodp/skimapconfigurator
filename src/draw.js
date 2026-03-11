@@ -43,7 +43,7 @@ function drawLiftLabel(ctx, scaleX, scaleY, name, ax, ay, bx, by, liftColor) {
   const midY = (ay + by) / 2;
   const angle = Math.atan2(by - ay, bx - ax);
   const drawAngle = normalizeAngleForDisplay(angle);
-  const offset = 10;
+  const offset = 20;
   const perpX = -Math.sin(angle) * offset;
   const perpY = Math.cos(angle) * offset;
   const tx = midX + perpX;

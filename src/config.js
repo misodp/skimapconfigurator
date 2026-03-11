@@ -13,6 +13,14 @@ import { updateAchievementBadges, getEffectiveSatisfaction } from './achievement
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
   if (el) el.textContent = formatCurrency(state.budget);
+  const dailyEl = document.getElementById('headerDailyProfit');
+  if (dailyEl) {
+    const profit = state.dailyProfit;
+    dailyEl.textContent = (profit >= 0 ? '+' : '') + formatCurrency(profit);
+    dailyEl.classList.remove('profit', 'loss');
+    if (profit > 0) dailyEl.classList.add('profit');
+    else if (profit < 0) dailyEl.classList.add('loss');
+  }
 }
 
 export function updateVisitorsDisplay() {
