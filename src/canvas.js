@@ -44,12 +44,27 @@ function isOperateTabActive() {
 export function syncCanvasSize() {
   if (!state.image || !DOM.canvas) return;
   const img = state.image;
-  const rect = img.getBoundingClientRect();
+  const imgRect = img.getBoundingClientRect();
   const wrapper = DOM.canvas.parentElement;
   const wrapperRect = wrapper ? wrapper.getBoundingClientRect() : null;
   const dpr = window.devicePixelRatio || 1;
   state.imageWidth = img.naturalWidth;
   state.imageHeight = img.naturalHeight;
+
+  /* With object-fit: contain, the image is letterboxed; compute the actual displayed area. */
+  const nw = img.naturalWidth || 1;
+  const nh = img.naturalHeight || 1;
+  const scale = Math.min(imgRect.width / nw, imgRect.height / nh);
+  const displayW = nw * scale;
+  const displayH = nh * scale;
+  const offsetX = (imgRect.width - displayW) / 2;
+  const offsetY = (imgRect.height - displayH) / 2;
+  const rect = {
+    width: displayW,
+    height: displayH,
+    left: imgRect.left + offsetX,
+    top: imgRect.top + offsetY,
+  };
 
   DOM.canvas.width = rect.width * dpr;
   DOM.canvas.height = rect.height * dpr;
@@ -174,30 +189,17 @@ export function findSnapPoint(px, py) {
   return best;
 }
 
-/** Lift label offset from midpoint (image px); must match draw.js drawLiftLabel. */
-const LIFT_LABEL_OFFSET = 10;
-
-/** Return image position of the lift number/label (circle/diamond indicator) for a lift. */
-function getLiftLabelPosition(lift) {
-  const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
-  const b = fromNormalized(lift.topStation.x, lift.topStation.y);
-  const midX = (a.x + b.x) / 2;
-  const midY = (a.y + b.y) / 2;
-  const angle = Math.atan2(b.y - a.y, b.x - a.x);
-  const perpX = -Math.sin(angle) * LIFT_LABEL_OFFSET;
-  const perpY = Math.cos(angle) * LIFT_LABEL_OFFSET;
-  return { x: midX + perpX, y: midY + perpY };
-}
-
-/** Return index of lift at image point (px, py), or null if none. Only hits when over the lift label (number indicator). */
+/** Return index of lift at image point (px, py), or null if none within threshold of the lift line. */
 function getLiftIndexAtImage(px, py) {
   let bestIdx = null;
   let bestDistSq = LIFT_HOVER_THRESHOLD_SQ;
 
   state.lifts.forEach((lift, idx) => {
-    const pos = getLiftLabelPosition(lift);
-    const dx = px - pos.x;
-    const dy = py - pos.y;
+    const a = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+    const b = fromNormalized(lift.topStation.x, lift.topStation.y);
+    const p = closestPointOnSegment(px, py, a.x, a.y, b.x, b.y);
+    const dx = px - p.x;
+    const dy = py - p.y;
     const d2 = dx * dx + dy * dy;
     if (d2 < bestDistSq) {
       bestDistSq = d2;
@@ -1103,6 +1105,8 @@ export function onCanvasMouseMove(e) {
     return;
   }
   if (isGroomerPopupPinned) return;
+  /* When not over a groomer, hide groomer popup so it closes as cursor moves off */
+  updateGroomerHoverPopup(-1, e.clientX, e.clientY);
   const slopeIdx = getSlopeIndexAtImage(pt.x, pt.y);
   if (slopeIdx >= 0 && !isSlopePopupPinned) {
     updateSlopeHoverPopup(slopeIdx, e.clientX, e.clientY);
