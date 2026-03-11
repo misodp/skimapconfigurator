@@ -1,251 +1,282 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Retro Ski Resort Tycoon</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-    <script type="module" crossorigin src="/skimapconfigurator/assets/index-CU6DHDvI.js"></script>
-    <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-BIrdv6po.css">
-  </head>
-  <body>
-    <div id="app">
-      <header class="header">
-        <div class="header-brand">
-          <h1>Retro Ski Resort Tycoon</h1>
-          <p class="subtitle">Build your dream ski resort in the 1960s.</p>
-        </div>
-        <div class="header-news" id="newsFeedContainer" aria-live="polite" aria-label="Resort news">
-          <div class="header-news-skier" id="newsSkierSprite" aria-hidden="true"></div>
-          <div class="header-news-text" id="newsFeedText">Welcome to the resort!</div>
-        </div>
-        <div class="header-meta">
-          <div class="header-badges" aria-label="Resort achievements">
-            <div class="header-badge header-badge--top-world" aria-hidden="true"></div>
-            <div class="header-badge header-badge--family" aria-hidden="true"></div>
-            <div class="header-badge header-badge--alpine" aria-hidden="true"></div>
-            <div class="header-badge header-badge--freeride" aria-hidden="true"></div>
-          </div>
-          <div class="header-date-block">
-            <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
-            <div class="header-season" id="seasonDisplay" aria-label="Season">Winter</div>
-          </div>
-          <div class="header-weather" id="weatherDisplay" aria-label="Current weather" title="Weather"></div>
-          <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
-            <img class="budget-icon" id="budgetIcon" src="" alt="" />
-            <span id="budgetAmount">0</span>
-          </div>
-        </div>
-      </header>
 
-      <aside class="sidebar" aria-label="Invest and statistics">
-        <div class="sidebar-tabs" role="tablist">
-          <button type="button" class="sidebar-tab active" role="tab" aria-selected="true" aria-controls="investPanel" id="investTab" data-tab="invest">Invest</button>
-          <button type="button" class="sidebar-tab" role="tab" aria-selected="false" aria-controls="statisticsPanel" id="statisticsTab" data-tab="statistics">Operate</button>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Retro Ski Resort Tycoon</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script type="module" crossorigin src="/skimapconfigurator/assets/index-DyOXjneR.js"></script>
+  <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-BtnM57DH.css">
+</head>
+
+<body>
+  <div id="app">
+    <header class="header">
+      <div class="header-brand">
+        <h1>Retro Ski Resort Tycoon</h1>
+        <p class="subtitle">Build your dream ski resort in the 1960s.</p>
+      </div>
+      <div class="header-news" id="newsFeedContainer" aria-live="polite" aria-label="Resort news">
+        <div class="header-news-skier" id="newsSkierSprite" aria-hidden="true"></div>
+        <div class="header-news-text" id="newsFeedText">Welcome to the resort!</div>
+      </div>
+      <div class="header-meta">
+        <div class="header-badges" aria-label="Resort achievements">
+          <div class="header-badge header-badge--top-world" aria-hidden="true"></div>
+          <div class="header-badge header-badge--family" aria-hidden="true"></div>
+          <div class="header-badge header-badge--alpine" aria-hidden="true"></div>
+          <div class="header-badge header-badge--freeride" aria-hidden="true"></div>
         </div>
-        <div class="sidebar-panel active" id="investPanel" role="tabpanel" aria-labelledby="investTab">
-          <div class="toolbar-content">
-            <section class="tool-section">
-              <h2>Invest</h2>
-              <div class="mode-buttons">
-                <button type="button" data-mode="lift" class="mode-btn active">Lifts</button>
-                <button type="button" data-mode="slope" class="mode-btn">Slopes</button>
-                <button type="button" data-mode="groomer" class="mode-btn">Groomers</button>
-                <!-- <button type="button" data-mode="cottage" class="mode-btn">Cottages</button> -->
+        <div class="header-date-block">
+          <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
+          <div class="header-season" id="seasonDisplay" aria-label="Season">Winter</div>
+        </div>
+        <div class="header-weather" id="weatherDisplay" aria-label="Current weather" title="Weather"></div>
+        <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
+          <img class="budget-icon" id="budgetIcon" src="" alt="" />
+          <span id="budgetAmount">0</span>
+        </div>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Invest and statistics">
+      <div class="sidebar-tabs" role="tablist">
+        <button type="button" class="sidebar-tab active" role="tab" aria-selected="true" aria-controls="investPanel"
+          id="investTab" data-tab="invest">Invest</button>
+        <button type="button" class="sidebar-tab" role="tab" aria-selected="false" aria-controls="statisticsPanel"
+          id="statisticsTab" data-tab="statistics">Operate</button>
+      </div>
+      <div class="sidebar-panel active" id="investPanel" role="tabpanel" aria-labelledby="investTab">
+        <div class="toolbar-content">
+          <section class="tool-section">
+            <h2>Invest</h2>
+            <div class="mode-buttons">
+              <button type="button" data-mode="lift" class="mode-btn active">Lifts</button>
+              <button type="button" data-mode="slope" class="mode-btn">Slopes</button>
+              <button type="button" data-mode="groomer" class="mode-btn">Groomers</button>
+              <!-- <button type="button" data-mode="cottage" class="mode-btn">Cottages</button> -->
+            </div>
+            <p class="hint lift-hint">Select type, then click bottom station, then top station. Press Escape to cancel.
+            </p>
+            <p class="hint slope-hint hidden">Select difficulty, then draw the slope. Double-click to place, Escape to
+              cancel.</p>
+            <p class="hint cottage-hint hidden">Click on the map to place a cottage.</p>
+            <p class="hint groomer-hint hidden">Select type, then click on the map to place.</p>
+          </section>
+
+          <section class="tool-section lift-options">
+            <h2>Lift type</h2>
+            <div id="liftTypeDropdown" class="lift-type-dropdown"></div>
+            <button type="button" id="cancelLiftBtn" class="cancel-lift-btn hidden">Cancel current lift</button>
+          </section>
+
+          <section class="tool-section slope-options hidden">
+            <h2>Slope type</h2>
+            <div id="difficultyButtons" class="slope-type-dropdown"></div>
+            <button type="button" id="cancelSlopeBtn" class="cancel-slope-btn hidden">Cancel current slope</button>
+          </section>
+
+          <section class="tool-section groomer-options hidden">
+            <h2>Groomer type</h2>
+            <div id="groomerTypeDropdown" class="groomer-type-dropdown"></div>
+          </section>
+
+          <section class="tool-section hidden" aria-hidden="true">
+            <h2>Lifts</h2>
+            <ul id="liftList" class="item-list"></ul>
+          </section>
+
+          <section class="tool-section hidden" aria-hidden="true">
+            <h2>Slopes</h2>
+            <ul id="slopeList" class="item-list"></ul>
+          </section>
+
+          <section class="tool-section hidden" aria-hidden="true">
+            <h2>Cottages</h2>
+            <ul id="cottageList" class="item-list"></ul>
+          </section>
+
+          <section class="tool-section hidden" aria-hidden="true">
+            <h2>Groomers</h2>
+            <ul id="groomerList" class="item-list"></ul>
+          </section>
+
+          <section class="tool-section hidden" aria-hidden="true">
+            <h2>Mountain image</h2>
+            <input type="file" id="imageInput" accept="image/*" />
+            <p class="hint small">Upload your mountain image to draw on.</p>
+          </section>
+        </div>
+      </div>
+      <div class="sidebar-panel" id="statisticsPanel" role="tabpanel" aria-labelledby="statisticsTab">
+        <div class="stats-content">
+          <section class="stats-section">
+            <h2 class="stats-panel-title">Operate</h2>
+            <div class="stat-row stat-row-resort">
+              <div class="resort-toggle" role="group" aria-label="Resort open or closed">
+                <span class="resort-switch-thumb" aria-hidden="true"></span>
+                <button type="button" class="resort-btn active" id="resortOpenBtn" data-resort="open"
+                  aria-pressed="true">Open</button>
+                <button type="button" class="resort-btn" id="resortClosedBtn" data-resort="closed"
+                  aria-pressed="false">Closed</button>
               </div>
-              <p class="hint lift-hint">Select type, then click bottom station, then top station. Press Escape to cancel.</p>
-              <p class="hint slope-hint hidden">Select difficulty, then draw the slope. Press Escape to cancel.</p>
-              <p class="hint cottage-hint hidden">Click on the map to place a cottage.</p>
-              <p class="hint groomer-hint hidden">Select type, then click on the map to place.</p>
-            </section>
-
-            <section class="tool-section lift-options">
-              <h2>Lift type</h2>
-              <div id="liftTypeDropdown" class="lift-type-dropdown"></div>
-              <button type="button" id="cancelLiftBtn" class="cancel-lift-btn hidden">Cancel current lift</button>
-            </section>
-
-            <section class="tool-section slope-options hidden">
-              <h2>Slope type</h2>
-              <div id="difficultyButtons" class="slope-type-dropdown"></div>
-              <button type="button" id="cancelSlopeBtn" class="cancel-slope-btn hidden">Cancel current slope</button>
-            </section>
-
-            <section class="tool-section groomer-options hidden">
-              <h2>Groomer type</h2>
-              <div id="groomerTypeDropdown" class="groomer-type-dropdown"></div>
-            </section>
-
-            <section class="tool-section">
-              <h2>Lifts</h2>
-              <ul id="liftList" class="item-list"></ul>
-            </section>
-
-            <section class="tool-section">
-              <h2>Slopes</h2>
-              <ul id="slopeList" class="item-list"></ul>
-            </section>
-
-            <section class="tool-section">
-              <h2>Cottages</h2>
-              <ul id="cottageList" class="item-list"></ul>
-            </section>
-
-            <section class="tool-section">
-              <h2>Groomers</h2>
-              <ul id="groomerList" class="item-list"></ul>
-            </section>
-
-            <section class="tool-section save-load-section" aria-label="Save and load game">
-              <h2>Save / Load</h2>
-              <div class="save-load-buttons">
-                <button type="button" id="saveBtn" class="sidebar-icon-btn" title="Save game" aria-label="Save game">
-                  <svg class="sidebar-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/>
-                    <polyline points="17 21 17 13 7 13 7 21"/>
-                    <polyline points="7 3 7 8 15 8"/>
-                  </svg>
-                  <span class="sidebar-btn-label">Save</span>
-                </button>
-                <button type="button" id="loadBtn" class="sidebar-icon-btn" title="Load game" aria-label="Load game">
-                  <svg class="sidebar-btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                  <span class="sidebar-btn-label">Load</span>
-                </button>
+            </div>
+            <div class="stat-row">
+              <div class="header-visitors stat-item" id="visitorsDisplay" data-label="Visitors:"
+                aria-label="Daily visitors">0</div>
+            </div>
+            <div class="stat-row">
+              <div class="header-finance header-sales stat-item stat-finance-row" data-label="Sales:"
+                aria-label="Daily sales">
+                <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+                <span id="salesDisplay">0</span>
               </div>
-              <input type="file" id="importInput" accept=".json" hidden />
-            </section>
-
-            <section class="tool-section">
-              <h2>Mountain image</h2>
-              <input type="file" id="imageInput" accept="image/*" />
-              <p class="hint small">Upload your mountain image to draw on.</p>
-            </section>
-          </div>
-        </div>
-        <div class="sidebar-panel" id="statisticsPanel" role="tabpanel" aria-labelledby="statisticsTab">
-          <div class="stats-content">
-            <section class="stats-section">
-              <h2 class="stats-panel-title">Operate</h2>
-              <div class="stat-row stat-row-resort">
-                <div class="resort-toggle" role="group" aria-label="Resort open or closed">
-                  <span class="resort-switch-thumb" aria-hidden="true"></span>
-                  <button type="button" class="resort-btn active" id="resortOpenBtn" data-resort="open" aria-pressed="true">Open</button>
-                  <button type="button" class="resort-btn" id="resortClosedBtn" data-resort="closed" aria-pressed="false">Closed</button>
+            </div>
+            <div class="stat-row">
+              <div class="header-finance header-costs stat-item stat-finance-row" data-label="Costs:"
+                aria-label="Daily operating costs">
+                <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+                <span id="operatingCostsDisplay">0</span>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="header-finance header-profit daily-change stat-item stat-finance-row" data-label="Profit:"
+                aria-label="Daily profit">
+                <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+                <span id="profitDisplay">0</span>
+              </div>
+            </div>
+            <div class="stat-row">
+              <div class="header-snow-depth stat-item" id="snowDepthDisplay" data-label="Snow:" aria-label="Snow depth">
+                0 cm</div>
+            </div>
+            <div class="stat-row satisfaction-row">
+              <div id="satisfactionDisplay" class="satisfaction-widget" aria-label="Visitor satisfaction">
+                <div class="satisfaction-header">
+                  <span class="satisfaction-label">Satisfaction</span>
+                  <span class="satisfaction-value" aria-live="polite">20%</span>
+                </div>
+                <div class="satisfaction-track" role="presentation">
+                  <div class="satisfaction-fill satisfaction-fill-low" style="width: 20%;"></div>
                 </div>
               </div>
-              <div class="stat-row">
-                <div class="header-visitors stat-item" id="visitorsDisplay" data-label="Visitors:" aria-label="Daily visitors">0</div>
-              </div>
-              <div class="stat-row">
-                <div class="header-finance header-sales stat-item stat-finance-row" data-label="Sales:" aria-label="Daily sales">
-                  <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
-                  <span id="salesDisplay">0</span>
+            </div>
+            <div class="stat-row experience-metric-row">
+              <div class="experience-metric">
+                <div class="experience-header">
+                  <span class="experience-metric-label">Lift wait <span class="experience-change change-stable"
+                      aria-label="Trend">−</span></span>
+                  <span class="experience-state-label" aria-live="polite">Medium</span>
                 </div>
-              </div>
-              <div class="stat-row">
-                <div class="header-finance header-costs stat-item stat-finance-row" data-label="Costs:" aria-label="Daily operating costs">
-                  <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
-                  <span id="operatingCostsDisplay">0</span>
-                </div>
-              </div>
-              <div class="stat-row">
-                <div class="header-finance header-profit daily-change stat-item stat-finance-row" data-label="Profit:" aria-label="Daily profit">
-                  <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
-                  <span id="profitDisplay">0</span>
-                </div>
-              </div>
-              <div class="stat-row">
-                <div class="header-snow-depth stat-item" id="snowDepthDisplay" data-label="Snow:" aria-label="Snow depth">0 cm</div>
-              </div>
-              <div class="stat-row satisfaction-row">
-                <div id="satisfactionDisplay" class="satisfaction-widget" aria-label="Visitor satisfaction">
-                  <div class="satisfaction-header">
-                    <span class="satisfaction-label">Satisfaction</span>
-                    <span class="satisfaction-value" aria-live="polite">20%</span>
-                  </div>
-                  <div class="satisfaction-track" role="presentation">
-                    <div class="satisfaction-fill satisfaction-fill-low" style="width: 20%;"></div>
-                  </div>
-                </div>
-              </div>
-              <div class="stat-row experience-metric-row">
-                <div class="experience-metric">
-                  <div class="experience-header">
-                    <span class="experience-metric-label">Lift wait <span class="experience-change change-stable" aria-label="Trend">−</span></span>
-                    <span class="experience-state-label" aria-live="polite">Medium</span>
-                  </div>
-                  <div class="experience-bar-wrap">
-                    <div id="liftExperienceDisplay" class="experience-bar experience-bar-gradient" role="img" aria-label="Lift wait experience">
-                      <div class="experience-track"><div class="experience-fill experience-fill-mid" style="width: 50%;"></div></div>
+                <div class="experience-bar-wrap">
+                  <div id="liftExperienceDisplay" class="experience-bar experience-bar-gradient" role="img"
+                    aria-label="Lift wait experience">
+                    <div class="experience-track">
+                      <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="stat-row experience-metric-row">
-                <div class="experience-metric">
-                  <div class="experience-header">
-                    <span class="experience-metric-label">Slope crowds <span class="experience-change change-stable" aria-label="Trend">−</span></span>
-                    <span class="experience-state-label" aria-live="polite">Medium</span>
-                  </div>
-                  <div class="experience-bar-wrap">
-                    <div id="slopeExperienceDisplay" class="experience-bar experience-bar-gradient" role="img" aria-label="Slope crowd experience">
-                      <div class="experience-track"><div class="experience-fill experience-fill-mid" style="width: 50%;"></div></div>
+            </div>
+            <div class="stat-row experience-metric-row">
+              <div class="experience-metric">
+                <div class="experience-header">
+                  <span class="experience-metric-label">Slope crowds <span class="experience-change change-stable"
+                      aria-label="Trend">−</span></span>
+                  <span class="experience-state-label" aria-live="polite">Medium</span>
+                </div>
+                <div class="experience-bar-wrap">
+                  <div id="slopeExperienceDisplay" class="experience-bar experience-bar-gradient" role="img"
+                    aria-label="Slope crowd experience">
+                    <div class="experience-track">
+                      <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="stat-row experience-metric-row">
-                <div class="experience-metric">
-                  <div class="experience-header">
-                    <span class="experience-metric-label">Slope quality <span class="experience-change change-stable" aria-label="Trend">−</span></span>
-                    <span class="experience-state-label" aria-live="polite">Medium</span>
-                  </div>
-                  <div class="experience-bar-wrap">
-                    <div id="slopeQualityDisplay" class="experience-bar experience-bar-gradient" role="img" aria-label="Slope quality (grooming)">
-                      <div class="experience-track"><div class="experience-fill experience-fill-mid" style="width: 50%;"></div></div>
+            </div>
+            <div class="stat-row experience-metric-row">
+              <div class="experience-metric">
+                <div class="experience-header">
+                  <span class="experience-metric-label">Slope quality <span class="experience-change change-stable"
+                      aria-label="Trend">−</span></span>
+                  <span class="experience-state-label" aria-live="polite">Medium</span>
+                </div>
+                <div class="experience-bar-wrap">
+                  <div id="slopeQualityDisplay" class="experience-bar experience-bar-gradient" role="img"
+                    aria-label="Slope quality (grooming)">
+                    <div class="experience-track">
+                      <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
                     </div>
                   </div>
                 </div>
               </div>
-              <div class="stat-row stat-row-speed">
-                <div class="header-speed" aria-label="Simulation speed">
-                  <span class="header-speed-label">Speed:</span>
-                  <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
-                  <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
-                  <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
-                  <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
-                </div>
-              </div>
-            </section>
-          </div>
+            </div>
+          </section>
         </div>
-      </aside>
+      </div>
+    </aside>
 
-      <main class="canvas-area">
-        <div class="canvas-wrapper">
-          <div class="mountain-image-wrap">
-            <img id="mountainImage" src="" alt="Mountain" class="mountain-img" />
-            <img id="mountainImageDissolve" class="mountain-img mountain-img-dissolve" aria-hidden="true" alt="" />
-          </div>
-          <canvas id="drawCanvas"></canvas>
-          <div class="mountain-badges mountain-badges--locked" aria-hidden="true" data-badges="locked">
-            <img class="mountain-badge" id="badgeFamily" alt="" />
-            <img class="mountain-badge" id="badgeAlpine" alt="" />
-            <img class="mountain-badge" id="badgeFreeride" alt="" />
-            <img class="mountain-badge" id="badgeTopWorld" alt="" />
-          </div>
-          <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
-          <div id="liftHoverPopup" class="lift-hover-popup" role="tooltip" aria-hidden="true" hidden></div>
-          <div id="groomerHoverPopup" class="lift-hover-popup groomer-hover-popup" role="tooltip" aria-hidden="true" hidden></div>
+    <main class="canvas-area">
+      <div class="canvas-wrapper">
+        <div class="mountain-image-wrap" role="img" aria-label="Mountain map">
+          <div class="mountain-image-stack" id="mountainImageStack" aria-hidden="false"></div>
+          <img id="mountainImage" src="" alt="" class="mountain-img mountain-img-custom" aria-hidden="true" hidden />
         </div>
-      </main>
+        <canvas id="drawCanvas"></canvas>
+        <div class="mountain-badges mountain-badges--locked" aria-hidden="true" data-badges="locked">
+          <img class="mountain-badge" id="badgeFamily" alt="" />
+          <img class="mountain-badge" id="badgeAlpine" alt="" />
+          <img class="mountain-badge" id="badgeFreeride" alt="" />
+          <img class="mountain-badge" id="badgeTopWorld" alt="" />
+        </div>
+        <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
+        <div id="liftHoverPopup" class="lift-hover-popup" role="tooltip" aria-hidden="true" hidden></div>
+        <div id="groomerHoverPopup" class="lift-hover-popup groomer-hover-popup" role="tooltip" aria-hidden="true"
+          hidden></div>
+        <div id="slopeHoverPopup" class="lift-hover-popup slope-hover-popup" role="tooltip" aria-hidden="true" hidden>
+        </div>
+      </div>
+    </main>
 
-    </div>
-  </body>
+    <footer class="status-bar" aria-label="Status and controls">
+      <div class="status-bar-inner">
+        <div class="status-bar-save-load" aria-label="Save and load game">
+          <button type="button" id="saveBtn" class="status-bar-icon-btn" title="Save game" aria-label="Save game">
+            <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+              <polyline points="17 21 17 13 7 13 7 21" />
+              <polyline points="7 3 7 8 15 8" />
+            </svg>
+          </button>
+          <button type="button" id="loadBtn" class="status-bar-icon-btn" title="Load game" aria-label="Load game">
+            <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+          </button>
+          <input type="file" id="importInput" accept=".json" hidden />
+        </div>
+        <div class="status-bar-speed" aria-label="Simulation speed">
+          <span class="status-bar-label">Speed:</span>
+          <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
+          <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
+          <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
+          <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
+        </div>
+      </div>
+    </footer>
+
+    <div id="badgeUnlockOverlay" class="badge-unlock-overlay" aria-hidden="true" hidden>
+      <img id="badgeUnlockFlyer" class="badge-unlock-flyer" alt="" />
+    </div>
+  </div>
+</body>
+
 </html>
