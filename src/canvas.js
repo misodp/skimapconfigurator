@@ -230,9 +230,9 @@ function getLiftPopupHtml(lift, liftType, lengthM, liftIndex) {
     serviceRow += '<button type="button" class="lift-popup-service-btn" data-lift-index="' + String(liftIndex) + '" title="Restore lift to 100% health">Service: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(serviceCost)) + '</button>';
   }
   if (!isBroken) {
-    serviceRow += '<button type="button" class="lift-popup-sell-btn" data-lift-index="' + String(liftIndex) + '" title="Sell lift (value scales with health)">Sell: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(Math.max(0, saleValue))) + '</button>';
+    serviceRow += '<button type="button" class="lift-popup-sell-btn" data-lift-index="' + String(liftIndex) + '" title="Sell lift (value scales with health)">Sell: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> + ' + escapeHtml(formatCurrency(Math.max(0, saleValue))) + '</button>';
   } else {
-    serviceRow += '<button type="button" class="lift-popup-scrap-btn" data-lift-index="' + String(liftIndex) + '" title="Scrap broken lift (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> −' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
+    serviceRow += '<button type="button" class="lift-popup-scrap-btn" data-lift-index="' + String(liftIndex) + '" title="Scrap broken lift (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" />' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
   }
   serviceRow += '</div>';
   const installedCap = (liftType && liftType.capacity != null) ? Number(liftType.capacity) : 0;

@@ -95,8 +95,19 @@ export function getLiftHealthZone(health: number, reliability: number): LiftHeal
 }
 
 /**
+ * Minimum capacity multiplier at 0 health (lifts and groomers): 0.5 at reliability ~0.85,
+ * 0.85 at reliability 0.98; linear in between, clamped to [0.5, 0.85].
+ */
+function getMinCapacityAtZeroHealth(reliability: number): number {
+  const rel = Math.max(0.1, Math.min(1, reliability ?? 0.5));
+  const t = (rel - 0.85) / (0.98 - 0.85);
+  return Math.max(0.5, Math.min(0.85, 0.5 + 0.35 * t));
+}
+
+/**
  * Effective capacity multiplier for a lift: 1.0 when health >= warning threshold;
- * below warning, scales down to 0.5 at 0 health (glitching/breakdowns reduce throughput).
+ * below warning, scales down to a reliability-dependent minimum at 0 health
+ * (0.5 at rel ~0.85, ~0.85 at rel 0.98).
  */
 export function getLiftEffectiveCapacityMultiplier(health: number, reliability: number, broken: boolean): number {
   if (broken) return 0;
@@ -104,7 +115,8 @@ export function getLiftEffectiveCapacityMultiplier(health: number, reliability: 
   const h = Math.max(0, Math.min(100, health));
   if (h >= warning) return 1;
   if (warning <= 0) return 1;
-  return 0.5 + 0.5 * (h / warning);
+  const floor = getMinCapacityAtZeroHealth(reliability);
+  return floor + (1 - floor) * (h / warning);
 }
 
 /** Daily breakdown chance when in critical health: 1–20%, lower when more reliable. */
@@ -174,7 +186,8 @@ export function getGroomerHealthZone(health: number, reliability: number): Groom
 }
 
 /**
- * Effective grooming capacity multiplier: 0 when broken; otherwise scales with health like lifts.
+ * Effective grooming capacity multiplier: 0 when broken; otherwise scales with health like lifts:
+ * reliability-dependent minimum at 0 health (0.5 at rel ~0.85, ~0.85 at rel 0.98).
  */
 export function getGroomerEffectiveCapacityMultiplier(health: number, reliability: number, broken: boolean): number {
   if (broken) return 0;
@@ -182,7 +195,8 @@ export function getGroomerEffectiveCapacityMultiplier(health: number, reliabilit
   const h = Math.max(0, Math.min(100, health));
   if (h >= warning) return 1;
   if (warning <= 0) return 1;
-  return 0.5 + 0.5 * (h / warning);
+  const floor = getMinCapacityAtZeroHealth(reliability);
+  return floor + (1 - floor) * (h / warning);
 }
 
 /**
