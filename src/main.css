@@ -74,7 +74,7 @@ body {
 .mountain-badges {
   position: absolute;
   top: 0.75rem;
-  right: 0.75rem;
+  right: calc(0.75rem + 40px);
   left: auto;
   height: 25%;
   min-height: 48px;
@@ -389,6 +389,7 @@ body {
   background: var(--surface);
   border-top: 1px solid var(--border);
 }
+
 .status-bar-inner {
   display: flex;
   align-items: center;
@@ -396,11 +397,13 @@ body {
   width: 100%;
   gap: 0.5rem;
 }
+
 .status-bar-save-load {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
 }
+
 .status-bar-icon-btn {
   display: inline-flex;
   align-items: center;
@@ -415,26 +418,31 @@ body {
   cursor: pointer;
   font: inherit;
 }
+
 .status-bar-icon-btn:hover {
   background: var(--surface-hover);
   border-color: var(--accent);
   color: var(--text);
 }
+
 .status-bar-icon-btn-svg {
   width: 14px;
   height: 14px;
   display: block;
 }
+
 .status-bar-speed {
   display: inline-flex;
   align-items: center;
   gap: 0.2rem;
 }
+
 .status-bar-label {
   font-size: 0.75rem;
   color: var(--text-muted);
   margin-right: 0.1rem;
 }
+
 .status-bar-speed .sim-speed-btn {
   margin: 0;
   line-height: 1;
