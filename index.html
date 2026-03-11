@@ -221,9 +221,9 @@
 
     <main class="canvas-area">
       <div class="canvas-wrapper">
-        <div class="mountain-image-wrap">
-          <img id="mountainImage" src="" alt="Mountain" class="mountain-img" />
-          <img id="mountainImageDissolve" class="mountain-img mountain-img-dissolve" aria-hidden="true" alt="" />
+        <div class="mountain-image-wrap" role="img" aria-label="Mountain map">
+          <div class="mountain-image-stack" id="mountainImageStack" aria-hidden="false"></div>
+          <img id="mountainImage" src="" alt="" class="mountain-img mountain-img-custom" aria-hidden="true" hidden />
         </div>
         <canvas id="drawCanvas"></canvas>
         <div class="mountain-badges mountain-badges--locked" aria-hidden="true" data-badges="locked">

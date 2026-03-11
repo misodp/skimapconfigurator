@@ -7,6 +7,10 @@ import groomerPrinothP15 from '../../assets/images/Prinoth_p15.png';
 import groomerRatracS from '../../assets/images/Ratrac_s.png';
 import groomerPb145 from '../../assets/images/PistenBully_145.png';
 import groomerPb170 from '../../assets/images/PistenBully_170.png';
+import groomerPrinothP15t from '../../assets/images/Prinoth_p15t.png';
+import groomerRatracSt from '../../assets/images/Ratrac_st.png';
+import groomerPb145t from '../../assets/images/PistenBully_145t.png';
+import groomerPb170t from '../../assets/images/PistenBully_170t.png';
 import { state } from '../state';
 import { escapeHtml, formatNumber, formatCurrency } from '../utils.js';
 
@@ -15,6 +19,14 @@ const GROOMER_IMAGE_URLS = {
   'Ratrac_s.png': groomerRatracS,
   'PistenBully_145.png': groomerPb145,
   'PistenBully_170.png': groomerPb170,
+};
+
+/** Transparent-background images for drawing groomers on the map (keyed by same filename as GROOMER_IMAGE_URLS). */
+const GROOMER_IMAGE_URLS_MAP = {
+  'Prinoth_p15.png': groomerPrinothP15t,
+  'Ratrac_s.png': groomerRatracSt,
+  'PistenBully_145.png': groomerPb145t,
+  'PistenBully_170.png': groomerPb170t,
 };
 
 export function getGroomerImageUrl(groomer) {
@@ -100,4 +112,9 @@ export function renderGroomerTypeDropdown(opts) {
 
 export function getGroomerImageUrls() {
   return { ...GROOMER_IMAGE_URLS };
+}
+
+/** Returns URLs for groomer images with transparent background (for drawing on the map). Falls back to original if no transparent version. */
+export function getGroomerMapImageUrls() {
+  return { ...GROOMER_IMAGE_URLS_MAP };
 }

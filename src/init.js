@@ -21,8 +21,8 @@ import { updateWeatherDisplay } from './weather-icon';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup, hideGroomerHoverPopup, hideSlopeHoverPopup, handleLiftPopupClick, handleGroomerPopupClick, handleSlopePopupClick } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
-import { renderGroomerTypeDropdown, getGroomerImageUrls } from './ui/groomers.js';
-import { updateMountainImage } from './mountain-images.js';
+import { renderGroomerTypeDropdown, getGroomerImageUrls, getGroomerMapImageUrls } from './ui/groomers.js';
+import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
 
 function setMode(mode) {
@@ -130,7 +130,7 @@ function loadCottageIcon() {
 }
 
 function loadGroomerImages() {
-  const urls = getGroomerImageUrls();
+  const urls = getGroomerMapImageUrls();
   if (!state.groomerTypes.length) return;
   state.groomerTypes.forEach((g) => {
     const url = urls[g.image];
@@ -150,11 +150,11 @@ function onImageSelected(e) {
   state.customMountainUrl = url;
   DOM.mountainImage.onload = () => {
     URL.revokeObjectURL(url);
-    state.image = DOM.mountainImage;
+    setMountainMode(true);
     syncCanvasSize();
+    DOM.canvas.classList.remove('no-image');
   };
   DOM.mountainImage.src = url;
-  DOM.canvas.classList.remove('no-image');
 }
 
 export function init() {
@@ -200,6 +200,7 @@ export function init() {
     state.displayedMountainThreshold = null;
     state.mountainPendingThreshold = null;
     state.mountainDaysAtPending = 0;
+    setMountainMode(false);
     updateMountainImage();
     const openBtn = document.getElementById('resortOpenBtn');
     const closedBtn = document.getElementById('resortClosedBtn');
@@ -357,9 +358,9 @@ export function init() {
   DOM.mountainImage.onload = () => {
     state.image = DOM.mountainImage;
     syncCanvasSize();
+    DOM.canvas.classList.remove('no-image');
   };
   updateMountainImage();
-  DOM.canvas.classList.remove('no-image');
 
   window.addEventListener('resize', () => {
     if (state.image) syncCanvasSize();
