@@ -27,6 +27,10 @@ export function updateVisitorsDisplay() {
   if (DOM.visitorsDisplay) {
     DOM.visitorsDisplay.textContent = formatNumber(state.dailyVisitors);
   }
+  const headerEl = document.getElementById('headerVisitorsDisplay');
+  if (headerEl) {
+    headerEl.textContent = formatNumber(state.dailyVisitors) + ' visitors';
+  }
 }
 
 export function updateDailyFinanceDisplay() {

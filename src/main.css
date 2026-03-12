@@ -273,6 +273,14 @@ body {
   text-transform: capitalize;
 }
 
+.header-visitors-count {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--text-muted);
+  opacity: 0.85;
+  white-space: nowrap;
+}
+
 .header-visitors {
   font-size: 1rem;
   font-weight: 500;
