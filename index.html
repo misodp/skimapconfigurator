@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/skimapconfigurator/assets/index-DyOXjneR.js"></script>
-  <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-BtnM57DH.css">
+  <script type="module" crossorigin src="/skimapconfigurator/assets/index-DXGPTeIQ.js"></script>
+  <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-BhZ_Jssi.css">
 </head>
 
 <body>
@@ -33,11 +33,15 @@
         <div class="header-date-block">
           <div class="header-date" id="currentDateDisplay" aria-label="Current date">November 1, 1960</div>
           <div class="header-season" id="seasonDisplay" aria-label="Season">Winter</div>
+          <div class="header-visitors-count" id="headerVisitorsDisplay" aria-label="Daily visitors">0</div>
         </div>
         <div class="header-weather" id="weatherDisplay" aria-label="Current weather" title="Weather"></div>
-        <div class="budget-display" id="budgetDisplay" aria-label="Available budget">
-          <img class="budget-icon" id="budgetIcon" src="" alt="" />
-          <span id="budgetAmount">0</span>
+        <div class="budget-display" id="budgetDisplay" aria-label="Available budget and daily profit">
+          <div class="budget-display-main">
+            <img class="budget-icon" id="budgetIcon" src="" alt="" />
+            <span id="budgetAmount">0</span>
+          </div>
+          <span id="headerDailyProfit" class="budget-daily-profit" aria-label="Daily profit or loss"></span>
         </div>
       </div>
     </header>
@@ -156,7 +160,7 @@
             <div class="stat-row satisfaction-row">
               <div id="satisfactionDisplay" class="satisfaction-widget" aria-label="Visitor satisfaction">
                 <div class="satisfaction-header">
-                  <span class="satisfaction-label">Satisfaction</span>
+                  <span class="satisfaction-label">Reputation</span>
                   <span class="satisfaction-value" aria-live="polite">20%</span>
                 </div>
                 <div class="satisfaction-track" role="presentation">
