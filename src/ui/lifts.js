@@ -44,6 +44,8 @@ export function renderLiftTypeDropdown(opts) {
   function setPanelBlank() {
     if (!floatingPanel) return;
     floatingPanel.innerHTML = LIFT_DETAIL_BLANK_HTML;
+    floatingPanel.hidden = true;
+    floatingPanel.setAttribute('aria-hidden', 'true');
   }
 
   function fillFloatingDetail(lift) {
@@ -123,10 +125,6 @@ export function renderLiftTypeDropdown(opts) {
   });
 
   if (!skipPanelBlank) setPanelBlank();
-  if (floatingPanel && state.mode === 'lift' && !skipPanelBlank) {
-    floatingPanel.hidden = false;
-    floatingPanel.setAttribute('aria-hidden', 'false');
-  }
 
   window.liftDropdownUpdateTrigger = () => {};
   window.liftDetailSetBlank = setPanelBlank;

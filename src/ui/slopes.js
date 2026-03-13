@@ -36,6 +36,8 @@ export function renderSlopeTypeButtons(opts) {
   function setPanelBlank() {
     if (!floatingPanel) return;
     floatingPanel.innerHTML = '';
+    floatingPanel.hidden = true;
+    floatingPanel.setAttribute('aria-hidden', 'true');
   }
 
   function fillSlopeDetailFloating(st) {
