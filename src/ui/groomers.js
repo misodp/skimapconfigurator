@@ -108,6 +108,7 @@ export function renderGroomerTypeDropdown(opts) {
   });
 
   window.groomerDetailSetBlank = setPanelBlank;
+  window.groomerDetailShowById = showGroomerDetail;
 }
 
 export function getGroomerImageUrls() {

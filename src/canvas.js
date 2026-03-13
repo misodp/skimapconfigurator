@@ -1055,7 +1055,7 @@ export function hideGroomerHoverPopup() {
 
 export function onCanvasMouseDown(e) {
   if (!state.image || state.mode !== 'slope' || state.slopeDrawMode !== 'pen') return;
-  if (!isInvestTabActive()) return;
+  if (!state.buildArmed) return;
   const { x, y } = getCanvasPoint(e);
   const pt = canvasToImage(x, y);
   state.slopePoints = [{ x: pt.x, y: pt.y }];
@@ -1068,11 +1068,19 @@ export function onCanvasMouseMove(e) {
   if (!state.image) return;
   const { x, y } = getCanvasPoint(e);
   const pt = canvasToImage(x, y);
-  if (state.mode === 'lift' && state.liftBottom && !state.liftTop) {
-    if (!isInvestTabActive()) return;
+  // Build-mode previews / ghosts
+  if (state.buildArmed && state.mode === 'lift') {
     state.mouseImage = { x: pt.x, y: pt.y };
     refresh();
     hideLiftHoverPopup();
+    return;
+  }
+  if (state.buildArmed && (state.mode === 'groomer' || (state.mode === 'slope' && state.slopeDrawMode === 'points' && !state.penDrawing))) {
+    state.mouseImage = { x: pt.x, y: pt.y };
+    refresh();
+    hideLiftHoverPopup();
+    hideGroomerHoverPopup();
+    hideSlopeHoverPopup();
     return;
   }
   if (state.penDrawing) {
@@ -1133,13 +1141,6 @@ export function onCanvasMouseMove(e) {
 
 export function onCanvasMouseUp() {
   if (!state.penDrawing || !state.image) return;
-  if (!isInvestTabActive()) {
-    state.penDrawing = false;
-    state.slopePoints = [];
-    document.getElementById('cancelSlopeBtn')?.classList.add('hidden');
-    refresh();
-    return;
-  }
   state.penDrawing = false;
   if (state.slopePoints.length >= 2) {
     let pts = state.slopePoints;
@@ -1178,6 +1179,8 @@ export function onCanvasMouseUp() {
   }
   state.slopePoints = [];
   document.getElementById('cancelSlopeBtn').classList.add('hidden');
+  state.buildArmed = false;
+  state.mouseImage = null;
   refresh();
 }
 
@@ -1220,7 +1223,7 @@ export function onCanvasClick(e) {
   }
 
   const isBuildMode = state.mode === 'lift' || state.mode === 'cottage' || state.mode === 'groomer' || (state.mode === 'slope' && state.slopeDrawMode === 'points');
-  if (isBuildMode && !isInvestTabActive()) return;
+  if (isBuildMode && !state.buildArmed) return;
 
   if (state.mode === 'lift') {
     const pt = canvasToImage(x, y);
@@ -1262,6 +1265,8 @@ export function onCanvasClick(e) {
       state.liftTop = null;
       updateCancelLiftButton();
       if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
+      state.buildArmed = false;
+      state.mouseImage = null;
     }
   } else if (state.mode === 'cottage') {
     const pt = canvasToImage(x, y);
@@ -1269,6 +1274,8 @@ export function onCanvasClick(e) {
     const nextNum = state.cottages.length + 1;
     const name = window.prompt('Cottage name (optional)', `Cottage ${nextNum}`) || `Cottage ${nextNum}`;
     state.cottages.push({ position: norm, name: name.trim() || `Cottage ${nextNum}` });
+    state.buildArmed = false;
+    state.mouseImage = null;
   } else if (state.mode === 'groomer') {
     const pt = canvasToImage(x, y);
     const norm = toNormalized(pt.x, pt.y);
@@ -1289,6 +1296,8 @@ export function onCanvasClick(e) {
       health: 100,
       installedDate: { ...state.currentDate },
     });
+    state.buildArmed = false;
+    state.mouseImage = null;
     if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
   } else if (state.mode === 'slope' && state.slopeDrawMode === 'points') {
     const pt = canvasToImage(x, y);
@@ -1302,7 +1311,6 @@ export function onCanvasClick(e) {
 
 export function onCanvasDblClick(e) {
   if (state.mode !== 'slope' || state.slopeDrawMode !== 'points' || !state.image) return;
-  if (!isInvestTabActive()) return;
   e.preventDefault();
   if (state.slopePoints.length >= 2) {
     const first = state.slopePoints[0];
@@ -1332,6 +1340,8 @@ export function onCanvasDblClick(e) {
     state.slopePoints = [];
     state.slopeDrawing = false;
     document.getElementById('cancelSlopeBtn').classList.add('hidden');
+    state.buildArmed = false;
+    state.mouseImage = null;
     refresh();
   }
   refresh();

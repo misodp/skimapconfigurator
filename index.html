@@ -14,9 +14,9 @@
 <body>
   <div id="app">
     <header class="header">
-      <div class="header-brand">
-        <h1>Retro Ski Resort Tycoon</h1>
-        <p class="subtitle">Build your dream ski resort in the 1960s.</p>
+      <div class="header-brand" aria-label="Retro Ski Resort Tycoon">
+        <img src="/assets/images/Title_a.png" alt="Retro Ski Resort Tycoon" class="header-title-banner" />
+        <img src="/assets/images/Title_a2.png" alt="Retro Ski Resort Tycoon" class="header-title-banner" />
       </div>
       <div class="header-news" id="newsFeedContainer" aria-live="polite" aria-label="Resort news">
         <div class="header-news-skier" id="newsSkierSprite" aria-hidden="true"></div>
@@ -45,14 +45,14 @@
       </div>
     </header>
 
-    <aside class="sidebar" aria-label="Invest and statistics">
+    <aside class="sidebar" aria-label="Statistics">
       <div class="sidebar-tabs" role="tablist">
-        <button type="button" class="sidebar-tab active" role="tab" aria-selected="true" aria-controls="investPanel"
-          id="investTab" data-tab="invest">Invest</button>
-        <button type="button" class="sidebar-tab" role="tab" aria-selected="false" aria-controls="statisticsPanel"
+        <button type="button" class="sidebar-tab" role="tab" aria-selected="false" aria-controls="investPanel"
+          id="investTab" data-tab="invest" hidden aria-hidden="true">Invest</button>
+        <button type="button" class="sidebar-tab active" role="tab" aria-selected="true" aria-controls="statisticsPanel"
           id="statisticsTab" data-tab="statistics">Operate</button>
       </div>
-      <div class="sidebar-panel active" id="investPanel" role="tabpanel" aria-labelledby="investTab">
+      <div class="sidebar-panel" id="investPanel" role="tabpanel" aria-labelledby="investTab" hidden aria-hidden="true">
         <div class="toolbar-content">
           <section class="tool-section">
             <h2>Invest</h2>
@@ -114,10 +114,9 @@
           </section>
         </div>
       </div>
-      <div class="sidebar-panel" id="statisticsPanel" role="tabpanel" aria-labelledby="statisticsTab">
+      <div class="sidebar-panel active" id="statisticsPanel" role="tabpanel" aria-labelledby="statisticsTab">
         <div class="stats-content">
           <section class="stats-section">
-            <h2 class="stats-panel-title">Operate</h2>
             <div class="stat-row stat-row-resort">
               <div class="resort-toggle" role="group" aria-label="Resort open or closed">
                 <span class="resort-switch-thumb" aria-hidden="true"></span>
@@ -265,6 +264,35 @@
       </div>
     </aside>
 
+    <aside class="invest-compact-sidebar" aria-label="Quick invest">
+      <div class="invest-compact-buttons">
+        <div
+          class="invest-compact-btn invest-compact-btn--lift"
+          data-invest-mode="lift"
+          role="button"
+          tabindex="0"
+          title="Lifts"
+          aria-label="Choose lift to invest">
+        </div>
+        <div
+          class="invest-compact-btn invest-compact-btn--slope"
+          data-invest-mode="slope"
+          role="button"
+          tabindex="0"
+          title="Slopes"
+          aria-label="Choose slope to invest">
+        </div>
+        <div
+          class="invest-compact-btn invest-compact-btn--groomer"
+          data-invest-mode="groomer"
+          role="button"
+          tabindex="0"
+          title="Groomers"
+          aria-label="Choose groomer to invest">
+        </div>
+      </div>
+    </aside>
+
     <main class="canvas-area">
       <div class="canvas-wrapper">
         <div class="mountain-image-wrap" role="img" aria-label="Mountain map">
@@ -317,6 +345,15 @@
         </div>
       </div>
     </footer>
+
+    <div id="investInventoryOverlay" class="invest-inventory-overlay" aria-hidden="true" hidden></div>
+    <div id="investInventoryPopup" class="invest-inventory-popup" role="dialog" aria-modal="true" aria-labelledby="investInventoryTitle" aria-hidden="true" hidden>
+      <div class="invest-inventory-header">
+        <h2 id="investInventoryTitle" class="invest-inventory-title">Choose type</h2>
+        <button type="button" class="invest-inventory-close" title="Close" aria-label="Close">×</button>
+      </div>
+      <div id="investInventoryList" class="invest-inventory-list"></div>
+    </div>
 
     <div id="badgeUnlockOverlay" class="badge-unlock-overlay" aria-hidden="true" hidden>
       <img id="badgeUnlockFlyer" class="badge-unlock-flyer" alt="" />

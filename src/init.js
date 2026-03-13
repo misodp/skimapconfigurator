@@ -21,7 +21,8 @@ import { updateWeatherDisplay } from './weather-icon';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup, hideGroomerHoverPopup, hideSlopeHoverPopup, handleLiftPopupClick, handleGroomerPopupClick, handleSlopePopupClick } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
-import { renderGroomerTypeDropdown, getGroomerImageUrls, getGroomerMapImageUrls } from './ui/groomers.js';
+import { renderGroomerTypeDropdown, getGroomerImageUrls, getGroomerMapImageUrls, setGroomerType } from './ui/groomers.js';
+import { initInvestCompactSidebar } from './ui/invest-inventory.js';
 import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
 
@@ -248,6 +249,26 @@ export function init() {
     });
   }
 
+  initInvestCompactSidebar();
+  document.addEventListener('invest-inventory-select', (e) => {
+    const { mode, typeId } = e.detail || {};
+    if (mode === 'lift' && typeId) {
+      setLiftType(typeId);
+      renderLiftTypeDropdown({ skipPanelBlank: true });
+    } else if (mode === 'slope' && typeId) {
+      setDifficulty(typeId);
+      renderSlopeTypeButtons({ skipPanelBlank: true });
+    } else if (mode === 'groomer' && typeId) {
+      setGroomerType(typeId);
+      renderGroomerTypeDropdown({ skipPanelBlank: true });
+    }
+    if (mode) {
+      setMode(mode);
+      state.buildArmed = true;
+      state.mouseImage = null;
+    }
+  });
+
   const sidebarTabs = document.querySelectorAll('.sidebar-tab');
   const investPanel = document.getElementById('investPanel');
   const statisticsPanel = document.getElementById('statisticsPanel');
@@ -311,6 +332,8 @@ export function init() {
     if (e.key === 'Escape') {
       if (state.mode === 'lift' && state.liftBottom) cancelLift();
       else cancelSlope();
+      state.buildArmed = false;
+      state.mouseImage = null;
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
       e.preventDefault();

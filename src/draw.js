@@ -4,6 +4,7 @@
  */
 
 import { state, DOM, getSlopeType, getDiffColor } from './state';
+import { COLS, ROWS } from './constants';
 import { fromNormalized, getLiftLengthM, getSlopePathLengthM, getSlopeCost } from './geometry.js';
 import { formatNumber, formatCurrency } from './utils.js';
 import { getLiftHealthZone, getGroomerHealthZone } from './maintenance_simulator';
@@ -412,4 +413,77 @@ export function draw() {
   drawLifts(ctx, scaleX, scaleY);
   drawCottages(ctx, scaleX, scaleY);
   drawGroomers(ctx, scaleX, scaleY);
+
+  // Build-mode ghost icon near cursor
+  if (state.buildArmed && state.mouseImage) {
+    // Base cursor position in canvas space
+    const cx = state.mouseImage.x * scaleX;
+    const cy = state.mouseImage.y * scaleY;
+    // Offset ghost further to the right and up from the cursor
+    const gx = cx + 24;
+    const gy = cy - 24;
+    ctx.save();
+    ctx.globalAlpha = 0.6;
+    if (state.mode === 'groomer') {
+      const img = state.groomerImages[state.groomerType];
+      if (img && img.complete && img.naturalWidth) {
+        const w = GROOMER_ICON_SIZE;
+        const h = (img.naturalHeight / img.naturalWidth) * w;
+        ctx.drawImage(img, gx - w / 2, gy - h / 2, w, h);
+      }
+    } else if (state.mode === 'slope') {
+      const slopeType = getSlopeType(state.difficulty);
+      const color = getDiffColor(slopeType);
+      const r = 10;
+      ctx.beginPath();
+      ctx.arc(gx, gy, r, 0, Math.PI * 2);
+      ctx.fillStyle = color || '#ffffff';
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#000';
+      ctx.stroke();
+    } else if (state.mode === 'lift') {
+      const sprite = state.spriteSheet;
+      const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
+      const liftDef = state.liftTypes.find((l) => l.id === typeId);
+      if (sprite && sprite.complete && sprite.naturalWidth && liftDef) {
+        const frame = Number(liftDef.frame) || 0;
+        const cols = COLS || 1;
+        const rows = ROWS || 1;
+        const col = frame % cols;
+        const row = Math.floor(frame / cols);
+        const sw = sprite.naturalWidth / cols;
+        const sh = sprite.naturalHeight / rows;
+        const sx = col * sw;
+        const sy = row * sh;
+        const iconSize = 32;
+        ctx.drawImage(
+          sprite,
+          sx,
+          sy,
+          sw,
+          sh,
+          gx - iconSize / 2,
+          gy - iconSize / 2,
+          iconSize,
+          iconSize
+        );
+      } else {
+        const r = 10;
+        ctx.beginPath();
+        ctx.arc(gx, gy, r, 0, Math.PI * 2);
+        ctx.fillStyle = '#111827';
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = '#e5e7eb';
+        ctx.stroke();
+        ctx.fillStyle = '#e5e7eb';
+        ctx.font = 'bold 10px "DM Sans", system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('L', gx, gy);
+      }
+    }
+    ctx.restore();
+  }
 }

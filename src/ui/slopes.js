@@ -87,4 +87,5 @@ export function renderSlopeTypeButtons(opts) {
 
   if (!skipPanelBlank) setPanelBlank();
   window.slopeDetailSetBlank = setPanelBlank;
+  window.slopeDetailShowById = showSlopeFloatingPanel;
 }

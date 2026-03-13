@@ -10,7 +10,7 @@ import { COLS, ROWS } from '../constants';
 
 const LIFT_DETAIL_BLANK_HTML = '';
 
-function getLiftSpriteStyle(lift) {
+export function getLiftSpriteStyle(lift) {
   const col = lift.frame % COLS;
   const row = Math.floor(lift.frame / COLS);
   const posX = COLS > 1 ? (col / (COLS - 1)) * 100 : 0;
@@ -130,4 +130,5 @@ export function renderLiftTypeDropdown(opts) {
 
   window.liftDropdownUpdateTrigger = () => {};
   window.liftDetailSetBlank = setPanelBlank;
+  window.liftDetailShowById = showFloatingPanel;
 }

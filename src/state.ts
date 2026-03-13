@@ -57,6 +57,8 @@ export interface AppState {
   /** Overall visitor satisfaction 0–100%, drifts daily from the three experience scores. */
   satisfaction: number;
   mode: AppMode;
+  /** When true, a build action is armed from the right Invest sidebar; next placement consumes it. */
+  buildArmed: boolean;
   liftType: string | null;
   liftTypes: LiftType[];
   slopeTypes: SlopeType[];
@@ -95,7 +97,7 @@ export interface AppState {
   achievements: { family: boolean; highAlpine: boolean; freeride: boolean; topOfWorld: boolean };
 }
 
-const START_DATE: SimulationDate = { year: 1960, month: 11, day: 1 };
+const START_DATE: SimulationDate = { year: 1971, month: 11, day: 1 };
 
 export const state: AppState = {
   currentDate: { ...START_DATE },
@@ -117,6 +119,7 @@ export const state: AppState = {
   slopeQualityChange: 'stable',
   satisfaction: 20,
   mode: 'lift',
+  buildArmed: false,
   liftType: null,
   liftTypes: [],
   slopeTypes: [],
