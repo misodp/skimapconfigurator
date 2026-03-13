@@ -9,6 +9,7 @@ import { getDailyVisitors } from './economics.js';
 import { getSlopePathLengthM, getLiftLengthM, fromNormalized } from './geometry.js';
 import { getTotalLiftCapacity, getTotalSlopeCapacity, getTotalGroomingDemand, getTotalGroomingCapacity } from './experience-simulator';
 import { updateAchievementBadges, getEffectiveSatisfaction } from './achievements.js';
+import { getEffectiveLiftCapacity } from './maintenance_simulator';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
@@ -51,9 +52,131 @@ export function updateDailyFinanceDisplay() {
 }
 
 export function updateSnowDepthDisplay() {
+  // Track change vs last update for arrow display
+  /** @type {number | null} */
+  // @ts-ignore - attach to function for simple module-local state
+  const prev = updateSnowDepthDisplay._prevDepth ?? null;
+  const current = state.snowDepth ?? 0;
+
   if (DOM.snowDepthDisplay) {
-    DOM.snowDepthDisplay.textContent = formatNumber(state.snowDepth) + ' cm';
+    DOM.snowDepthDisplay.textContent = formatNumber(current) + ' cm';
   }
+  const fill = document.getElementById('snowInfoFill');
+  if (fill) {
+    const pct = Math.max(0, Math.min(1, current / 450)) * 100;
+    fill.style.width = `${pct}%`;
+  }
+  const changeEl = document.querySelector('.snow-change');
+  if (changeEl) {
+    let change = 'stable';
+    if (prev != null) {
+      if (current > prev) change = 'up';
+      else if (current < prev) change = 'down';
+    }
+    changeEl.textContent = changeSymbol(change);
+    changeEl.classList.remove('change-up', 'change-down', 'change-stable');
+    changeEl.classList.add('change-' + change);
+  }
+  // @ts-ignore
+  updateSnowDepthDisplay._prevDepth = current;
+}
+
+function updateLiftInfoPanel() {
+  const countEl = document.getElementById('liftInfoCounts');
+  const capEl = document.getElementById('liftInfoCapacity');
+  const totalLifts = state.lifts.length;
+  const operatingLifts = state.lifts.filter((l) => !l.broken).length;
+  if (countEl) {
+    countEl.textContent = `Lifts: ${formatNumber(operatingLifts)} / ${formatNumber(totalLifts)}`;
+  }
+  if (capEl) {
+    const idealCap = getTotalLiftCapacity();
+    const effectiveCap = Math.round(getEffectiveLiftCapacity());
+    capEl.textContent = `Capacity: ${formatNumber(effectiveCap)} / ${formatNumber(idealCap)} p./hour`;
+  }
+}
+
+function updateSlopeInfoPanel() {
+  const canvas = /** @type {HTMLCanvasElement|null} */ (document.getElementById('slopeInfoChart'));
+  const capEl = document.getElementById('slopeInfoCapacity');
+  const lengthEl = document.getElementById('slopeInfoLength');
+
+  if (capEl) {
+    const totalCap = getTotalSlopeCapacity();
+    capEl.textContent = 'Capacity: ' + formatNumber(totalCap) + ' p/day';
+  }
+  if (lengthEl) {
+    let totalLengthM = 0;
+    state.slopes.forEach((s) => {
+      if (!s.points || s.points.length < 2) return;
+      const imagePoints = s.points.map((p) => fromNormalized(p.x, p.y));
+      const lengthM = getSlopePathLengthM(imagePoints);
+      if (typeof lengthM === 'number' && Number.isFinite(lengthM)) {
+        totalLengthM += lengthM;
+      }
+    });
+    const totalKm = totalLengthM / 1000;
+    const roundedKm = Math.round(totalKm * 10) / 10;
+    lengthEl.textContent = 'Length: ' + formatNumber(roundedKm) + ' km';
+  }
+
+  if (!canvas || !canvas.getContext) return;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  const w = canvas.width;
+  const h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  const cx = w / 2;
+  const cy = h / 2;
+  const radius = Math.min(w, h) / 2 - 2;
+  const innerRadius = radius * 0.55;
+
+  // Aggregate slopes by color (using getDiffColor) so each difficulty gets its own slice.
+  // Weight is total slope length per color, not just count.
+  /** @type {Record<string, number>} */
+  const colorLengths = {};
+  state.slopes.forEach((s) => {
+    if (!s.points || s.points.length < 2) return;
+    const imagePoints = s.points.map((p) => fromNormalized(p.x, p.y));
+    const lengthM = getSlopePathLengthM(imagePoints);
+    if (typeof lengthM !== 'number' || !Number.isFinite(lengthM) || lengthM <= 0) return;
+    const color = getDiffColor(s) || '#4b5563';
+    colorLengths[color] = (colorLengths[color] || 0) + lengthM;
+  });
+
+  const entries = Object.entries(colorLengths);
+  if (!entries.length) {
+    // Draw a subtle empty ring when there are no slopes.
+    ctx.beginPath();
+    ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(148, 163, 184, 0.6)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    return;
+  }
+
+  const total = entries.reduce((sum, [, count]) => sum + count, 0);
+  let startAngle = -Math.PI / 2;
+  entries.forEach(([color, count]) => {
+    const slice = (count / total) * Math.PI * 2;
+    const endAngle = startAngle + slice;
+    ctx.beginPath();
+    // Draw as donut slice: outer arc then inner arc back.
+    ctx.arc(cx, cy, radius, startAngle, endAngle);
+    ctx.arc(cx, cy, innerRadius, endAngle, startAngle, true);
+    ctx.fillStyle = color;
+    ctx.fill();
+    startAngle = endAngle;
+  });
+
+  // Outline outer ring for better definition.
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(15, 23, 42, 0.9)';
+  ctx.lineWidth = 1;
+  ctx.stroke();
 }
 
 function experienceFillClass(value) {
@@ -127,6 +250,8 @@ export function refresh() {
   state.dailyVisitors = getDailyVisitors();
   updateBudgetDisplay();
   updateVisitorsDisplay();
+  updateLiftInfoPanel();
+  updateSlopeInfoPanel();
   updateExperienceDisplay();
   updateSatisfactionDisplay();
   updateAchievementBadges();

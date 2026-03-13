@@ -127,34 +127,127 @@
                   aria-pressed="false">Closed</button>
               </div>
             </div>
-            <div class="stat-row">
+            <div class="stat-row" aria-hidden="true" hidden>
               <div class="header-visitors stat-item" id="visitorsDisplay" data-label="Visitors:"
                 aria-label="Daily visitors">0</div>
             </div>
-            <div class="stat-row">
+            <div class="stat-row" aria-hidden="true" hidden>
               <div class="header-finance header-sales stat-item stat-finance-row" data-label="Sales:"
                 aria-label="Daily sales">
                 <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
                 <span id="salesDisplay">0</span>
               </div>
             </div>
-            <div class="stat-row">
+            <div class="stat-row" aria-hidden="true" hidden>
               <div class="header-finance header-costs stat-item stat-finance-row" data-label="Costs:"
                 aria-label="Daily operating costs">
                 <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
                 <span id="operatingCostsDisplay">0</span>
               </div>
             </div>
-            <div class="stat-row">
+            <div class="stat-row" aria-hidden="true" hidden>
               <div class="header-finance header-profit daily-change stat-item stat-finance-row" data-label="Profit:"
                 aria-label="Daily profit">
                 <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
                 <span id="profitDisplay">0</span>
               </div>
             </div>
-            <div class="stat-row">
-              <div class="header-snow-depth stat-item" id="snowDepthDisplay" data-label="Snow:" aria-label="Snow depth">
-                0 cm</div>
+            <div class="stat-row snow-info-row">
+              <div class="snow-info-section" aria-label="Snow overview">
+                <div class="snow-info-header">
+                  <span class="snow-info-label">Snow</span>
+                </div>
+                <div class="snow-info-depth-row">
+                  <span class="snow-depth-label">
+                    Snow depth <span class="snow-change change-stable" aria-label="Trend">−</span>
+                  </span>
+                  <span id="snowDepthDisplay" class="snow-info-value" aria-label="Snow depth">0 cm</span>
+                </div>
+                <div class="snow-info-bar-wrap">
+                  <div class="snow-info-bar" role="img" aria-label="Snow depth indicator">
+                    <div class="snow-info-track">
+                      <div id="snowInfoFill" class="snow-info-fill" style="width: 0%;"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="stat-row lifts-info-row">
+              <div class="lifts-info-section" aria-label="Lifts overview">
+                <div class="lifts-info-header">Lifts</div>
+                <div class="lifts-info-meta">
+                  <div id="liftInfoCounts" class="lifts-info-line">0 / 0 lifts</div>
+                  <div id="liftInfoCapacity" class="lifts-info-line">0 / 0 capacity</div>
+                </div>
+                <div class="lifts-experience-metrics">
+                  <div class="stat-row experience-metric-row">
+                    <div class="experience-metric">
+                      <div class="experience-header">
+                        <span class="experience-metric-label">Lift wait <span class="experience-change change-stable"
+                            aria-label="Trend">−</span></span>
+                        <span class="experience-state-label" aria-live="polite">Medium</span>
+                      </div>
+                      <div class="experience-bar-wrap">
+                        <div id="liftExperienceDisplay" class="experience-bar experience-bar-gradient" role="img"
+                          aria-label="Lift wait experience">
+                          <div class="experience-track">
+                            <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="stat-row slope-info-row">
+              <div class="slope-info-section" aria-label="Slope overview">
+                <div class="slope-info-header">Slopes</div>
+                <div class="slope-info-body">
+                  <canvas id="slopeInfoChart" class="slope-info-chart" width="80" height="80"
+                    aria-label="Slope type mix"></canvas>
+                  <div class="slope-info-meta">
+                    <div id="slopeInfoLength" class="slope-info-line">Length: 0.0 km</div>
+                    <div id="slopeInfoCapacity" class="slope-info-line">Ideal Capacity: 0</div>
+                  </div>
+                </div>
+                <div class="slope-experience-metrics">
+                  <div class="stat-row experience-metric-row">
+                    <div class="experience-metric">
+                      <div class="experience-header">
+                        <span class="experience-metric-label">Slope crowds <span class="experience-change change-stable"
+                            aria-label="Trend">−</span></span>
+                        <span class="experience-state-label" aria-live="polite">Medium</span>
+                      </div>
+                      <div class="experience-bar-wrap">
+                        <div id="slopeExperienceDisplay" class="experience-bar experience-bar-gradient" role="img"
+                          aria-label="Slope crowd experience">
+                          <div class="experience-track">
+                            <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="stat-row experience-metric-row">
+                    <div class="experience-metric">
+                      <div class="experience-header">
+                        <span class="experience-metric-label">Slope quality <span
+                            class="experience-change change-stable" aria-label="Trend">−</span></span>
+                        <span class="experience-state-label" aria-live="polite">Medium</span>
+                      </div>
+                      <div class="experience-bar-wrap">
+                        <div id="slopeQualityDisplay" class="experience-bar experience-bar-gradient" role="img"
+                          aria-label="Slope quality (grooming)">
+                          <div class="experience-track">
+                            <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
             <div class="stat-row satisfaction-row">
               <div id="satisfactionDisplay" class="satisfaction-widget" aria-label="Visitor satisfaction">
@@ -164,57 +257,6 @@
                 </div>
                 <div class="satisfaction-track" role="presentation">
                   <div class="satisfaction-fill satisfaction-fill-low" style="width: 20%;"></div>
-                </div>
-              </div>
-            </div>
-            <div class="stat-row experience-metric-row">
-              <div class="experience-metric">
-                <div class="experience-header">
-                  <span class="experience-metric-label">Lift wait <span class="experience-change change-stable"
-                      aria-label="Trend">−</span></span>
-                  <span class="experience-state-label" aria-live="polite">Medium</span>
-                </div>
-                <div class="experience-bar-wrap">
-                  <div id="liftExperienceDisplay" class="experience-bar experience-bar-gradient" role="img"
-                    aria-label="Lift wait experience">
-                    <div class="experience-track">
-                      <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="stat-row experience-metric-row">
-              <div class="experience-metric">
-                <div class="experience-header">
-                  <span class="experience-metric-label">Slope crowds <span class="experience-change change-stable"
-                      aria-label="Trend">−</span></span>
-                  <span class="experience-state-label" aria-live="polite">Medium</span>
-                </div>
-                <div class="experience-bar-wrap">
-                  <div id="slopeExperienceDisplay" class="experience-bar experience-bar-gradient" role="img"
-                    aria-label="Slope crowd experience">
-                    <div class="experience-track">
-                      <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="stat-row experience-metric-row">
-              <div class="experience-metric">
-                <div class="experience-header">
-                  <span class="experience-metric-label">Slope quality <span class="experience-change change-stable"
-                      aria-label="Trend">−</span></span>
-                  <span class="experience-state-label" aria-live="polite">Medium</span>
-                </div>
-                <div class="experience-bar-wrap">
-                  <div id="slopeQualityDisplay" class="experience-bar experience-bar-gradient" role="img"
-                    aria-label="Slope quality (grooming)">
-                    <div class="experience-track">
-                      <div class="experience-fill experience-fill-mid" style="width: 50%;"></div>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
