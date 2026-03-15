@@ -8,15 +8,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/skimapconfigurator/assets/index-Gy5Mqice.js"></script>
-  <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-1JAYrDr1.css">
+  <script type="module" crossorigin src="/skimapconfigurator/assets/index-fx4inqkL.js"></script>
+  <link rel="stylesheet" crossorigin href="/skimapconfigurator/assets/index-B6upYP6I.css">
 </head>
 
 <body>
+  <div id="splashOverlay" class="splash-overlay" aria-label="Loading" aria-hidden="false">
+    <img src="/skimapconfigurator/assets/Splash-lvgU8Mcb.webp" alt="" class="splash-image" />
+  </div>
   <div id="app">
     <header class="header">
       <div class="header-brand" aria-label="Retro Ski Resort Tycoon">
-        <img src="/skimapconfigurator/assets/Title_a-De1pRRwv.png" alt="Retro Ski Resort Tycoon" class="header-title-banner" />
+        <img src="/skimapconfigurator/assets/Title_a-C4j8OoIt.webp" alt="Retro Ski Resort Tycoon" class="header-title-banner" />
       </div>
       <div class="header-news" id="newsFeedContainer" aria-live="polite" aria-label="Resort news">
         <div class="header-news-skier" id="newsSkierSprite" aria-hidden="true"></div>
@@ -165,7 +168,7 @@
                 <div class="snow-info-bar-wrap">
                   <div class="snow-info-bar" role="img" aria-label="Snow depth indicator">
                     <div class="snow-info-track">
-                      <div id="snowInfoFill" class="snow-info-fill" style="width: 0%;"></div>
+                      <div id="snowInfoFill" class="snow-info-fill snow-info-fill-low" style="width: 0%;"></div>
                     </div>
                   </div>
                 </div>
@@ -275,6 +278,11 @@
         <div class="invest-compact-btn invest-compact-btn--groomer" data-invest-mode="groomer" role="button"
           tabindex="0" title="Groomers" aria-label="Choose groomer to invest">
         </div>
+        <button type="button" id="cancelBuildBtn" class="invest-compact-cancel-btn hidden" title="Cancel building"
+          aria-label="Cancel building">
+          <span class="invest-compact-cancel-icon" aria-hidden="true">✕</span>
+          <span class="invest-compact-cancel-label">Cancel</span>
+        </button>
       </div>
     </aside>
 
@@ -291,7 +299,6 @@
           <img class="mountain-badge" id="badgeFreeride" alt="" />
           <img class="mountain-badge" id="badgeTopWorld" alt="" />
         </div>
-        <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
         <div id="liftHoverPopup" class="lift-hover-popup" role="tooltip" aria-hidden="true" hidden></div>
         <div id="groomerHoverPopup" class="lift-hover-popup groomer-hover-popup" role="tooltip" aria-hidden="true"
           hidden></div>
@@ -338,8 +345,10 @@
         <h2 id="investInventoryTitle" class="invest-inventory-title">Choose type</h2>
         <button type="button" class="invest-inventory-close" title="Close" aria-label="Close">×</button>
       </div>
+      <p id="investInventoryHint" class="invest-inventory-hint hint" aria-live="polite"></p>
       <div id="investInventoryList" class="invest-inventory-list"></div>
     </div>
+    <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
 
     <div id="badgeUnlockOverlay" class="badge-unlock-overlay" aria-hidden="true" hidden>
       <img id="badgeUnlockFlyer" class="badge-unlock-flyer" alt="" />
