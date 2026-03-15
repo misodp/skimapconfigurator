@@ -19,6 +19,12 @@ const TITLES = {
   groomer: 'Choose groomer type',
 };
 
+const HINTS = {
+  lift: 'Select type, then click on the map to place the bottom and the top station. Escape to cancel.',
+  slope: 'Select difficulty, then draw the slope by clicking on the map. Double-click to place, Escape to cancel.',
+  groomer: 'Select type, then click on the map to place the groomer.',
+};
+
 /**
  * Fill the popup list with items for the given mode and attach click handlers.
  * @param {'lift'|'slope'|'groomer'} mode
@@ -135,6 +141,11 @@ export function openInventoryPopup(mode, anchorBtn) {
   popup.setAttribute('aria-hidden', 'false');
   popup.style.display = '';
   popup.dataset.investMode = mode;
+
+  const hintEl = document.getElementById('investInventoryHint');
+  if (hintEl && HINTS[mode]) {
+    hintEl.textContent = HINTS[mode];
+  }
 
   if (anchorBtn && typeof anchorBtn.getBoundingClientRect === 'function') {
     const rect = anchorBtn.getBoundingClientRect();
