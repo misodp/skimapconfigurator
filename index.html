@@ -15,7 +15,7 @@
   <div id="app">
     <header class="header">
       <div class="header-brand" aria-label="Retro Ski Resort Tycoon">
-        <img src="/assets/images/Title_a.png" alt="Retro Ski Resort Tycoon" class="header-title-banner" />
+        <img src="/assets/images/Title_a.webp" alt="Retro Ski Resort Tycoon" class="header-title-banner" />
       </div>
       <div class="header-news" id="newsFeedContainer" aria-live="polite" aria-label="Resort news">
         <div class="header-news-skier" id="newsSkierSprite" aria-hidden="true"></div>
@@ -164,7 +164,7 @@
                 <div class="snow-info-bar-wrap">
                   <div class="snow-info-bar" role="img" aria-label="Snow depth indicator">
                     <div class="snow-info-track">
-                      <div id="snowInfoFill" class="snow-info-fill" style="width: 0%;"></div>
+                      <div id="snowInfoFill" class="snow-info-fill snow-info-fill-low" style="width: 0%;"></div>
                     </div>
                   </div>
                 </div>
@@ -274,6 +274,11 @@
         <div class="invest-compact-btn invest-compact-btn--groomer" data-invest-mode="groomer" role="button"
           tabindex="0" title="Groomers" aria-label="Choose groomer to invest">
         </div>
+        <button type="button" id="cancelBuildBtn" class="invest-compact-cancel-btn hidden" title="Cancel building"
+          aria-label="Cancel building">
+          <span class="invest-compact-cancel-icon" aria-hidden="true">✕</span>
+          <span class="invest-compact-cancel-label">Cancel</span>
+        </button>
       </div>
     </aside>
 

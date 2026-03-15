@@ -6,7 +6,7 @@
 import { state, DOM } from './state';
 import { syncCanvasSize } from './canvas.js';
 
-const mountainModules = import.meta.glob('../assets/images/mountain/*.png', { eager: true, import: 'default' });
+const mountainModules = import.meta.glob('../assets/images/mountain/*.webp', { eager: true, import: 'default' });
 
 /** @type { { threshold: number, url: string }[] } sorted by threshold ascending */
 let snowThresholds = [];
@@ -15,7 +15,7 @@ let layerImages = [];
 let stackBuilt = false;
 
 function parseThresholdFromPath(path) {
-  const match = path.match(/_(\d+)\.png$/i) || path.match(/_(\d+)$/);
+  const match = path.match(/_(\d+)\.webp$/i) || path.match(/_(\d+)\.png$/i) || path.match(/_(\d+)$/);
   return match ? parseInt(match[1], 10) : 0;
 }
 

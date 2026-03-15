@@ -8,7 +8,7 @@ import { getSeason, generateWeatherForSeason, getDailySnowfall, getDailyMelt, ge
 import { updateWeatherDisplay } from './weather-icon';
 import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './economics.js';
 import { getTotalSlopeCapacity, getLiftWaitRawScore, getSlopeCrowdRawScore, getTotalGroomingDemand, getSlopeQualityRawScore, driftLiftExperience, driftSlopeCrowdExperience, driftSlopeQualityExperience, driftSatisfaction } from './experience-simulator';
-import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay } from './config.js';
+import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay, updateLiftInfoPanel } from './config.js';
 import { renderLiftTypeDropdown } from './ui/lifts.js';
 import { renderGroomerTypeDropdown } from './ui/groomers.js';
 import { updateMountainImage } from './mountain-images.js';
@@ -133,6 +133,7 @@ function startLoopWithCurrentSpeed() {
     updateExperienceDisplay();
     updateSatisfactionDisplay();
     updateBudgetDisplay();
+    updateLiftInfoPanel();
     updateNewsFeed(simulationTickCount);
     const year = state.currentDate.year;
     if (lastRenderedDropdownYear !== year) {

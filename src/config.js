@@ -65,6 +65,14 @@ export function updateSnowDepthDisplay() {
   if (fill) {
     const pct = Math.max(0, Math.min(1, current / 450)) * 100;
     fill.style.width = `${pct}%`;
+    fill.classList.remove('snow-info-fill-low', 'snow-info-fill-mid', 'snow-info-fill-high');
+    if (current <= 50) {
+      fill.classList.add('snow-info-fill-low');
+    } else if (current <= 90) {
+      fill.classList.add('snow-info-fill-mid');
+    } else {
+      fill.classList.add('snow-info-fill-high');
+    }
   }
   const changeEl = document.querySelector('.snow-change');
   if (changeEl) {
@@ -81,7 +89,7 @@ export function updateSnowDepthDisplay() {
   updateSnowDepthDisplay._prevDepth = current;
 }
 
-function updateLiftInfoPanel() {
+export function updateLiftInfoPanel() {
   const countEl = document.getElementById('liftInfoCounts');
   const capEl = document.getElementById('liftInfoCapacity');
   const totalLifts = state.lifts.length;

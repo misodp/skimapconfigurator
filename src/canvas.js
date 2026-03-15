@@ -17,7 +17,7 @@ import { getGroomerImageUrl } from './ui/groomers.js';
 import { getSlopeSpritePositionStyle } from './ui/slopes.js';
 import { COLS, ROWS } from './constants';
 import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier, getGroomerHealthZone, getGroomerServiceCost, getGroomerEffectiveCapacityMultiplier } from './maintenance_simulator';
-import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
+import skidollarg2mUrl from '../assets/images/Skidollar_g2m.webp';
 
 const PEN_SMOOTH_SAMPLES = 24;
 const PEN_MIN_DIST_SQ = 16;
@@ -1181,6 +1181,7 @@ export function onCanvasMouseUp() {
   document.getElementById('cancelSlopeBtn').classList.add('hidden');
   state.buildArmed = false;
   state.mouseImage = null;
+  document.getElementById('cancelBuildBtn')?.classList.add('hidden');
   refresh();
 }
 
@@ -1267,6 +1268,7 @@ export function onCanvasClick(e) {
       if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
       state.buildArmed = false;
       state.mouseImage = null;
+      document.getElementById('cancelBuildBtn')?.classList.add('hidden');
     }
   } else if (state.mode === 'cottage') {
     const pt = canvasToImage(x, y);
@@ -1298,6 +1300,7 @@ export function onCanvasClick(e) {
     });
     state.buildArmed = false;
     state.mouseImage = null;
+    document.getElementById('cancelBuildBtn')?.classList.add('hidden');
     if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
   } else if (state.mode === 'slope' && state.slopeDrawMode === 'points') {
     const pt = canvasToImage(x, y);
@@ -1342,6 +1345,7 @@ export function onCanvasDblClick(e) {
     document.getElementById('cancelSlopeBtn').classList.add('hidden');
     state.buildArmed = false;
     state.mouseImage = null;
+    document.getElementById('cancelBuildBtn')?.classList.add('hidden');
     refresh();
   }
   refresh();

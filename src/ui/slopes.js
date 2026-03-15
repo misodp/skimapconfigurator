@@ -2,7 +2,7 @@
  * Slope type dropdown and detail panel.
  */
 
-import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.png';
+import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
 import { state } from '../state';
 import { escapeHtml, formatNumber } from '../utils.js';
 import { COLS, ROWS } from '../constants';

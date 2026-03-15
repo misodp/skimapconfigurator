@@ -2,17 +2,17 @@
  * Application init: DOM wiring, tech tree load, mode and toolbar, asset loading.
  */
 
-import cottageIconUrl from '../assets/images/cottage.png';
-import spriteSheetUrl from '../assets/images/SpriteSheet.png';
-import skidollarg2mUrl from '../assets/images/Skidollar_g2m.png';
-import animalsH1Url from '../assets/images/skiers/animals_h1.png';
-import animalsH2Url from '../assets/images/skiers/animals_h2.png';
-import animalsA1Url from '../assets/images/skiers/animals_a1.png';
-import animalsA2Url from '../assets/images/skiers/animals_a2.png';
-import badgeTopWorldUrl from '../assets/images/badges/top_world_at.png';
-import badgeFamilyUrl from '../assets/images/badges/family_friendly_at.png';
-import badgeAlpineUrl from '../assets/images/badges/high_alpine_at.png';
-import badgeFreerideUrl from '../assets/images/badges/freeride_paradise_at.png';
+import cottageIconUrl from '../assets/images/cottage.webp';
+import spriteSheetUrl from '../assets/images/SpriteSheet.webp';
+import skidollarg2mUrl from '../assets/images/Skidollar_g2m.webp';
+import animalsH1Url from '../assets/images/skiers/animals_h1.webp';
+import animalsH2Url from '../assets/images/skiers/animals_h2.webp';
+import animalsA1Url from '../assets/images/skiers/animals_a1.webp';
+import animalsA2Url from '../assets/images/skiers/animals_a2.webp';
+import badgeTopWorldUrl from '../assets/images/badges/top_world_at.webp';
+import badgeFamilyUrl from '../assets/images/badges/family_friendly_at.webp';
+import badgeAlpineUrl from '../assets/images/badges/high_alpine_at.webp';
+import badgeFreerideUrl from '../assets/images/badges/freeride_paradise_at.webp';
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
@@ -266,8 +266,25 @@ export function init() {
       setMode(mode);
       state.buildArmed = true;
       state.mouseImage = null;
+      const cancelBuildBtn = document.getElementById('cancelBuildBtn');
+      if (cancelBuildBtn) cancelBuildBtn.classList.remove('hidden');
     }
   });
+
+  const cancelBuildBtn = document.getElementById('cancelBuildBtn');
+  if (cancelBuildBtn) {
+    cancelBuildBtn.addEventListener('click', () => {
+      if (state.mode === 'lift' && state.liftBottom) cancelLift();
+      else cancelSlope();
+      state.buildArmed = false;
+      state.mouseImage = null;
+      updateCancelLiftButton();
+      cancelBuildBtn.classList.add('hidden');
+      const cancelSlopeEl = document.getElementById('cancelSlopeBtn');
+      if (cancelSlopeEl) cancelSlopeEl.classList.add('hidden');
+      refresh();
+    });
+  }
 
   const sidebarTabs = document.querySelectorAll('.sidebar-tab');
   const investPanel = document.getElementById('investPanel');
@@ -334,6 +351,8 @@ export function init() {
       else cancelSlope();
       state.buildArmed = false;
       state.mouseImage = null;
+      const cancelBuildBtn = document.getElementById('cancelBuildBtn');
+      if (cancelBuildBtn) cancelBuildBtn.classList.add('hidden');
     }
     if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
       e.preventDefault();

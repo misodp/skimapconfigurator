@@ -2,8 +2,8 @@
  * Lift type dropdown and detail panel.
  */
 
-import spriteSheetUrl from '../../assets/images/SpriteSheet.png';
-import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.png';
+import spriteSheetUrl from '../../assets/images/SpriteSheet.webp';
+import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
 import { state } from '../state';
 import { escapeHtml, formatNumber, scale1to3, skidollarIconsHtml } from '../utils.js';
 import { COLS, ROWS } from '../constants';

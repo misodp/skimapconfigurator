@@ -2,31 +2,31 @@
  * Groomer type dropdown and detail panel.
  */
 
-import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.png';
-import groomerPrinothP15 from '../../assets/images/Prinoth_p15.png';
-import groomerRatracS from '../../assets/images/Ratrac_s.png';
-import groomerPb145 from '../../assets/images/PistenBully_145.png';
-import groomerPb170 from '../../assets/images/PistenBully_170.png';
-import groomerPrinothP15t from '../../assets/images/Prinoth_p15t.png';
-import groomerRatracSt from '../../assets/images/Ratrac_st.png';
-import groomerPb145t from '../../assets/images/PistenBully_145t.png';
-import groomerPb170t from '../../assets/images/PistenBully_170t.png';
+import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
+import groomerPrinothP15 from '../../assets/images/groomers/Prinoth_p15.webp';
+import groomerRatracS from '../../assets/images/groomers/Ratrac_s.webp';
+import groomerPb145 from '../../assets/images/groomers/PistenBully_145.webp';
+import groomerPb170 from '../../assets/images/groomers/PistenBully_170.webp';
+import groomerPrinothP15t from '../../assets/images/groomers/Prinoth_p15t.webp';
+import groomerRatracSt from '../../assets/images/groomers/Ratrac_st.webp';
+import groomerPb145t from '../../assets/images/groomers/PistenBully_145t.webp';
+import groomerPb170t from '../../assets/images/groomers/PistenBully_170t.webp';
 import { state } from '../state';
 import { escapeHtml, formatNumber, formatCurrency } from '../utils.js';
 
 const GROOMER_IMAGE_URLS = {
-  'Prinoth_p15.png': groomerPrinothP15,
-  'Ratrac_s.png': groomerRatracS,
-  'PistenBully_145.png': groomerPb145,
-  'PistenBully_170.png': groomerPb170,
+  'Prinoth_p15': groomerPrinothP15,
+  'Ratrac_s': groomerRatracS,
+  'PistenBully_145': groomerPb145,
+  'PistenBully_170': groomerPb170,
 };
 
-/** Transparent-background images for drawing groomers on the map (keyed by same filename as GROOMER_IMAGE_URLS). */
+/** Transparent-background images for drawing groomers on the map (keyed by same name as GROOMER_IMAGE_URLS). */
 const GROOMER_IMAGE_URLS_MAP = {
-  'Prinoth_p15.png': groomerPrinothP15t,
-  'Ratrac_s.png': groomerRatracSt,
-  'PistenBully_145.png': groomerPb145t,
-  'PistenBully_170.png': groomerPb170t,
+  'Prinoth_p15': groomerPrinothP15t,
+  'Ratrac_s': groomerRatracSt,
+  'PistenBully_145': groomerPb145t,
+  'PistenBully_170': groomerPb170t,
 };
 
 export function getGroomerImageUrl(groomer) {
