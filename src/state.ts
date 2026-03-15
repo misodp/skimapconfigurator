@@ -97,7 +97,7 @@ export interface AppState {
   achievements: { family: boolean; highAlpine: boolean; freeride: boolean; topOfWorld: boolean };
 }
 
-const START_DATE: SimulationDate = { year: 1960, month: 11, day: 1 };
+const START_DATE: SimulationDate = { year: 1970, month: 11, day: 1 };
 
 export const state: AppState = {
   currentDate: { ...START_DATE },

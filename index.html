@@ -12,6 +12,9 @@
 </head>
 
 <body>
+  <div id="splashOverlay" class="splash-overlay" aria-label="Loading" aria-hidden="false">
+    <img src="/assets/images/Splash.webp" alt="" class="splash-image" />
+  </div>
   <div id="app">
     <header class="header">
       <div class="header-brand" aria-label="Retro Ski Resort Tycoon">
@@ -295,7 +298,6 @@
           <img class="mountain-badge" id="badgeFreeride" alt="" />
           <img class="mountain-badge" id="badgeTopWorld" alt="" />
         </div>
-        <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
         <div id="liftHoverPopup" class="lift-hover-popup" role="tooltip" aria-hidden="true" hidden></div>
         <div id="groomerHoverPopup" class="lift-hover-popup groomer-hover-popup" role="tooltip" aria-hidden="true"
           hidden></div>
@@ -344,6 +346,7 @@
       </div>
       <div id="investInventoryList" class="invest-inventory-list"></div>
     </div>
+    <div id="liftDetailFloating" class="lift-detail-floating" hidden aria-hidden="true"></div>
 
     <div id="badgeUnlockOverlay" class="badge-unlock-overlay" aria-hidden="true" hidden>
       <img id="badgeUnlockFlyer" class="badge-unlock-flyer" alt="" />

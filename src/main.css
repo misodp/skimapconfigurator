@@ -31,6 +31,33 @@ body {
   line-height: 1.5;
 }
 
+.splash-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  transition: opacity 0.9s ease-out;
+  cursor: pointer;
+}
+
+.splash-overlay.splash-dissolve {
+  opacity: 0;
+  pointer-events: none;
+  cursor: default;
+}
+
+.splash-overlay .splash-image {
+  max-width: 95vw;
+  max-height: 95vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  pointer-events: none;
+}
+
 #app {
   display: grid;
   grid-template-columns: 260px 1fr 80px;
@@ -1579,15 +1606,25 @@ button:hover {
   margin: 0 0.1em;
 }
 
+/* Full width; square for lift and slope icons */
 .lift-hover-popup .lift-hover-popup-icon {
-  width: 40px;
-  height: 40px;
-  margin: 0 auto 0.3rem;
+  width: 100%;
+  height: 0;
+  padding-bottom: 100%;
+  margin: 0 0 0.3rem;
   background-repeat: no-repeat;
   background-size: 300% 200%;
+  background-position: center;
   background-color: rgba(255, 255, 255, 0.06);
   border-radius: 4px;
   flex-shrink: 0;
+}
+
+/* Groomer: contain keeps image aspect ratio; box height ~3:5 */
+.lift-hover-popup .groomer-popup-icon {
+  background-size: contain;
+  background-position: center;
+  padding-bottom: 60%;
 }
 
 .slope-hover-popup .slope-popup-icon--diamond {
@@ -1967,10 +2004,9 @@ button:hover {
 }
 
 .lift-detail-floating .lift-type-detail-icon {
-  width: 90%;
+  width: 100%;
   height: 0;
   padding-bottom: 90%;
-  align-self: center;
   background-repeat: no-repeat;
   background-color: var(--surface-alt, rgba(255, 255, 255, 0.06));
   border-radius: 6px;
@@ -2201,6 +2237,7 @@ button:hover {
   white-space: nowrap;
 }
 
+.lift-detail-floating .groomer-detail-icon,
 .groomer-detail-icon {
   width: 100%;
   height: 0;

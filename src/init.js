@@ -410,4 +410,24 @@ export function init() {
 
   updateDateDisplay();
   startSimulation();
+
+  initSplash();
+}
+
+const SPLASH_DURATION_MS = 2800;
+
+function initSplash() {
+  const overlay = document.getElementById('splashOverlay');
+  if (!overlay) return;
+
+  function dissolve() {
+    overlay.classList.add('splash-dissolve');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.addEventListener('transitionend', () => {
+      overlay.style.visibility = 'hidden';
+    }, { once: true });
+  }
+
+  overlay.addEventListener('click', () => dissolve(), { once: true });
+  setTimeout(dissolve, SPLASH_DURATION_MS);
 }
