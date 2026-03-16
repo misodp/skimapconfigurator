@@ -5,19 +5,20 @@
 }
 
 :root {
-  --bg: #1a1d23;
-  --surface: #252b33;
-  --surface-hover: #2d3540;
-  --border: #3d4654;
-  --text: #e8eaed;
-  --text-muted: #9aa0a8;
-  --accent: #4a9eff;
-  --accent-hover: #6bb0ff;
-  --green: #34a853;
-  --blue: #4285f4;
-  --red: #ea4335;
-  --black: #1f1f1f;
-  --freeride: #2d1b4e;
+  /* Retro pastel ski resort palette (60s/70s poster vibes) */
+  --bg: #f7f2e9;              /* warm paper background */
+  --surface: #fff9f0;         /* soft cream panels */
+  --surface-hover: #f0e4d4;   /* slightly darker hover */
+  --border: #d6c5ad;          /* muted warm border */
+  --text: #262334;            /* deep charcoal */
+  --text-muted: #8b7c6f;      /* warm muted brown/gray */
+  --accent: #ff8a5c;          /* retro orange */
+  --accent-hover: #ffb38a;    /* lighter orange */
+  --green: #4fbf90;           /* minty green */
+  --blue: #4aa3d8;            /* pastel sky blue */
+  --red: #f26666;             /* soft red */
+  --black: #231b33;           /* deep eggplant */
+  --freeride: #8d5ca8;        /* retro purple */
   --radius: 8px;
   --font: "DM Sans", system-ui, -apple-system, sans-serif;
 }
@@ -38,7 +39,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
+  background: linear-gradient(120deg, #ffddba, #ffffff);
   transition: opacity 0.9s ease-out;
   cursor: pointer;
 }
@@ -77,7 +78,8 @@ body {
   justify-content: space-between;
   gap: 1rem;
   padding: 1rem 1.5rem;
-  background: var(--surface);
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.9), rgba(255, 221, 187, 0.9));
+  background: linear-gradient(120deg, rgba(255, 221, 187, 0.9), rgba(255, 255, 255, 0.9));
   border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
 }
@@ -114,7 +116,7 @@ body {
 .mountain-badges {
   position: absolute;
   top: 0.75rem;
-  right: 0;
+  right: 10px;
   left: auto;
   height: 25%;
   min-height: 48px;
@@ -198,7 +200,7 @@ body {
   max-width: 100%;
   min-width: 0;
   font-size: 0.85rem;
-  color: #fff;
+  color: var(--text);
   white-space: normal;
   word-wrap: break-word;
   line-height: 1.35;
@@ -309,7 +311,7 @@ body {
   font-size: 0.75rem;
   font-weight: 400;
   color: var(--text-muted);
-  opacity: 0.85;
+  opacity: 0.95;
   text-transform: capitalize;
 }
 
@@ -317,7 +319,7 @@ body {
   font-size: 0.75rem;
   font-weight: 400;
   color: var(--text-muted);
-  opacity: 0.85;
+  opacity: 0.95;
   white-space: nowrap;
 }
 
@@ -467,7 +469,7 @@ body {
   width: 100%;
   height: 0.45rem;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.25);
+  background: var(--border);
   overflow: hidden;
 }
 
@@ -922,11 +924,11 @@ body {
   width: 100%;
   padding: 2px;
   border-radius: 999px;
-  background: linear-gradient(180deg, #2d333c 0%, #1e2228 100%);
+  background: linear-gradient(120deg, rgba(255, 255, 255, 0.9), rgba(255, 221, 187, 0.9));
   border: 1px solid var(--border);
   box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.4),
-    0 1px 0 rgba(255, 255, 255, 0.06);
+    0 1px 2px rgba(0, 0, 0, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.4);
 }
 
 .resort-switch-thumb {
@@ -936,20 +938,20 @@ body {
   width: calc(50% - 2px);
   height: calc(100% - 4px);
   border-radius: 999px;
-  background: linear-gradient(180deg, #5cb85c 0%, #3d8b3d 50%, #2d6b2d 100%);
+  background: linear-gradient(135deg, #4fbf90, #7ed6ae);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
   transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
   pointer-events: none;
 }
 
 .resort-toggle:has(.resort-btn:last-child.active) .resort-switch-thumb {
   transform: translateX(calc(100% + 2px));
-  background: linear-gradient(180deg, #e05a5a 0%, #c94a4a 50%, #a83838 100%);
+  background: linear-gradient(135deg, #f26666, #ff9a9a);
   box-shadow:
-    0 2px 4px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    0 2px 4px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.55);
 }
 
 .resort-btn {
@@ -981,8 +983,8 @@ body {
 }
 
 .resort-btn.active {
-  color: #fff;
-  text-shadow: 0 1px 1px rgba(0, 0, 0, 0.3);
+  color: var(--black);
+  text-shadow: none;
 }
 
 .stat-row-speed {
@@ -1623,9 +1625,12 @@ button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--bg);
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
-  border-radius: var(--radius);
+  background:
+    radial-gradient(circle at 50% 0, rgba(255, 255, 255, 0.65), transparent 55%),
+    radial-gradient(circle at 90% 10%, rgba(186, 230, 253, 0.65), transparent 60%),
+    var(--bg);
+  box-shadow: none;
+  border-radius: 0;
   overflow: visible;
 }
 
