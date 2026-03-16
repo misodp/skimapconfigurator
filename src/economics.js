@@ -7,9 +7,6 @@ import { fromNormalized, getLiftLengthM } from './geometry.js';
 import { WEATHER_VISITOR_MODIFIERS, SEASON_VISITOR_MODIFIERS, getSeason } from './weather-simulation';
 import { getEffectiveSatisfaction } from './achievements.js';
 
-/** Ticket price in ski dollars per visitor per day. */
-export const TICKET_PRICE = 1.0;
-
 /**
  * Total daily operating cost for all built lifts and groomers.
  * Lifts: base_operating_cost + (length in m × op_cost_per_meter).
@@ -82,6 +79,33 @@ export function getDailyVisitors() {
   const seasonFactor = SEASON_VISITOR_MODIFIERS[season] ?? 1;
   const weatherFactor = WEATHER_VISITOR_MODIFIERS[state.currentWeather] ?? 0.85;
   const satisfactionFactor = getSatisfactionVisitorFactor();
+  // Price penalty: if percent price increase above base (1.0) is higher than effective satisfaction,
+  // visitors drop by double the % difference.
+  const price = getTicketPrice();
+  const basePrice = 1.0;
+  const priceIncreasePct = price <= basePrice ? 0 : ((price - basePrice) / basePrice) * 100;
+  const effectiveSatisfaction = Math.max(0, Math.min(100, getEffectiveSatisfaction()));
+  let priceVisitorFactor = 1;
+  if (priceIncreasePct > effectiveSatisfaction) {
+    const diff = priceIncreasePct - effectiveSatisfaction; // percentage points
+    const penalty = 2 * (diff / 100); // double the % difference
+    priceVisitorFactor = Math.max(0, 1 - penalty);
+  }
   const randomFactor = 1 + (Math.random() * 2 - 1) * VISITOR_RANDOMNESS; // 0.9 to 1.1
-  return Math.round(potentialVisitors * snowFactor * seasonFactor * weatherFactor * satisfactionFactor * randomFactor);
+  return Math.round(
+    potentialVisitors *
+    snowFactor *
+    seasonFactor *
+    weatherFactor *
+    satisfactionFactor *
+    priceVisitorFactor *
+    randomFactor
+  );
+}
+
+/** Current ticket price in ski dollars per visitor per day. */
+export function getTicketPrice() {
+  const p = Number(state.ticketPrice);
+  if (!Number.isFinite(p) || p <= 0) return 1.0;
+  return Math.max(0.25, Math.min(5, p));
 }

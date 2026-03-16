@@ -1,10 +1,13 @@
 /**
  * Achievement badge unlock logic. Computes which badges are unlocked from lifts and slopes,
  * updates state.achievements, and updates the badge DOM (show only unlocked badges).
+ *
+ * Also provides effective satisfaction and lift‑driven reputation modifiers.
  */
 
 import { state, getSlopeType } from './state';
 import { getSlopePathLengthM, fromNormalized } from './geometry.js';
+import { getLiftHealthZone } from './maintenance_simulator';
 
 /** Lift type ids that count as two-seater (duo or agamatic) for Family achievement. */
 const TWO_SEATER_LIFT_IDS = ['graffer_double', 'agamatic_duo'];
@@ -13,6 +16,51 @@ const TWO_SEATER_LIFT_IDS = ['graffer_double', 'agamatic_duo'];
 const TOP_HALF_Y = 0.5;
 /** Top 1/5th for Top of the World: lift top station y < 0.2. */
 const TOP_FIFTH_Y = 0.2;
+
+/**
+ * Overall lift reputation multiplier from all built lifts.
+ * For each lift, multiply by its type's reputation_boost, adjusted for current health zone:
+ * - healthy (green): reputation_boost
+ * - warning (yellow): reputation_boost - 0.1
+ * - critical (red): reputation_boost - 0.3
+ */
+function getLiftReputationMultiplier() {
+  if (!state.lifts.length || !state.liftTypes.length) return 1;
+
+  let mult = 1;
+  for (const lift of state.lifts) {
+    const type = state.liftTypes.find((t) => t.id === lift.type);
+    if (!type) continue;
+
+    const baseBoostRaw = /** @type {number | undefined} */ (type.reputation_boost);
+    if (baseBoostRaw == null) continue;
+    let baseBoost = Number(baseBoostRaw);
+    if (!Number.isFinite(baseBoost) || baseBoost <= 0) continue;
+
+    const reliabilityRaw = /** @type {number | undefined} */ (type.reliability);
+    const reliability = reliabilityRaw != null ? Number(reliabilityRaw) : 0.85;
+    const health = Math.max(0, Math.min(100, lift.health ?? 100));
+    const broken = lift.broken === true;
+
+    let factor = baseBoost;
+    if (!broken) {
+      const zone = getLiftHealthZone(health, reliability);
+      if (zone === 'warning') {
+        factor = baseBoost - 0.05;
+      } else if (zone === 'critical') {
+        factor = baseBoost - 0.3;
+      }
+    } else {
+      // Broken lifts are reputationally bad: treat as critical.
+      factor = baseBoost - 0.5;
+    }
+
+    if (factor <= 0) continue;
+    mult *= factor;
+  }
+
+  return mult;
+}
 
 function hasTwoSeaterLift() {
   return state.lifts.some((lift) => TWO_SEATER_LIFT_IDS.includes(lift.type));
@@ -86,7 +134,9 @@ export function getSatisfactionCap() {
 export function getEffectiveSatisfaction() {
   const raw = Math.max(0, Math.min(100, state.satisfaction));
   const cap = getSatisfactionCap();
-  return (raw / 100) * cap;
+  const base = (raw / 100) * cap;
+  const liftMultiplier = getLiftReputationMultiplier();
+  return base * liftMultiplier;
 }
 
 /**

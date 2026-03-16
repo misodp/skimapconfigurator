@@ -25,6 +25,7 @@ import { renderGroomerTypeDropdown, getGroomerImageUrls, getGroomerMapImageUrls,
 import { initInvestCompactSidebar } from './ui/invest-inventory.js';
 import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
+import { updateTicketPriceDisplay } from './config.js';
 
 function setMode(mode) {
   state.mode = mode;
@@ -237,6 +238,16 @@ export function init() {
   if (resortOpenBtn) resortOpenBtn.addEventListener('click', () => { state.resortOpen = true; updateResortButtons(); });
   if (resortClosedBtn) resortClosedBtn.addEventListener('click', () => { state.resortOpen = false; updateResortButtons(); });
   updateResortButtons();
+
+  const ticketSlider = /** @type {HTMLInputElement | null} */ (document.getElementById('ticketPriceSlider'));
+  if (ticketSlider) {
+    const steps = [1.0, 1.25, 1.5, 1.75, 2.0];
+    ticketSlider.addEventListener('input', () => {
+      const idx = Math.max(0, Math.min(steps.length - 1, Number(ticketSlider.value) || 0));
+      state.ticketPrice = steps[idx];
+      updateTicketPriceDisplay();
+    });
+  }
 
   if (DOM.simSpeedButtons) {
     DOM.simSpeedButtons.forEach((btn) => {

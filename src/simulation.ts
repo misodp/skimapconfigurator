@@ -6,7 +6,7 @@ import { state, DOM } from './state';
 import type { SimulationDate } from './types';
 import { getSeason, generateWeatherForSeason, getDailySnowfall, getDailyMelt, getTempRange } from './weather-simulation';
 import { updateWeatherDisplay } from './weather-icon';
-import { getDailyOperatingCost, getDailyVisitors, TICKET_PRICE } from './economics.js';
+import { getDailyOperatingCost, getDailyVisitors, getTicketPrice } from './economics.js';
 import { getTotalSlopeCapacity, getLiftWaitRawScore, getSlopeCrowdRawScore, getTotalGroomingDemand, getSlopeQualityRawScore, driftLiftExperience, driftSlopeCrowdExperience, driftSlopeQualityExperience, driftSatisfaction } from './experience-simulator';
 import { updateBudgetDisplay, updateVisitorsDisplay, updateDailyFinanceDisplay, updateSnowDepthDisplay, updateExperienceDisplay, updateSatisfactionDisplay, updateLiftInfoPanel } from './config.js';
 import { renderLiftTypeDropdown } from './ui/lifts.js';
@@ -68,7 +68,7 @@ function advanceDay(): void {
   driftSatisfaction();
   updateMaintenance(groomingDemand);
     draw();
-    state.dailySales = state.dailyVisitors * TICKET_PRICE;
+    state.dailySales = state.dailyVisitors * getTicketPrice();
   state.dailyCost = getDailyOperatingCost();
   state.dailyProfit = state.dailySales - state.dailyCost;
   state.budget = Math.max(0, state.budget + state.dailyProfit);

@@ -56,6 +56,8 @@ export interface AppState {
   slopeQualityChange: ExperienceChange;
   /** Overall visitor satisfaction 0–100%, drifts daily from the three experience scores. */
   satisfaction: number;
+  /** Ticket price in ski dollars per visitor per day. */
+  ticketPrice: number;
   mode: AppMode;
   /** When true, a build action is armed from the right Invest sidebar; next placement consumes it. */
   buildArmed: boolean;
@@ -118,6 +120,7 @@ export const state: AppState = {
   slopeCrowdChange: 'stable',
   slopeQualityChange: 'stable',
   satisfaction: 20,
+  ticketPrice: 1.0,
   mode: 'lift',
   buildArmed: false,
   liftType: null,

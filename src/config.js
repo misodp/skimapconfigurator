@@ -13,7 +13,7 @@ import { getEffectiveLiftCapacity } from './maintenance_simulator';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
-  if (el) el.textContent = formatCurrency(state.budget);
+  if (el) el.textContent = formatCurrency(Math.round(state.budget));
   const dailyEl = document.getElementById('headerDailyProfit');
   if (dailyEl) {
     const profit = state.dailyProfit;
@@ -31,6 +31,21 @@ export function updateVisitorsDisplay() {
   const headerEl = document.getElementById('headerVisitorsDisplay');
   if (headerEl) {
     headerEl.textContent = formatNumber(state.dailyVisitors) + ' visitors';
+  }
+}
+
+const TICKET_STEPS = [1.0, 1.25, 1.5, 1.75, 2.0];
+
+export function updateTicketPriceDisplay() {
+  const valueEl = document.getElementById('ticketPriceValue');
+  const slider = /** @type {HTMLInputElement | null} */ (document.getElementById('ticketPriceSlider'));
+  const price = Number(state.ticketPrice) || 1.0;
+  if (valueEl) {
+    valueEl.textContent = price.toFixed(2);
+  }
+  if (slider) {
+    const idx = TICKET_STEPS.indexOf(Number(price));
+    slider.value = String(idx >= 0 ? idx : 0);
   }
 }
 
@@ -258,6 +273,7 @@ export function refresh() {
   state.dailyVisitors = getDailyVisitors();
   updateBudgetDisplay();
   updateVisitorsDisplay();
+  updateTicketPriceDisplay();
   updateLiftInfoPanel();
   updateSlopeInfoPanel();
   updateExperienceDisplay();

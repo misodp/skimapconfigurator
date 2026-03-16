@@ -1024,6 +1024,64 @@ body {
   vertical-align: middle;
 }
 
+.tickets-row {
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.tickets-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.tickets-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.tickets-label {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.tickets-price {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}
+
+.tickets-price .stat-skidollar-icon {
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.tickets-slider-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+#ticketPriceSlider {
+  width: 100%;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+.tickets-ticks {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
 /* Overall satisfaction (0–100%), above experience metrics */
 .satisfaction-row {
   padding-top: 0.5rem;
