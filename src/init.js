@@ -16,7 +16,7 @@ import badgeFreerideUrl from '../assets/images/badges/freeride_paradise_at.webp'
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
-import { startSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
+import { startSimulation, stopSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
 import { updateWeatherDisplay } from './weather-icon';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup, hideGroomerHoverPopup, hideSlopeHoverPopup, handleLiftPopupClick, handleGroomerPopupClick, handleSlopePopupClick } from './canvas.js';
 import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './ui/lifts.js';
@@ -423,13 +423,42 @@ export function init() {
   startSimulation();
 
   initSplash();
+  initGameOver();
 }
 
 const SPLASH_DURATION_MS = 2800;
 
+function initGameOver() {
+  window.addEventListener('gameover', () => {
+    stopSimulation();
+    const overlay = document.getElementById('gameOverOverlay');
+    if (overlay) {
+      overlay.classList.add('visible');
+      overlay.setAttribute('aria-hidden', 'false');
+    }
+  }, { once: true });
+  const overlay = document.getElementById('gameOverOverlay');
+  if (overlay) {
+    overlay.addEventListener('click', () => window.location.reload());
+  }
+}
+
 function initSplash() {
   const overlay = document.getElementById('splashOverlay');
   if (!overlay) return;
+
+  const versionEl = overlay.querySelector('.splash-version');
+  if (versionEl) {
+    versionEl.textContent = 'v' + (typeof __APP_VERSION__ !== 'undefined' ? __APP_VERSION__ : '1.0.0');
+  }
+  const buildDateEl = overlay.querySelector('.splash-build-date');
+  if (buildDateEl && typeof __BUILD_DATE__ !== 'undefined') {
+    const raw = __BUILD_DATE__;
+    const d = raw && raw.length >= 10 ? new Date(raw + 'T00:00:00Z') : null;
+    buildDateEl.textContent = d && !isNaN(d.getTime())
+      ? 'Built: ' + d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+      : 'Built: ' + (raw || '');
+  }
 
   function dissolve() {
     overlay.classList.add('splash-dissolve');

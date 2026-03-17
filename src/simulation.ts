@@ -135,6 +135,11 @@ function startLoopWithCurrentSpeed() {
     updateBudgetDisplay();
     updateLiftInfoPanel();
     updateNewsFeed(simulationTickCount);
+    if (state.budget <= 0) {
+      clearLoop();
+      window.dispatchEvent(new CustomEvent('gameover'));
+      return;
+    }
     const year = state.currentDate.year;
     if (lastRenderedDropdownYear !== year) {
       lastRenderedDropdownYear = year;
