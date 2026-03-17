@@ -99,7 +99,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(90deg, #060210 0%, #0a0415 50%, #120a1e 100%);
+  background: linear-gradient(90deg, #060210 0%, #0a0415 40%, #1a0e28 100%);
   cursor: pointer;
   opacity: 0;
   pointer-events: none;
@@ -119,6 +119,25 @@ body {
   object-fit: contain;
   pointer-events: none;
   display: block;
+}
+
+.build-mask-hint {
+  position: fixed;
+  z-index: 10000;
+  transform: translate(14px, -18px);
+  padding: 4px 8px;
+  border-radius: 10px;
+  background: rgba(17, 24, 39, 0.85);
+  color: #ff4d4d;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.build-mask-hint.hidden {
+  display: none;
 }
 
 #app {

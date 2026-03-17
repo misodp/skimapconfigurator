@@ -424,23 +424,33 @@ export function draw() {
     const gy = cy - 24;
     ctx.save();
     ctx.globalAlpha = 0.6;
+    const blocked = !!state.buildBlocked;
     if (state.mode === 'groomer') {
       const img = state.groomerImages[state.groomerType];
       if (img && img.complete && img.naturalWidth) {
         const w = GROOMER_ICON_SIZE;
         const h = (img.naturalHeight / img.naturalWidth) * w;
-        ctx.drawImage(img, gx - w / 2, gy - h / 2, w, h);
+        const dx = gx - w / 2;
+        const dy = gy - h / 2;
+        ctx.drawImage(img, dx, dy, w, h);
+        if (blocked) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.55)';
+          ctx.fillRect(dx, dy, w, h);
+          ctx.restore();
+        }
       }
     } else if (state.mode === 'slope') {
       const slopeType = getSlopeType(state.difficulty);
-      const color = getDiffColor(slopeType);
+      const color = blocked ? '#ff2d2d' : getDiffColor(slopeType);
       const r = 10;
       ctx.beginPath();
       ctx.arc(gx, gy, r, 0, Math.PI * 2);
       ctx.fillStyle = color || '#ffffff';
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = '#000';
+      ctx.strokeStyle = blocked ? '#7f1d1d' : '#000';
       ctx.stroke();
     } else if (state.mode === 'lift') {
       const sprite = state.spriteSheet;
@@ -457,25 +467,34 @@ export function draw() {
         const sx = col * sw;
         const sy = row * sh;
         const iconSize = 32;
+        const dx = gx - iconSize / 2;
+        const dy = gy - iconSize / 2;
         ctx.drawImage(
           sprite,
           sx,
           sy,
           sw,
           sh,
-          gx - iconSize / 2,
-          gy - iconSize / 2,
+          dx,
+          dy,
           iconSize,
           iconSize
         );
+        if (blocked) {
+          ctx.save();
+          ctx.globalCompositeOperation = 'source-atop';
+          ctx.fillStyle = 'rgba(255, 0, 0, 0.55)';
+          ctx.fillRect(dx, dy, iconSize, iconSize);
+          ctx.restore();
+        }
       } else {
         const r = 10;
         ctx.beginPath();
         ctx.arc(gx, gy, r, 0, Math.PI * 2);
-        ctx.fillStyle = '#111827';
+        ctx.fillStyle = blocked ? '#ff2d2d' : '#111827';
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = '#e5e7eb';
+        ctx.strokeStyle = blocked ? '#7f1d1d' : '#e5e7eb';
         ctx.stroke();
         ctx.fillStyle = '#e5e7eb';
         ctx.font = 'bold 10px "DM Sans", system-ui, sans-serif';

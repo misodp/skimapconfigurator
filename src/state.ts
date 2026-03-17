@@ -78,6 +78,8 @@ export interface AppState {
   liftBottom: ImagePoint | null;
   liftTop: ImagePoint | null;
   mouseImage: { x: number; y: number } | null;
+  /** True when current hover placement is blocked by build mask. */
+  buildBlocked: boolean;
   slopePoints: { x: number; y: number }[];
   slopeDrawing: boolean;
   slopeDrawMode: SlopeDrawMode;
@@ -140,6 +142,7 @@ export const state: AppState = {
   liftBottom: null,
   liftTop: null,
   mouseImage: null,
+  buildBlocked: false,
   slopePoints: [],
   slopeDrawing: false,
   slopeDrawMode: 'points',

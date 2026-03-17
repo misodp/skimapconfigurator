@@ -22,8 +22,11 @@ function parseThresholdFromPath(path) {
 function buildThresholds() {
   if (snowThresholds.length > 0) return;
   snowThresholds = Object.entries(mountainModules)
+    // Only include actual mountain layers with an explicit numeric threshold suffix.
+    // This intentionally excludes non-layer assets in the folder (e.g. build masks).
+    .filter(([path]) => /_\d+\.(webp|png)$/i.test(path))
     .map(([path, url]) => ({ threshold: parseThresholdFromPath(path), url: /** @type {string} */ (url) }))
-    .filter((e) => !Number.isNaN(e.threshold))
+    .filter((e) => Number.isFinite(e.threshold))
     .sort((a, b) => a.threshold - b.threshold);
 }
 

@@ -18,6 +18,7 @@ import { getSlopeSpritePositionStyle } from './ui/slopes.js';
 import { COLS, ROWS } from './constants';
 import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier, getGroomerHealthZone, getGroomerServiceCost, getGroomerEffectiveCapacityMultiplier } from './maintenance_simulator';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.webp';
+import { isBuildableAtImagePoint } from './build-mask';
 
 const PEN_SMOOTH_SAMPLES = 24;
 const PEN_MIN_DIST_SQ = 16;
@@ -28,6 +29,38 @@ const LIFT_HOVER_THRESHOLD_SQ = 24 * 24;
 const GROOMER_HOVER_RADIUS_SQ = 35 * 35;
 /** Image-space distance squared (px) to consider cursor over a slope line. */
 const SLOPE_HOVER_THRESHOLD_SQ = 24 * 24;
+
+function setBuildMaskHintPosition(e) {
+  const hint = document.getElementById('buildMaskHint');
+  if (!hint) return;
+  hint.style.left = `${e.clientX}px`;
+  hint.style.top = `${e.clientY}px`;
+}
+
+function setBuildMaskHintVisible(visible) {
+  const hint = document.getElementById('buildMaskHint');
+  if (!hint) return;
+  hint.classList.toggle('hidden', !visible);
+  hint.setAttribute('aria-hidden', visible ? 'false' : 'true');
+}
+
+function updateBuildBlockedAtImagePoint(pt) {
+  const shouldCheck =
+    state.buildArmed &&
+    (state.mode === 'lift' ||
+      state.mode === 'groomer' ||
+      (state.mode === 'slope' && (state.slopeDrawMode === 'points' || state.slopeDrawMode === 'pen')));
+  if (!shouldCheck) {
+    state.buildBlocked = false;
+    setBuildMaskHintVisible(false);
+    if (DOM.canvas) DOM.canvas.style.cursor = '';
+    return;
+  }
+  const ok = isBuildableAtImagePoint(pt.x, pt.y);
+  state.buildBlocked = !ok;
+  setBuildMaskHintVisible(state.buildBlocked);
+  if (DOM.canvas) DOM.canvas.style.cursor = state.buildBlocked ? 'not-allowed' : '';
+}
 
 /** True when Invest tab is active; false when Operate (Statistics) tab is active. Building is only allowed in Invest. */
 function isInvestTabActive() {
@@ -1058,6 +1091,9 @@ export function onCanvasMouseDown(e) {
   if (!state.buildArmed) return;
   const { x, y } = getCanvasPoint(e);
   const pt = canvasToImage(x, y);
+  setBuildMaskHintPosition(e);
+  updateBuildBlockedAtImagePoint(pt);
+  if (state.buildBlocked) return;
   state.slopePoints = [{ x: pt.x, y: pt.y }];
   state.penDrawing = true;
   document.getElementById('cancelSlopeBtn').classList.remove('hidden');
@@ -1068,6 +1104,8 @@ export function onCanvasMouseMove(e) {
   if (!state.image) return;
   const { x, y } = getCanvasPoint(e);
   const pt = canvasToImage(x, y);
+  setBuildMaskHintPosition(e);
+  updateBuildBlockedAtImagePoint(pt);
   // Build-mode previews / ghosts
   if (state.buildArmed && state.mode === 'lift') {
     state.mouseImage = { x: pt.x, y: pt.y };
@@ -1084,6 +1122,7 @@ export function onCanvasMouseMove(e) {
     return;
   }
   if (state.penDrawing) {
+    if (state.buildBlocked) return;
     const last = state.slopePoints[state.slopePoints.length - 1];
     if (last) {
       const dx = pt.x - last.x;
@@ -1221,6 +1260,14 @@ export function onCanvasClick(e) {
       hideGroomerHoverPopup();
       hideSlopeHoverPopup();
     }
+  }
+
+  const hoverPt = canvasToImage(x, y);
+  setBuildMaskHintPosition(e);
+  updateBuildBlockedAtImagePoint(hoverPt);
+  if (state.buildBlocked && (state.mode === 'lift' || state.mode === 'groomer' || state.mode === 'slope')) {
+    refresh();
+    return;
   }
 
   const isBuildMode = state.mode === 'lift' || state.mode === 'cottage' || state.mode === 'groomer' || (state.mode === 'slope' && state.slopeDrawMode === 'points');

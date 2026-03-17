@@ -26,6 +26,7 @@ import { initInvestCompactSidebar } from './ui/invest-inventory.js';
 import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
 import { updateTicketPriceDisplay } from './config.js';
+import { initBuildMask } from './build-mask';
 
 function setMode(mode) {
   state.mode = mode;
@@ -96,6 +97,9 @@ function updateSlopeHints() {
 function cancelSlope() {
   state.slopePoints = [];
   state.slopeDrawing = false;
+  state.penDrawing = false;
+  state.mouseImage = null;
+  state.buildBlocked = false;
   const btn = document.getElementById('cancelSlopeBtn');
   if (btn) btn.classList.add('hidden');
   refresh();
@@ -342,6 +346,10 @@ export function init() {
   DOM.canvas.addEventListener('mouseup', onCanvasMouseUp);
   DOM.canvas.addEventListener('mouseleave', (e) => {
     if (state.mode === 'lift') state.mouseImage = null;
+    state.buildBlocked = false;
+    const hint = document.getElementById('buildMaskHint');
+    if (hint) { hint.classList.add('hidden'); hint.setAttribute('aria-hidden', 'true'); }
+    if (DOM.canvas) DOM.canvas.style.cursor = '';
     const popup = document.getElementById('liftHoverPopup');
     if (!popup || !popup.contains(e.relatedTarget)) hideLiftHoverPopup();
     const groomerPopup = document.getElementById('groomerHoverPopup');
@@ -384,6 +392,9 @@ export function init() {
   loadSpriteSheet();
   loadCottageIcon();
   loadGroomerImages();
+  initBuildMask('/assets/images/mountain/mountain1_buildmask.webp').catch(() => {
+    // Fail open if mask fails to load; building remains allowed.
+  });
   initNewsFeed([animalsH1Url, animalsH2Url], [animalsA1Url, animalsA2Url]);
   renderLiftTypeDropdown();
   renderSlopeTypeButtons();
