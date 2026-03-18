@@ -13,6 +13,8 @@ const LIFT_LINE_WIDTH = 3;
 const LIFT_DOT_RADIUS = 5;
 const SLOPE_LINE_WIDTH = 2;
 const SLOPE_NUMBER_RADIUS = 10;
+/** Allow small upward jitter when checking slope preview (image px). */
+const SLOPE_UPHILL_TOLERANCE_PX = 15;
 
 function drawLine(ctx, scaleX, scaleY, ax, ay, bx, by, color, lineWidth = LIFT_LINE_WIDTH) {
   ctx.strokeStyle = color;
@@ -262,10 +264,12 @@ function drawSlopes(ctx, scaleX, scaleY) {
       state.slopeDrawMode === 'points' &&
       state.mouseImage &&
       last &&
-      state.mouseImage.y < last.y;
+      state.mouseImage.y < last.y - SLOPE_UPHILL_TOLERANCE_PX;
     const uphill =
       hoverUphill ||
-      state.slopePoints.some((p, i) => i > 0 && p && state.slopePoints[i - 1] && p.y < state.slopePoints[i - 1].y);
+      state.slopePoints.some(
+        (p, i) => i > 0 && p && state.slopePoints[i - 1] && p.y < state.slopePoints[i - 1].y - SLOPE_UPHILL_TOLERANCE_PX,
+      );
     const insufficientFunds = state.budget < totalCost;
     const endpointInvalid = !startOk;
     const c = (insufficientFunds || uphill || endpointInvalid || !!state.slopePlaceError) ? 'rgba(180, 0, 0, 0.95)' : getDiffColor(state.difficulty);
@@ -548,7 +552,9 @@ export function draw() {
       if (state.slopeDrawMode !== 'points') return false;
       const last = state.slopePoints[state.slopePoints.length - 1];
       if (!last) return false;
-      return my < last.y;
+      // Uphill means moving to a smaller y value (y increases downward).
+      // Allow small upward jitter to match placement validation tolerance.
+      return my < last.y - SLOPE_UPHILL_TOLERANCE_PX;
     })();
     const ghostCannotPlace = blocked || liftCannotPlace || slopeCannotPlace;
     if (state.mode === 'groomer') {

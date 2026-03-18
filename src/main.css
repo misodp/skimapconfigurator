@@ -1271,6 +1271,14 @@ body {
   gap: 0.4rem;
 }
 
+.satisfaction-description {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.2;
+  margin-top: -0.1rem;
+  text-align: center;
+}
+
 .satisfaction-header {
   display: flex;
   justify-content: space-between;

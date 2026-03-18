@@ -31,13 +31,17 @@ const LIFT_HOVER_THRESHOLD_SQ = 24 * 24;
 const GROOMER_HOVER_RADIUS_SQ = 35 * 35;
 /** Image-space distance squared (px) to consider cursor over a slope line. */
 const SLOPE_HOVER_THRESHOLD_SQ = 24 * 24;
+/** Allow small upward jitter when placing slope points (image px). */
+const SLOPE_UPHILL_TOLERANCE_PX = 15;
 
 function isSlopeNonUphill(points) {
   for (let i = 1; i < points.length; i++) {
     const prev = points[i - 1];
     const cur = points[i];
     if (!prev || !cur) continue;
-    if (cur.y < prev.y) return false;
+    // y increases downward, so "uphill" means cur.y is smaller than prev.y.
+    // We allow a small tolerance to prevent blocking slight upward jitter.
+    if (cur.y < prev.y - SLOPE_UPHILL_TOLERANCE_PX) return false;
   }
   return true;
 }
@@ -668,10 +672,12 @@ function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
   const liftPopupEl = document.getElementById('liftHoverPopup');
   const slopePopupEl = document.getElementById('slopeHoverPopup');
   if (liftPopupEl) {
-    liftPopupEl.hidden = true;
-    liftPopupEl.setAttribute('aria-hidden', 'true');
-    lastHoveredLiftIndex = null;
-    isPopupPinned = false;
+    // Keep the lift popup visible when user pinned it.
+    if (!isPopupPinned) {
+      liftPopupEl.hidden = true;
+      liftPopupEl.setAttribute('aria-hidden', 'true');
+      lastHoveredLiftIndex = null;
+    }
   }
   if (slopePopupEl) {
     slopePopupEl.hidden = true;
@@ -717,10 +723,12 @@ function updateSlopeHoverPopup(slopeIndex, clientX, clientY) {
   const liftPopupEl = document.getElementById('liftHoverPopup');
   const groomerPopupEl = document.getElementById('groomerHoverPopup');
   if (liftPopupEl) {
-    liftPopupEl.hidden = true;
-    liftPopupEl.setAttribute('aria-hidden', 'true');
-    lastHoveredLiftIndex = null;
-    isPopupPinned = false;
+    // Keep the lift popup visible when user pinned it.
+    if (!isPopupPinned) {
+      liftPopupEl.hidden = true;
+      liftPopupEl.setAttribute('aria-hidden', 'true');
+      lastHoveredLiftIndex = null;
+    }
   }
   if (groomerPopupEl) {
     groomerPopupEl.hidden = true;
@@ -1291,7 +1299,7 @@ export function onCanvasMouseMove(e) {
       const dx = pt.x - last.x;
       const dy = pt.y - last.y;
       if (dx * dx + dy * dy < PEN_MIN_DIST_SQ) return;
-      if (pt.y < last.y) return;
+      if (pt.y < last.y - SLOPE_UPHILL_TOLERANCE_PX) return;
     }
     state.slopePoints.push({ x: pt.x, y: pt.y });
     refresh();
@@ -1320,6 +1328,12 @@ export function onCanvasMouseMove(e) {
   updateGroomerHoverPopup(-1, e.clientX, e.clientY);
   const slopeIdx = getSlopeIndexAtImage(pt.x, pt.y);
   if (slopeIdx >= 0 && !isSlopePopupPinned) {
+    // Do not show a slope popup while a lift popup is pinned.
+    if (isPopupPinned) {
+      hideSlopeHoverPopup();
+      return;
+    }
+
     updateSlopeHoverPopup(slopeIdx, e.clientX, e.clientY);
     const liftPopup = document.getElementById('liftHoverPopup');
     if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
@@ -1354,7 +1368,7 @@ export function onCanvasMouseUp() {
     const snapEndAny = rawLast ? findSlopeConnectionSnap(rawLast.x, rawLast.y) : null;
     const snapEnd = (rawLast && rawPrev) ? findSlopeConnectionSnapForEnd(rawLast.x, rawLast.y, rawPrev.y) : snapEndAny;
     if (!snapStart || !snapEnd) {
-      if (rawPrev && snapEndAny && snapEndAny.y < rawPrev.y) {
+      if (rawPrev && snapEndAny && snapEndAny.y < rawPrev.y - SLOPE_UPHILL_TOLERANCE_PX) {
         window.alert('Slope end point must not be higher than the previous point.');
       } else {
       window.alert('Slope must start/end at a lift station or on an existing slope.');
@@ -1550,7 +1564,8 @@ export function onCanvasClick(e) {
     }
     state.slopePlaceError = null;
     const last = state.slopePoints[state.slopePoints.length - 1];
-    if (last && pt.y < last.y) {
+    // Allow small upward movement within tolerance.
+    if (last && pt.y < last.y - SLOPE_UPHILL_TOLERANCE_PX) {
       refresh();
       return;
     }
@@ -1573,7 +1588,9 @@ export function onCanvasDblClick(e) {
     const snapEndAny = findSlopeConnectionSnap(last.x, last.y);
     const snapEnd = prev ? findSlopeConnectionSnapForEnd(last.x, last.y, prev.y) : snapEndAny;
     if (!snapStart || !snapEnd) {
-      if (prev && snapEndAny && snapEndAny.y < prev.y) state.slopePlaceError = 'Slope end point must not be higher than the previous point.';
+      if (prev && snapEndAny && snapEndAny.y < prev.y - SLOPE_UPHILL_TOLERANCE_PX) {
+        state.slopePlaceError = 'Slope end point must not be higher than the previous point.';
+      }
       else state.slopePlaceError = 'Slope must start/end at a lift station or on an existing slope.';
       refresh();
       return;

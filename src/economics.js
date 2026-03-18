@@ -6,6 +6,7 @@ import { state } from './state';
 import { fromNormalized, getLiftLengthM } from './geometry.js';
 import { WEATHER_VISITOR_MODIFIERS, SEASON_VISITOR_MODIFIERS, getSeason } from './weather-simulation';
 import { getEffectiveSatisfaction } from './achievements.js';
+import { getTotalSlopeCapacity } from './experience-simulator';
 import { getEffectiveLiftCapacity } from './maintenance_simulator';
 
 /**
@@ -103,8 +104,14 @@ export function getDailyVisitors() {
     randomFactor
   );
 
+  // Visitors are capped by both lift throughput and slope crowding:
+  // - lifts: capped by 2× effective lift capacity
+  // - slopes: capped by 2× total slope capacity
   const effectiveLiftCap = getEffectiveLiftCapacity();
-  const maxVisitors = Math.max(0, Math.round(2 * effectiveLiftCap));
+  const maxVisitorsByLift = Math.max(0, Math.round(2 * effectiveLiftCap));
+  const slopeCap = getTotalSlopeCapacity();
+  const maxVisitorsBySlope = Math.max(0, Math.round(2 * (Number.isFinite(slopeCap) ? slopeCap : 0)));
+  const maxVisitors = Math.max(0, Math.min(maxVisitorsByLift, maxVisitorsBySlope));
   if (maxVisitors <= 0) return 0;
   return Math.max(0, Math.min(raw, maxVisitors));
 }

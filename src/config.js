@@ -264,6 +264,12 @@ export function updateSatisfactionDisplay() {
     else fill.classList.add('satisfaction-fill-high');
   }
   if (valueEl) valueEl.textContent = `${pct}%`;
+  const descEl = DOM.satisfactionDisplay.querySelector('.satisfaction-description');
+  if (descEl) {
+    if (pct <= 20) descEl.textContent = '"Local hill"';
+    else if (pct <= 55) descEl.textContent = '"Regional highlight"';
+    else descEl.textContent = '"National champion"';
+  }
 }
 
 /** Redraw canvas, update lists, refresh budget and visitors. Call after any state change. */
