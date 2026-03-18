@@ -25,6 +25,9 @@ const HINTS = {
   groomer: 'Select type, then click on the map to place the groomer.',
 };
 
+/** @type {HTMLElement | null} */
+let lastFocusBeforePopup = null;
+
 /**
  * Fill the popup list with items for the given mode and attach click handlers.
  * @param {'lift'|'slope'|'groomer'} mode
@@ -132,6 +135,8 @@ export function openInventoryPopup(mode, anchorBtn) {
   const overlay = document.getElementById(OVERLAY_ID);
   const popup = document.getElementById(POPUP_ID);
   if (!overlay || !popup) return;
+  const active = document.activeElement;
+  lastFocusBeforePopup = (active && active instanceof HTMLElement) ? active : null;
   fillList(mode);
   overlay.hidden = false;
   overlay.setAttribute('aria-hidden', 'false');
@@ -160,6 +165,18 @@ export function openInventoryPopup(mode, anchorBtn) {
 export function closeInventoryPopup() {
   const overlay = document.getElementById(OVERLAY_ID);
   const popup = document.getElementById(POPUP_ID);
+
+  // If focus is inside the popup, move it out BEFORE hiding/aria-hidden.
+  const active = document.activeElement;
+  if (popup && active && popup.contains(active)) {
+    if (lastFocusBeforePopup && document.contains(lastFocusBeforePopup)) {
+      lastFocusBeforePopup.focus();
+    } else {
+      /** @type {HTMLElement | null} */ (document.getElementById('drawCanvas'))?.focus?.();
+      /** @type {HTMLElement} */ (document.body).focus?.();
+    }
+  }
+
   if (overlay) {
     overlay.hidden = true;
     overlay.setAttribute('aria-hidden', 'true');
@@ -170,6 +187,7 @@ export function closeInventoryPopup() {
     popup.setAttribute('aria-hidden', 'true');
     popup.style.display = 'none';
   }
+  lastFocusBeforePopup = null;
 
   // Also hide/reset the shared detail panel when the flyout closes.
   if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();

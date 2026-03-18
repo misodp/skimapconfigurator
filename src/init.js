@@ -27,6 +27,7 @@ import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
 import { updateTicketPriceDisplay } from './config.js';
 import { initBuildMask } from './build-mask';
+import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
 
 function setMode(mode) {
   state.mode = mode;
@@ -393,7 +394,7 @@ export function init() {
   loadSpriteSheet();
   loadCottageIcon();
   loadGroomerImages();
-  initBuildMask('/assets/images/mountain/mountain1_buildmask.webp').catch(() => {
+  initBuildMask(buildMaskUrl).catch(() => {
     // Fail open if mask fails to load; building remains allowed.
   });
   initNewsFeed([animalsH1Url, animalsH2Url], [animalsA1Url, animalsA2Url]);
