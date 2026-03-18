@@ -81,7 +81,9 @@ function drawSmoothCurve(ctx, scaleX, scaleY, points, color, lineWidth = SLOPE_L
       const p1 = points[i];
       const p0 = (i === points.length - 2) ? p1 : points[Math.max(0, i - 1)];
       const p2 = points[i + 1];
-      const p3 = points[Math.min(points.length - 1, i + 2)];
+      // Clamp the second-to-last segment's look-ahead too, so it doesn't "swing past"
+      // the final snapped endpoint and come back.
+      const p3 = (i === points.length - 3) ? p2 : points[Math.min(points.length - 1, i + 2)];
       const cp1x = p1.x + (p2.x - p0.x) / 6;
       const cp1y = p1.y + (p2.y - p0.y) / 6;
       const cp2x = p2.x - (p3.x - p1.x) / 6;
@@ -176,6 +178,84 @@ function drawSlopes(ctx, scaleX, scaleY) {
     const lengthM = getSlopePathLengthM(state.slopePoints);
     const totalCost = getSlopeCost(lengthM);
     const last = state.slopePoints[state.slopePoints.length - 1];
+    const SNAP_DIST_SQ_LOCAL = 28 * 28;
+    const distSq = (ax, ay, bx, by) => {
+      const dx = ax - bx;
+      const dy = ay - by;
+      return dx * dx + dy * dy;
+    };
+    const closestPointOnSegmentLocal = (px, py, ax, ay, bx, by) => {
+      const vx = bx - ax;
+      const vy = by - ay;
+      const wx = px - ax;
+      const wy = py - ay;
+      const lenSq = vx * vx + vy * vy;
+      if (!lenSq) return { x: ax, y: ay };
+      let t = (vx * wx + vy * wy) / lenSq;
+      if (t < 0) t = 0;
+      else if (t > 1) t = 1;
+      return { x: ax + t * vx, y: ay + t * vy };
+    };
+    const isNearLiftStation = (pt) => {
+      for (const lift of state.lifts) {
+        const top = fromNormalized(lift.topStation.x, lift.topStation.y);
+        const bottom = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+        if (distSq(pt.x, pt.y, top.x, top.y) < SNAP_DIST_SQ_LOCAL) return true;
+        if (distSq(pt.x, pt.y, bottom.x, bottom.y) < SNAP_DIST_SQ_LOCAL) return true;
+      }
+      return false;
+    };
+    const isNearSlopeLine = (pt) => {
+      for (const s of state.slopes) {
+        const pts = s.points.map((p) => fromNormalized(p.x, p.y));
+        if (pts.length < 2) continue;
+        // Snap against the same curve approximation used elsewhere.
+        if (pts.length === 2) {
+          const p = closestPointOnSegmentLocal(pt.x, pt.y, pts[0].x, pts[0].y, pts[1].x, pts[1].y);
+          if (distSq(pt.x, pt.y, p.x, p.y) < SNAP_DIST_SQ_LOCAL) return true;
+          continue;
+        }
+        const STEPS = 10;
+        for (let i = 0; i < pts.length - 1; i++) {
+          const p1 = pts[i];
+          const p0 = (i === pts.length - 2) ? p1 : pts[Math.max(0, i - 1)];
+          const p2 = pts[i + 1];
+          const p3 = pts[Math.min(pts.length - 1, i + 2)];
+          const cp1x = p1.x + (p2.x - p0.x) / 6;
+          const cp1y = p1.y + (p2.y - p0.y) / 6;
+          const cp2x = p2.x - (p3.x - p1.x) / 6;
+          const cp2y = p2.y - (p3.y - p1.y) / 6;
+          let prevX = p1.x;
+          let prevY = p1.y;
+          for (let s = 1; s <= STEPS; s++) {
+            const t = s / STEPS;
+            const mt = 1 - t;
+            const x =
+              mt * mt * mt * p1.x +
+              3 * mt * mt * t * cp1x +
+              3 * mt * t * t * cp2x +
+              t * t * t * p2.x;
+            const y =
+              mt * mt * mt * p1.y +
+              3 * mt * mt * t * cp1y +
+              3 * mt * t * t * cp2y +
+              t * t * t * p2.y;
+            const p = closestPointOnSegmentLocal(pt.x, pt.y, prevX, prevY, x, y);
+            if (distSq(pt.x, pt.y, p.x, p.y) < SNAP_DIST_SQ_LOCAL) return true;
+            prevX = x;
+            prevY = y;
+          }
+        }
+      }
+      return false;
+    };
+    const startPt = state.slopePoints[0];
+    const startOk = !!startPt && (isNearLiftStation(startPt) || isNearSlopeLine(startPt));
+    const endCandidate =
+      (state.buildArmed && state.mode === 'slope' && state.slopeDrawMode === 'points' && state.mouseImage)
+        ? state.mouseImage
+        : last;
+    const endOk = !!endCandidate && (isNearLiftStation(endCandidate) || isNearSlopeLine(endCandidate));
     const hoverUphill =
       state.buildArmed &&
       state.mode === 'slope' &&
@@ -187,7 +267,8 @@ function drawSlopes(ctx, scaleX, scaleY) {
       hoverUphill ||
       state.slopePoints.some((p, i) => i > 0 && p && state.slopePoints[i - 1] && p.y < state.slopePoints[i - 1].y);
     const insufficientFunds = state.budget < totalCost;
-    const c = (insufficientFunds || uphill) ? 'rgba(180, 0, 0, 0.95)' : getDiffColor(state.difficulty);
+    const endpointInvalid = !startOk;
+    const c = (insufficientFunds || uphill || endpointInvalid || !!state.slopePlaceError) ? 'rgba(180, 0, 0, 0.95)' : getDiffColor(state.difficulty);
     drawSmoothCurve(ctx, scaleX, scaleY, state.slopePoints, c, SLOPE_LINE_WIDTH, useDotted);
     if (state.slopeDrawMode === 'points') {
       state.slopePoints.forEach((p, i) => {
@@ -204,12 +285,14 @@ function drawSlopes(ctx, scaleX, scaleY) {
       let labelY = (last.y + offsetY) * scaleY;
       const lineHeight = 14;
       ctx.save();
-      ctx.fillStyle = (insufficientFunds || uphill) ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
+      ctx.fillStyle = (insufficientFunds || uphill || endpointInvalid || !!state.slopePlaceError) ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
       ctx.font = 'bold 12px "DM Sans", system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
       let msg = `${lengthM} m`;
-      if (uphill) msg = 'Slope cannot go uphill';
+      if (state.slopePlaceError) msg = state.slopePlaceError;
+      else if (!startOk) msg = 'Slope must start at a lift station or on an existing slope';
+      else if (uphill) msg = 'Slope cannot go uphill';
       else if (insufficientFunds) msg = `Not enough budget (need ${formatCurrency(totalCost)})`;
       ctx.fillText(msg, labelX, labelY);
       labelY += lineHeight;

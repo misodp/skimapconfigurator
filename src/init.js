@@ -100,6 +100,7 @@ function cancelSlope() {
   state.penDrawing = false;
   state.mouseImage = null;
   state.buildBlocked = false;
+  state.slopePlaceError = null;
   const btn = document.getElementById('cancelSlopeBtn');
   if (btn) btn.classList.add('hidden');
   refresh();

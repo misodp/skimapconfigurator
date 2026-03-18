@@ -84,6 +84,8 @@ export interface AppState {
   slopeDrawing: boolean;
   slopeDrawMode: SlopeDrawMode;
   penDrawing: boolean;
+  /** If set, show a red slope placement error in the on-canvas label. */
+  slopePlaceError: string | null;
   spriteSheet: HTMLImageElement | null;
   cottageIcon: HTMLImageElement | null;
   groomerImages: Record<string, HTMLImageElement>;
@@ -147,6 +149,7 @@ export const state: AppState = {
   slopeDrawing: false,
   slopeDrawMode: 'points',
   penDrawing: false,
+  slopePlaceError: null,
   spriteSheet: null,
   cottageIcon: null,
   groomerImages: {},

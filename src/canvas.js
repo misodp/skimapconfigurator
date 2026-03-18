@@ -42,6 +42,93 @@ function isSlopeNonUphill(points) {
   return true;
 }
 
+function findSlopeConnectionSnapImpl(px, py, minY = -Infinity) {
+  /** @type {{x:number,y:number}|null} */
+  let best = null;
+  let bestDistSq = SNAP_DIST_SQ;
+
+  // Lift stations only (top/bottom endpoints)
+  state.lifts.forEach((lift) => {
+    const bottom = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+    const top = fromNormalized(lift.topStation.x, lift.topStation.y);
+    for (const p of [top, bottom]) {
+      if (p.y < minY) continue;
+      const dx = px - p.x;
+      const dy = py - p.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < bestDistSq) {
+        bestDistSq = d2;
+        best = { x: p.x, y: p.y };
+      }
+    }
+  });
+
+  // Anywhere along existing slopes (snap to visible smoothed curve)
+  state.slopes.forEach((slope) => {
+    const pts = slope.points.map((p) => fromNormalized(p.x, p.y));
+    if (pts.length < 2) return;
+
+    const considerSegment = (ax, ay, bx, by) => {
+      const p = closestPointOnSegment(px, py, ax, ay, bx, by);
+      if (p.y < minY) return;
+      const dx = px - p.x;
+      const dy = py - p.y;
+      const d2 = dx * dx + dy * dy;
+      if (d2 < bestDistSq) {
+        bestDistSq = d2;
+        best = { x: p.x, y: p.y };
+      }
+    };
+
+    if (pts.length === 2) {
+      considerSegment(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
+      return;
+    }
+
+    const STEPS = 10;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p1 = pts[i];
+      const p0 = (i === pts.length - 2) ? p1 : pts[Math.max(0, i - 1)];
+      const p2 = pts[i + 1];
+      const p3 = (i === pts.length - 3) ? p2 : pts[Math.min(pts.length - 1, i + 2)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      let prevX = p1.x;
+      let prevY = p1.y;
+      for (let s = 1; s <= STEPS; s++) {
+        const t = s / STEPS;
+        const mt = 1 - t;
+        const x =
+          mt * mt * mt * p1.x +
+          3 * mt * mt * t * cp1x +
+          3 * mt * t * t * cp2x +
+          t * t * t * p2.x;
+        const y =
+          mt * mt * mt * p1.y +
+          3 * mt * mt * t * cp1y +
+          3 * mt * t * t * cp2y +
+          t * t * t * p2.y;
+        considerSegment(prevX, prevY, x, y);
+        prevX = x;
+        prevY = y;
+      }
+    }
+  });
+
+  return best;
+}
+
+function findSlopeConnectionSnap(px, py) {
+  return findSlopeConnectionSnapImpl(px, py);
+}
+
+function findSlopeConnectionSnapForEnd(px, py, minY) {
+  return findSlopeConnectionSnapImpl(px, py, minY);
+}
+
 function setBuildMaskHintPosition(e) {
   const hint = document.getElementById('buildMaskHint');
   if (!hint) return;
@@ -49,9 +136,10 @@ function setBuildMaskHintPosition(e) {
   hint.style.top = `${e.clientY}px`;
 }
 
-function setBuildMaskHintVisible(visible) {
+function setBuildMaskHint(visible, text) {
   const hint = document.getElementById('buildMaskHint');
   if (!hint) return;
+  if (typeof text === 'string') hint.textContent = text;
   hint.classList.toggle('hidden', !visible);
   hint.setAttribute('aria-hidden', visible ? 'false' : 'true');
 }
@@ -64,13 +152,13 @@ function updateBuildBlockedAtImagePoint(pt) {
       (state.mode === 'slope' && (state.slopeDrawMode === 'points' || state.slopeDrawMode === 'pen')));
   if (!shouldCheck) {
     state.buildBlocked = false;
-    setBuildMaskHintVisible(false);
+    setBuildMaskHint(false);
     if (DOM.canvas) DOM.canvas.style.cursor = '';
     return;
   }
   const ok = isBuildableAtImagePoint(pt.x, pt.y);
   state.buildBlocked = !ok;
-  setBuildMaskHintVisible(state.buildBlocked);
+  if (state.buildBlocked) setBuildMaskHint(true, 'Cannot build here');
   if (DOM.canvas) DOM.canvas.style.cursor = state.buildBlocked ? 'not-allowed' : '';
 }
 
@@ -242,7 +330,7 @@ export function findSnapPoint(px, py) {
       const p1 = pts[i];
       const p0 = (i === pts.length - 2) ? p1 : pts[Math.max(0, i - 1)];
       const p2 = pts[i + 1];
-      const p3 = pts[Math.min(pts.length - 1, i + 2)];
+      const p3 = (i === pts.length - 3) ? p2 : pts[Math.min(pts.length - 1, i + 2)];
       const cp1x = p1.x + (p2.x - p0.x) / 6;
       const cp1y = p1.y + (p2.y - p0.y) / 6;
       const cp2x = p2.x - (p3.x - p1.x) / 6;
@@ -1145,6 +1233,10 @@ export function onCanvasMouseDown(e) {
   setBuildMaskHintPosition(e);
   updateBuildBlockedAtImagePoint(pt);
   if (state.buildBlocked) return;
+  const snap = findSlopeConnectionSnap(pt.x, pt.y);
+  if (!snap) return;
+  pt.x = snap.x;
+  pt.y = snap.y;
   state.slopePoints = [{ x: pt.x, y: pt.y }];
   state.penDrawing = true;
   document.getElementById('cancelSlopeBtn').classList.remove('hidden');
@@ -1157,6 +1249,26 @@ export function onCanvasMouseMove(e) {
   const pt = canvasToImage(x, y);
   setBuildMaskHintPosition(e);
   updateBuildBlockedAtImagePoint(pt);
+
+  // Before placing the first slope point (points mode), show a start-area hint if not near a snap target.
+  if (
+    !state.buildBlocked &&
+    state.buildArmed &&
+    state.mode === 'slope' &&
+    state.slopeDrawMode === 'points' &&
+    state.slopePoints.length === 0
+  ) {
+    const snap = findSlopeConnectionSnap(pt.x, pt.y);
+    if (!snap) {
+      setBuildMaskHint(true, 'Slope must start at a lift station or on an existing slope');
+    } else {
+      setBuildMaskHint(false);
+    }
+  } else if (!state.buildBlocked) {
+    // If we're not blocked by mask and not in the slope-start case, hide the hint.
+    setBuildMaskHint(false);
+  }
+
   // Build-mode previews / ghosts
   if (state.buildArmed && state.mode === 'lift') {
     state.mouseImage = { x: pt.x, y: pt.y };
@@ -1234,20 +1346,32 @@ export function onCanvasMouseUp() {
   if (!state.penDrawing || !state.image) return;
   state.penDrawing = false;
   if (state.slopePoints.length >= 2) {
-    let pts = state.slopePoints;
-    pts = resamplePolylineByPathLength(pts, PEN_SMOOTH_SAMPLES);
+    // Validate endpoints BEFORE smoothing, so we don't mutate the path if it can't be placed.
+    const rawFirst = state.slopePoints[0];
+    const rawLast = state.slopePoints[state.slopePoints.length - 1];
+    const rawPrev = state.slopePoints[state.slopePoints.length - 2];
+    const snapStart = rawFirst ? findSlopeConnectionSnap(rawFirst.x, rawFirst.y) : null;
+    const snapEndAny = rawLast ? findSlopeConnectionSnap(rawLast.x, rawLast.y) : null;
+    const snapEnd = (rawLast && rawPrev) ? findSlopeConnectionSnapForEnd(rawLast.x, rawLast.y, rawPrev.y) : snapEndAny;
+    if (!snapStart || !snapEnd) {
+      if (rawPrev && snapEndAny && snapEndAny.y < rawPrev.y) {
+        window.alert('Slope end point must not be higher than the previous point.');
+      } else {
+      window.alert('Slope must start/end at a lift station or on an existing slope.');
+      }
+      state.slopePoints = [];
+      document.getElementById('cancelSlopeBtn').classList.add('hidden');
+      refresh();
+      return;
+    }
+
+    let pts = resamplePolylineByPathLength(state.slopePoints, PEN_SMOOTH_SAMPLES);
     const first = pts[0];
     const last = pts[pts.length - 1];
-    const snapStart = findSnapPoint(first.x, first.y);
-    const snapEnd = findSnapPoint(last.x, last.y);
-    if (snapStart) {
-      first.x = snapStart.x;
-      first.y = snapStart.y;
-    }
-    if (snapEnd) {
-      last.x = snapEnd.x;
-      last.y = snapEnd.y;
-    }
+    first.x = snapStart.x;
+    first.y = snapStart.y;
+    last.x = snapEnd.x;
+    last.y = snapEnd.y;
     if (!isSlopeNonUphill(pts)) {
       window.alert('Slope cannot go uphill. Each point must be same height or lower than the previous one.');
       state.slopePoints = [];
@@ -1415,6 +1539,16 @@ export function onCanvasClick(e) {
     if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
   } else if (state.mode === 'slope' && state.slopeDrawMode === 'points') {
     const pt = canvasToImage(x, y);
+    if (state.slopePoints.length === 0) {
+      const snap = findSlopeConnectionSnap(pt.x, pt.y);
+      if (!snap) {
+        refresh();
+        return;
+      }
+      pt.x = snap.x;
+      pt.y = snap.y;
+    }
+    state.slopePlaceError = null;
     const last = state.slopePoints[state.slopePoints.length - 1];
     if (last && pt.y < last.y) {
       refresh();
@@ -1434,16 +1568,21 @@ export function onCanvasDblClick(e) {
   if (state.slopePoints.length >= 2) {
     const first = state.slopePoints[0];
     const last = state.slopePoints[state.slopePoints.length - 1];
-    const snapStart = findSnapPoint(first.x, first.y);
-    const snapEnd = findSnapPoint(last.x, last.y);
-    if (snapStart) {
-      first.x = snapStart.x;
-      first.y = snapStart.y;
+    const prev = state.slopePoints[state.slopePoints.length - 2];
+    const snapStart = findSlopeConnectionSnap(first.x, first.y);
+    const snapEndAny = findSlopeConnectionSnap(last.x, last.y);
+    const snapEnd = prev ? findSlopeConnectionSnapForEnd(last.x, last.y, prev.y) : snapEndAny;
+    if (!snapStart || !snapEnd) {
+      if (prev && snapEndAny && snapEndAny.y < prev.y) state.slopePlaceError = 'Slope end point must not be higher than the previous point.';
+      else state.slopePlaceError = 'Slope must start/end at a lift station or on an existing slope.';
+      refresh();
+      return;
     }
-    if (snapEnd) {
-      last.x = snapEnd.x;
-      last.y = snapEnd.y;
-    }
+    state.slopePlaceError = null;
+    first.x = snapStart.x;
+    first.y = snapStart.y;
+    last.x = snapEnd.x;
+    last.y = snapEnd.y;
     if (!isSlopeNonUphill(state.slopePoints)) {
       window.alert('Slope cannot go uphill. Each point must be same height or lower than the previous one.');
       refresh();
