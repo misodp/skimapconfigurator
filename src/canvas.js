@@ -22,7 +22,9 @@ import { isBuildableAtImagePoint } from './build-mask';
 
 const PEN_SMOOTH_SAMPLES = 24;
 const PEN_MIN_DIST_SQ = 16;
-const SNAP_DIST_SQ = 50 * 50;
+// Snapping distance to connect to nearby lifts/slopes (image px).
+// Keep this fairly small so connections look intentional and clean.
+const SNAP_DIST_SQ = 28 * 28;
 /** Image-space distance threshold (px) to consider cursor over a lift line. */
 const LIFT_HOVER_THRESHOLD_SQ = 24 * 24;
 /** Image-space radius (px) to consider cursor over a groomer icon. */
@@ -213,18 +215,57 @@ export function findSnapPoint(px, py) {
   });
 
   state.slopes.forEach((slope) => {
-    for (let i = 0; i < slope.points.length - 1; i++) {
-      const aN = slope.points[i];
-      const bN = slope.points[i + 1];
-      const a = fromNormalized(aN.x, aN.y);
-      const b = fromNormalized(bN.x, bN.y);
-      const p = closestPointOnSegment(px, py, a.x, a.y, b.x, b.y);
+    const pts = slope.points.map((p) => fromNormalized(p.x, p.y));
+    if (pts.length < 2) return;
+
+    const considerSegment = (ax, ay, bx, by) => {
+      const p = closestPointOnSegment(px, py, ax, ay, bx, by);
       const dx = px - p.x;
       const dy = py - p.y;
       const d2 = dx * dx + dy * dy;
       if (d2 < bestDistSq) {
         bestDistSq = d2;
         best = p;
+      }
+    };
+
+    // If the slope is just a straight segment, snap directly.
+    if (pts.length === 2) {
+      considerSegment(pts[0].x, pts[0].y, pts[1].x, pts[1].y);
+      return;
+    }
+
+    // Slopes are rendered as smoothed beziers (see drawSmoothCurve). Snap against a sampled
+    // approximation of that curve so snapping matches the visible line.
+    const STEPS = 10;
+    for (let i = 0; i < pts.length - 1; i++) {
+      const p1 = pts[i];
+      const p0 = (i === pts.length - 2) ? p1 : pts[Math.max(0, i - 1)];
+      const p2 = pts[i + 1];
+      const p3 = pts[Math.min(pts.length - 1, i + 2)];
+      const cp1x = p1.x + (p2.x - p0.x) / 6;
+      const cp1y = p1.y + (p2.y - p0.y) / 6;
+      const cp2x = p2.x - (p3.x - p1.x) / 6;
+      const cp2y = p2.y - (p3.y - p1.y) / 6;
+
+      let prevX = p1.x;
+      let prevY = p1.y;
+      for (let s = 1; s <= STEPS; s++) {
+        const t = s / STEPS;
+        const mt = 1 - t;
+        const x =
+          mt * mt * mt * p1.x +
+          3 * mt * mt * t * cp1x +
+          3 * mt * t * t * cp2x +
+          t * t * t * p2.x;
+        const y =
+          mt * mt * mt * p1.y +
+          3 * mt * mt * t * cp1y +
+          3 * mt * t * t * cp2y +
+          t * t * t * p2.y;
+        considerSegment(prevX, prevY, x, y);
+        prevX = x;
+        prevY = y;
       }
     }
   });

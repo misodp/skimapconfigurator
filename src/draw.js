@@ -75,8 +75,11 @@ function drawSmoothCurve(ctx, scaleX, scaleY, points, color, lineWidth = SLOPE_L
     ctx.lineTo(sx(points[1].x), sy(points[1].y));
   } else {
     for (let i = 0; i < points.length - 1; i++) {
-      const p0 = points[Math.max(0, i - 1)];
+      // Clamp the final segment's "look-back" to reduce overshoot at the end.
+      // This helps when snapping an endpoint onto another slope line: the curve approaches
+      // the snapped point cleanly instead of creating a tiny stub.
       const p1 = points[i];
+      const p0 = (i === points.length - 2) ? p1 : points[Math.max(0, i - 1)];
       const p2 = points[i + 1];
       const p3 = points[Math.min(points.length - 1, i + 2)];
       const cp1x = p1.x + (p2.x - p0.x) / 6;
