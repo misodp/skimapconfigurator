@@ -114,15 +114,15 @@
     },
     {
       "id": "agamatic_duo",
-      "brand": "Agamatic",
-      "name": "Duo-Sette Fixed",
-      "base_cost": 15000,
-      "cost_per_meter": 60,
+      "brand": "Pomagalski",
+      "name": "Delta Double-67",
+      "base_cost": 15500,
+      "cost_per_meter": 65,
       "max_length": 2000,
       "base_operating_cost": 55,
       "op_cost_per_meter": 0.25,
       "speed": 2.5,
-      "capacity": 950,
+      "capacity": 1200,
       "reliability": 0.92,
       "unlock_year": 1968,
       "reputation_boost": 1.15,
@@ -130,7 +130,7 @@
       "pros_cons": [
         "+ Največji doseg",
         "+ Velik dvig ugleda",
-        "- Draga elektrika"
+        "- Visoka poraba energije"
       ],
       "frame": 3
     }
@@ -209,7 +209,7 @@
       "grooming_capacity": 10,
       "reliability": 0.82,
       "speed": 12,
-      "description": "Majhen in okreten. Idealen za ozke gozdne poti in začetniške proge."
+      "description": "Majhen in okreten. Proge ureja z vleko težke deske za glajenje snega. Ikona začetkov mehanizacije."
     },
     {
       "id": "ratrac_s",
@@ -222,7 +222,7 @@
       "grooming_capacity": 18,
       "reliability": 0.88,
       "speed": 15,
-      "description": "Švicarska vzdržljivost. Odličen za delo v ekstremnem mrazu in srednje zahtevne terene."
+      "description": "Švicarska vzdržljivost. Zmogljivejši stroj, ki uporablja težke valjarje za zbijanje snežne podlage."
     },
     {
       "id": "pb_145",
@@ -235,7 +235,7 @@
       "grooming_capacity": 32,
       "reliability": 0.94,
       "speed": 18,
-      "description": "Stroj, ki je spremenil vse. Prva izbira za hitro urejanje glavnih smučišč."
+      "description": "Stroj, ki je spremenil vse. Prvi, ki omogoča uporabo vibracijske deske za ustvarjanje popolne smučarske površine."
     },
     {
       "id": "pb_170",

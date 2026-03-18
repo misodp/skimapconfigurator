@@ -172,8 +172,19 @@ function drawSlopes(ctx, scaleX, scaleY) {
     const useDiamond = currentSt?.symbol === 'Diamond';
     const lengthM = getSlopePathLengthM(state.slopePoints);
     const totalCost = getSlopeCost(lengthM);
+    const last = state.slopePoints[state.slopePoints.length - 1];
+    const hoverUphill =
+      state.buildArmed &&
+      state.mode === 'slope' &&
+      state.slopeDrawMode === 'points' &&
+      state.mouseImage &&
+      last &&
+      state.mouseImage.y < last.y;
+    const uphill =
+      hoverUphill ||
+      state.slopePoints.some((p, i) => i > 0 && p && state.slopePoints[i - 1] && p.y < state.slopePoints[i - 1].y);
     const insufficientFunds = state.budget < totalCost;
-    const c = insufficientFunds ? 'rgba(180, 0, 0, 0.95)' : getDiffColor(state.difficulty);
+    const c = (insufficientFunds || uphill) ? 'rgba(180, 0, 0, 0.95)' : getDiffColor(state.difficulty);
     drawSmoothCurve(ctx, scaleX, scaleY, state.slopePoints, c, SLOPE_LINE_WIDTH, useDotted);
     if (state.slopeDrawMode === 'points') {
       state.slopePoints.forEach((p, i) => {
@@ -184,18 +195,19 @@ function drawSlopes(ctx, scaleX, scaleY) {
       });
     }
     if (state.slopePoints.length >= 2) {
-      const last = state.slopePoints[state.slopePoints.length - 1];
       const offsetX = 0.005 * state.imageWidth;
       const offsetY = 0.005 * state.imageHeight;
       const labelX = (last.x + offsetX) * scaleX;
       let labelY = (last.y + offsetY) * scaleY;
       const lineHeight = 14;
       ctx.save();
-      ctx.fillStyle = insufficientFunds ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
+      ctx.fillStyle = (insufficientFunds || uphill) ? 'rgba(120, 0, 0, 0.95)' : 'rgba(0, 0, 0, 0.75)';
       ctx.font = 'bold 12px "DM Sans", system-ui, sans-serif';
       ctx.textAlign = 'left';
       ctx.textBaseline = 'top';
-      const msg = insufficientFunds ? `Not enough budget (need ${formatCurrency(totalCost)})` : `${lengthM} m`;
+      let msg = `${lengthM} m`;
+      if (uphill) msg = 'Slope cannot go uphill';
+      else if (insufficientFunds) msg = `Not enough budget (need ${formatCurrency(totalCost)})`;
       ctx.fillText(msg, labelX, labelY);
       labelY += lineHeight;
       ctx.fillText(`${formatNumber(totalCost)} $`, labelX, labelY);
@@ -259,8 +271,9 @@ function drawLifts(ctx, scaleX, scaleY) {
       const costPerMeter = (liftDef && liftDef.cost_per_meter != null) ? Number(liftDef.cost_per_meter) : 0;
       const totalCost = Math.round(baseCost + lengthM * costPerMeter);
       const tooLong = lengthM > maxLength;
+      const notHigher = my >= a.y;
       const insufficientFunds = state.budget < totalCost;
-      const cannotBuild = tooLong || insufficientFunds;
+      const cannotBuild = tooLong || notHigher || insufficientFunds;
       ctx.save();
       ctx.strokeStyle = cannotBuild ? 'rgba(180, 0, 0, 0.9)' : 'rgba(26, 26, 26, 0.5)';
       ctx.lineWidth = LIFT_LINE_WIDTH;
@@ -282,6 +295,7 @@ function drawLifts(ctx, scaleX, scaleY) {
       ctx.textBaseline = 'top';
       let msg = `${lengthM} m`;
       if (tooLong) msg = `Too long for this lift (max ${maxLength} m)`;
+      else if (notHigher) msg = 'Top station must be higher';
       else if (insufficientFunds) msg = `Not enough budget (need ${formatCurrency(totalCost)})`;
       ctx.fillText(msg, labelX, labelY);
       ctx.fillText(`${formatNumber(totalCost)} $`, labelX, labelY + lineHeight);
@@ -425,6 +439,32 @@ export function draw() {
     ctx.save();
     ctx.globalAlpha = 0.6;
     const blocked = !!state.buildBlocked;
+    const mx = state.mouseImage.x;
+    const my = state.mouseImage.y;
+    const liftCannotPlace = (() => {
+      if (state.mode !== 'lift') return false;
+      if (!state.liftBottom || state.liftTop) return false;
+      const a = state.liftBottom;
+      const lengthM = getLiftLengthM(a, { x: mx, y: my });
+      const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
+      const liftDef = state.liftTypes.find((l) => l.id === typeId);
+      const maxLength = (liftDef && liftDef.max_length != null) ? liftDef.max_length : Infinity;
+      const baseCost = (liftDef && liftDef.base_cost != null) ? Number(liftDef.base_cost) : 0;
+      const costPerMeter = (liftDef && liftDef.cost_per_meter != null) ? Number(liftDef.cost_per_meter) : 0;
+      const totalCost = Math.round(baseCost + lengthM * costPerMeter);
+      const tooLong = lengthM > maxLength;
+      const notHigher = my >= a.y;
+      const insufficientFunds = state.budget < totalCost;
+      return tooLong || notHigher || insufficientFunds;
+    })();
+    const slopeCannotPlace = (() => {
+      if (state.mode !== 'slope') return false;
+      if (state.slopeDrawMode !== 'points') return false;
+      const last = state.slopePoints[state.slopePoints.length - 1];
+      if (!last) return false;
+      return my < last.y;
+    })();
+    const ghostCannotPlace = blocked || liftCannotPlace || slopeCannotPlace;
     if (state.mode === 'groomer') {
       const img = state.groomerImages[state.groomerType];
       if (img && img.complete && img.naturalWidth) {
@@ -433,7 +473,7 @@ export function draw() {
         const dx = gx - w / 2;
         const dy = gy - h / 2;
         ctx.drawImage(img, dx, dy, w, h);
-        if (blocked) {
+        if (ghostCannotPlace) {
           ctx.save();
           ctx.globalCompositeOperation = 'source-atop';
           ctx.fillStyle = 'rgba(255, 0, 0, 0.55)';
@@ -443,14 +483,14 @@ export function draw() {
       }
     } else if (state.mode === 'slope') {
       const slopeType = getSlopeType(state.difficulty);
-      const color = blocked ? '#ff2d2d' : getDiffColor(slopeType);
+      const color = ghostCannotPlace ? '#ff2d2d' : getDiffColor(slopeType);
       const r = 10;
       ctx.beginPath();
       ctx.arc(gx, gy, r, 0, Math.PI * 2);
       ctx.fillStyle = color || '#ffffff';
       ctx.fill();
       ctx.lineWidth = 2;
-      ctx.strokeStyle = blocked ? '#7f1d1d' : '#000';
+      ctx.strokeStyle = ghostCannotPlace ? '#7f1d1d' : '#000';
       ctx.stroke();
     } else if (state.mode === 'lift') {
       const sprite = state.spriteSheet;
@@ -480,7 +520,7 @@ export function draw() {
           iconSize,
           iconSize
         );
-        if (blocked) {
+        if (ghostCannotPlace) {
           ctx.save();
           ctx.globalCompositeOperation = 'source-atop';
           ctx.fillStyle = 'rgba(255, 0, 0, 0.55)';
@@ -491,10 +531,10 @@ export function draw() {
         const r = 10;
         ctx.beginPath();
         ctx.arc(gx, gy, r, 0, Math.PI * 2);
-        ctx.fillStyle = blocked ? '#ff2d2d' : '#111827';
+        ctx.fillStyle = ghostCannotPlace ? '#ff2d2d' : '#111827';
         ctx.fill();
         ctx.lineWidth = 2;
-        ctx.strokeStyle = blocked ? '#7f1d1d' : '#e5e7eb';
+        ctx.strokeStyle = ghostCannotPlace ? '#7f1d1d' : '#e5e7eb';
         ctx.stroke();
         ctx.fillStyle = '#e5e7eb';
         ctx.font = 'bold 10px "DM Sans", system-ui, sans-serif';

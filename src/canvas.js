@@ -30,6 +30,16 @@ const GROOMER_HOVER_RADIUS_SQ = 35 * 35;
 /** Image-space distance squared (px) to consider cursor over a slope line. */
 const SLOPE_HOVER_THRESHOLD_SQ = 24 * 24;
 
+function isSlopeNonUphill(points) {
+  for (let i = 1; i < points.length; i++) {
+    const prev = points[i - 1];
+    const cur = points[i];
+    if (!prev || !cur) continue;
+    if (cur.y < prev.y) return false;
+  }
+  return true;
+}
+
 function setBuildMaskHintPosition(e) {
   const hint = document.getElementById('buildMaskHint');
   if (!hint) return;
@@ -1128,6 +1138,7 @@ export function onCanvasMouseMove(e) {
       const dx = pt.x - last.x;
       const dy = pt.y - last.y;
       if (dx * dx + dy * dy < PEN_MIN_DIST_SQ) return;
+      if (pt.y < last.y) return;
     }
     state.slopePoints.push({ x: pt.x, y: pt.y });
     refresh();
@@ -1195,6 +1206,13 @@ export function onCanvasMouseUp() {
     if (snapEnd) {
       last.x = snapEnd.x;
       last.y = snapEnd.y;
+    }
+    if (!isSlopeNonUphill(pts)) {
+      window.alert('Slope cannot go uphill. Each point must be same height or lower than the previous one.');
+      state.slopePoints = [];
+      document.getElementById('cancelSlopeBtn').classList.add('hidden');
+      refresh();
+      return;
     }
     const lengthM = getSlopePathLengthM(pts);
     const totalCost = getSlopeCost(lengthM);
@@ -1281,6 +1299,11 @@ export function onCanvasClick(e) {
       state.mouseImage = null;
       updateCancelLiftButton();
     } else if (!state.liftTop) {
+      if (pt.y >= state.liftBottom.y) {
+        window.alert('Top station must be higher than bottom station.');
+        refresh();
+        return;
+      }
       const lengthM = getLiftLengthM(state.liftBottom, pt);
       const typeId = state.liftType || (state.liftTypes[0] && state.liftTypes[0].id);
       const liftDef = state.liftTypes.find((l) => l.id === typeId);
@@ -1351,6 +1374,11 @@ export function onCanvasClick(e) {
     if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
   } else if (state.mode === 'slope' && state.slopeDrawMode === 'points') {
     const pt = canvasToImage(x, y);
+    const last = state.slopePoints[state.slopePoints.length - 1];
+    if (last && pt.y < last.y) {
+      refresh();
+      return;
+    }
     state.slopePoints.push({ x: pt.x, y: pt.y });
     state.slopeDrawing = true;
     document.getElementById('cancelSlopeBtn').classList.remove('hidden');
@@ -1374,6 +1402,11 @@ export function onCanvasDblClick(e) {
     if (snapEnd) {
       last.x = snapEnd.x;
       last.y = snapEnd.y;
+    }
+    if (!isSlopeNonUphill(state.slopePoints)) {
+      window.alert('Slope cannot go uphill. Each point must be same height or lower than the previous one.');
+      refresh();
+      return;
     }
     const lengthM = getSlopePathLengthM(state.slopePoints);
     const totalCost = getSlopeCost(lengthM);
