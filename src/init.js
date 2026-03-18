@@ -28,6 +28,7 @@ import { initNewsFeed } from './news-feed.js';
 import { updateTicketPriceDisplay } from './config.js';
 import { initBuildMask } from './build-mask';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
+const musicModules = import.meta.glob('../assets/music/*.{mp3,ogg,wav,m4a}', { eager: true, import: 'default' });
 
 function setMode(mode) {
   state.mode = mode;
@@ -435,8 +436,153 @@ export function init() {
   updateDateDisplay();
   startSimulation();
 
+  initMusic();
   initSplash();
   initGameOver();
+}
+
+function initMusic() {
+  const btn = document.getElementById('soundToggleBtn');
+  const tracks = Object.values(musicModules).filter(Boolean);
+  if (!tracks.length) return;
+
+  const audio = new Audio();
+  audio.preload = 'auto';
+  const targetVolume = 0.55;
+  audio.volume = 0;
+  // Start muted so autoplay is allowed; we fade in on splash dissolve.
+  audio.muted = true;
+
+  const storageKey = 'musicMuted';
+  const saved = window.localStorage ? window.localStorage.getItem(storageKey) : null;
+  let muted = saved === '1';
+  let fading = false;
+  let autoplayBlocked = false;
+  /** @type {string[]} */
+  let queue = [];
+
+  function shuffle(arr) {
+    for (let i = arr.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+  }
+
+  function refillQueue() {
+    queue = shuffle([...tracks]);
+  }
+
+  function nextTrack() {
+    if (!queue.length) refillQueue();
+    return queue.shift();
+  }
+
+  function playNext() {
+    const next = nextTrack();
+    if (!next) return;
+    audio.src = next;
+    audio.currentTime = 0;
+    void audio.play().then(() => {
+      autoplayBlocked = false;
+    }).catch(() => {
+      autoplayBlocked = true;
+    });
+  }
+
+  function updateButton() {
+    if (!btn) return;
+    btn.classList.toggle('is-muted', muted);
+    btn.setAttribute('aria-pressed', String(!muted));
+    btn.title = muted ? 'Sound off' : 'Sound on';
+  }
+
+  function easeInOut(t) {
+    return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+  }
+
+  function fadeTo(volume, durationMs) {
+    if (!Number.isFinite(durationMs) || durationMs <= 0) {
+      audio.volume = Math.max(0, Math.min(1, volume));
+      return;
+    }
+    const from = audio.volume;
+    const to = Math.max(0, Math.min(1, volume));
+    const start = performance.now();
+    fading = true;
+    const tick = (now) => {
+      const t = Math.min(1, (now - start) / durationMs);
+      const e = easeInOut(t);
+      audio.volume = from + (to - from) * e;
+      if (t < 1) requestAnimationFrame(tick);
+      else fading = false;
+    };
+    requestAnimationFrame(tick);
+  }
+
+  function setMuted(next) {
+    muted = !!next;
+    if (window.localStorage) window.localStorage.setItem(storageKey, muted ? '1' : '0');
+    updateButton();
+    if (muted) {
+      fadeTo(0, 250);
+      window.setTimeout(() => {
+        audio.muted = true;
+      }, 260);
+    } else {
+      audio.muted = false;
+      void audio.play().catch(() => {});
+      fadeTo(targetVolume, 600);
+    }
+  }
+
+  updateButton();
+  refillQueue();
+  playNext();
+  audio.addEventListener('ended', () => playNext());
+
+  // Fade in as splash dissolves (only if not muted by user).
+  window.addEventListener('splashdissolve', () => {
+    if (muted) return;
+    audio.muted = false;
+    void audio.play().then(() => {
+      autoplayBlocked = false;
+    }).catch(() => {
+      autoplayBlocked = true;
+    });
+    fadeTo(targetVolume, 1200);
+  });
+
+  // Fade out on game over.
+  window.addEventListener('gameover', () => {
+    fadeTo(0, 900);
+    window.setTimeout(() => {
+      audio.muted = true;
+    }, 920);
+  });
+
+  if (btn) {
+    btn.addEventListener('click', () => setMuted(!muted));
+  }
+
+  // If autoplay is blocked (even while muted), retry once on first user gesture.
+  const unlock = () => {
+    if (!autoplayBlocked) return;
+    void audio.play().then(() => {
+      autoplayBlocked = false;
+    }).catch(() => {});
+  };
+  window.addEventListener('pointerdown', unlock, { once: true });
+  window.addEventListener('keydown', unlock, { once: true });
+
+  // Apply initial preference: keep muted until splash dissolves.
+  if (muted) {
+    audio.muted = true;
+    audio.volume = 0;
+  }
+
+  // Expose for debugging or future UI
+  window.__bgm = audio;
 }
 
 const SPLASH_DURATION_MS = 2800;
@@ -476,6 +622,7 @@ function initSplash() {
   function dissolve() {
     overlay.classList.add('splash-dissolve');
     overlay.setAttribute('aria-hidden', 'true');
+    window.dispatchEvent(new Event('splashdissolve'));
     overlay.addEventListener('transitionend', () => {
       overlay.style.visibility = 'hidden';
     }, { once: true });

@@ -6,6 +6,7 @@ import { state } from './state';
 import { fromNormalized, getLiftLengthM } from './geometry.js';
 import { WEATHER_VISITOR_MODIFIERS, SEASON_VISITOR_MODIFIERS, getSeason } from './weather-simulation';
 import { getEffectiveSatisfaction } from './achievements.js';
+import { getEffectiveLiftCapacity } from './maintenance_simulator';
 
 /**
  * Total daily operating cost for all built lifts and groomers.
@@ -92,7 +93,7 @@ export function getDailyVisitors() {
     priceVisitorFactor = Math.max(0, 1 - penalty);
   }
   const randomFactor = 1 + (Math.random() * 2 - 1) * VISITOR_RANDOMNESS; // 0.9 to 1.1
-  return Math.round(
+  const raw = Math.round(
     potentialVisitors *
     snowFactor *
     seasonFactor *
@@ -101,6 +102,11 @@ export function getDailyVisitors() {
     priceVisitorFactor *
     randomFactor
   );
+
+  const effectiveLiftCap = getEffectiveLiftCapacity();
+  const maxVisitors = Math.max(0, Math.round(2 * effectiveLiftCap));
+  if (maxVisitors <= 0) return 0;
+  return Math.max(0, Math.min(raw, maxVisitors));
 }
 
 /** Current ticket price in ski dollars per visitor per day. */

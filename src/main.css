@@ -715,6 +715,18 @@ body {
   font-size: 0.75rem;
 }
 
+.status-bar-sound-btn {
+  margin-left: 0.35rem;
+}
+
+.status-bar-sound-btn.is-muted .sound-wave {
+  display: none;
+}
+
+.status-bar-sound-btn:not(.is-muted) .sound-mute {
+  display: none;
+}
+
 /* Combined left sidebar with Invest / Statistics tabs */
 .sidebar {
   grid-area: sidebar;

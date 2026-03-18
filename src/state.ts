@@ -140,7 +140,7 @@ export const state: AppState = {
   slopes: [],
   cottages: [],
   groomers: [],
-  budget: 15_000,
+  budget: 20_000,
   liftBottom: null,
   liftTop: null,
   mouseImage: null,

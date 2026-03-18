@@ -62,6 +62,34 @@ function getLiftReputationMultiplier() {
   return mult;
 }
 
+/**
+ * Overall slope reputation multiplier from all built slopes.
+ * Applies ONLY to slopes longer than 1500 m (map length in meters).
+ * For each qualifying slope, multiply by its slope type's reputation_boost.
+ */
+function getSlopeReputationMultiplier() {
+  if (!state.slopes.length || !state.slopeTypes.length) return 1;
+
+  let mult = 1;
+  for (const slope of state.slopes) {
+    const st = getSlopeType(slope);
+    if (!st) continue;
+    const baseBoostRaw = /** @type {number | undefined} */ (st.reputation_boost);
+    if (baseBoostRaw == null) continue;
+    const baseBoost = Number(baseBoostRaw);
+    if (!Number.isFinite(baseBoost) || baseBoost <= 0) continue;
+
+    if (!slope.points || slope.points.length < 2) continue;
+    const imagePoints = slope.points.map((p) => fromNormalized(p.x, p.y));
+    const lengthM = getSlopePathLengthM(imagePoints);
+    if (!Number.isFinite(lengthM) || lengthM <= 1500) continue;
+
+    mult *= baseBoost;
+  }
+
+  return mult;
+}
+
 function hasTwoSeaterLift() {
   return state.lifts.some((lift) => TWO_SEATER_LIFT_IDS.includes(lift.type));
 }
@@ -136,7 +164,8 @@ export function getEffectiveSatisfaction() {
   const cap = getSatisfactionCap();
   const base = (raw / 100) * cap;
   const liftMultiplier = getLiftReputationMultiplier();
-  return base * liftMultiplier;
+  const slopeMultiplier = getSlopeReputationMultiplier();
+  return base * liftMultiplier * slopeMultiplier;
 }
 
 /**
