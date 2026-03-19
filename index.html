@@ -8,13 +8,17 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/assets/index-nvIyM8Yt.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-C-PDA6z3.css">
+  <script type="module" crossorigin src="/assets/index-BDiLJ0Ps.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-Docjp-cY.css">
 </head>
 
 <body>
   <div id="splashOverlay" class="splash-overlay" aria-label="Loading" aria-hidden="false">
     <img src="/assets/Splash-lvgU8Mcb.webp" alt="" class="splash-image" />
+    <div class="splash-actions" aria-label="Start options">
+      <button type="button" id="startTutorialBtn" class="splash-action-btn splash-action-btn-primary">Start Tutorial</button>
+      <button type="button" id="newGameBtn" class="splash-action-btn">New Game</button>
+    </div>
     <div class="splash-credits">
       <span class="splash-version" aria-hidden="true">v2.0.0</span>
       <span class="splash-build-date" aria-hidden="true"></span>
@@ -23,6 +27,9 @@
   </div>
   <div id="gameOverOverlay" class="game-over-overlay" aria-label="Game over" aria-hidden="true">
     <img src="/assets/GameOverSplash-Bg0OMbFd.webp" alt="Game Over" class="game-over-image" />
+  </div>
+  <div id="introVideoOverlay" class="intro-video-overlay" aria-label="Intro video" aria-hidden="true" hidden>
+    <video id="introVideo" class="intro-video" playsinline preload="auto"></video>
   </div>
   <div id="buildMaskHint" class="build-mask-hint hidden" aria-hidden="true">Cannot build here</div>
   <div id="app">
