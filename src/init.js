@@ -28,7 +28,16 @@ import { initNewsFeed } from './news-feed.js';
 import { updateTicketPriceDisplay } from './config.js';
 import { initBuildMask } from './build-mask';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
+import introVideoUrl from '../assets/video/Intro.mov';
 const musicModules = import.meta.glob('../assets/music/*.{mp3,ogg,wav,m4a}', { eager: true, import: 'default' });
+
+let simulationStarted = false;
+
+function ensureSimulationStarted() {
+  if (simulationStarted) return;
+  simulationStarted = true;
+  startSimulation();
+}
 
 function setMode(mode) {
   state.mode = mode;
@@ -434,9 +443,9 @@ export function init() {
   });
 
   updateDateDisplay();
-  startSimulation();
 
   initMusic();
+  initIntroVideo();
   initSplash();
   initGameOver();
 }
@@ -585,7 +594,74 @@ function initMusic() {
   window.__bgm = audio;
 }
 
-const SPLASH_DURATION_MS = 2800;
+function initIntroVideo() {
+  const overlay = /** @type {HTMLDivElement | null} */ (document.getElementById('introVideoOverlay'));
+  const video = /** @type {HTMLVideoElement | null} */ (document.getElementById('introVideo'));
+  if (!overlay || !video || !introVideoUrl) {
+    // If intro video is unavailable, still allow "Start Tutorial" path to continue.
+    window.addEventListener('splashdissolve', (evt) => {
+      const playIntro = !(evt && evt.detail && evt.detail.playIntro === false);
+      if (playIntro) ensureSimulationStarted();
+    });
+    return;
+  }
+
+  let finished = false;
+  let autoplayBlocked = false;
+  video.src = introVideoUrl;
+
+  function finishIntro() {
+    if (finished) return;
+    finished = true;
+    video.pause();
+    ensureSimulationStarted();
+    overlay.classList.add('intro-video-dissolve');
+    overlay.setAttribute('aria-hidden', 'true');
+    overlay.addEventListener('transitionend', () => {
+      overlay.classList.remove('visible', 'intro-video-dissolve');
+      overlay.hidden = true;
+    }, { once: true });
+  }
+
+  function tryPlayIntro() {
+    if (finished) return;
+    void video.play().then(() => {
+      autoplayBlocked = false;
+    }).catch(() => {
+      // Keep overlay visible; retry on next user gesture.
+      autoplayBlocked = true;
+    });
+  }
+
+  window.addEventListener('splashdissolve', (evt) => {
+    const playIntro = !(evt && evt.detail && evt.detail.playIntro === false);
+    if (!playIntro) return;
+    finished = false;
+    autoplayBlocked = false;
+    video.currentTime = 0;
+    overlay.hidden = false;
+    overlay.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => overlay.classList.add('visible'));
+    tryPlayIntro();
+  });
+
+  video.addEventListener('ended', finishIntro, { once: true });
+
+  const unlockIntroPlayback = () => {
+    if (autoplayBlocked) tryPlayIntro();
+  };
+  window.addEventListener('pointerdown', unlockIntroPlayback);
+  window.addEventListener('keydown', unlockIntroPlayback);
+
+  overlay.addEventListener('click', () => {
+    // If autoplay was blocked, first click should start playback, not skip.
+    if (autoplayBlocked) {
+      tryPlayIntro();
+      return;
+    }
+    finishIntro();
+  });
+}
 
 function initGameOver() {
   window.addEventListener('gameover', () => {
@@ -619,15 +695,30 @@ function initSplash() {
       : 'Built: ' + (raw || '');
   }
 
-  function dissolve() {
+  function dissolve(playIntro = true) {
     overlay.classList.add('splash-dissolve');
     overlay.setAttribute('aria-hidden', 'true');
-    window.dispatchEvent(new Event('splashdissolve'));
+    window.dispatchEvent(new CustomEvent('splashdissolve', { detail: { playIntro } }));
     overlay.addEventListener('transitionend', () => {
       overlay.style.visibility = 'hidden';
+      if (!playIntro) ensureSimulationStarted();
     }, { once: true });
   }
 
-  overlay.addEventListener('click', () => dissolve(), { once: true });
-  setTimeout(dissolve, SPLASH_DURATION_MS);
+  const startTutorialBtn = document.getElementById('startTutorialBtn');
+  const newGameBtn = document.getElementById('newGameBtn');
+  if (startTutorialBtn) {
+    startTutorialBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dissolve(true);
+    }, { once: true });
+  }
+  if (newGameBtn) {
+    newGameBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dissolve(false);
+    }, { once: true });
+  }
 }

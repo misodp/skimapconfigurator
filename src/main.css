@@ -54,7 +54,7 @@ body {
   justify-content: center;
   background: linear-gradient(120deg, #ffddba, #ffffff);
   transition: opacity 0.9s ease-out;
-  cursor: pointer;
+  cursor: default;
 }
 
 .splash-overlay.splash-dissolve {
@@ -71,6 +71,50 @@ body {
   object-fit: contain;
   pointer-events: none;
   display: block;
+}
+
+.splash-overlay .splash-actions {
+  position: absolute;
+  left: 50%;
+  bottom: 42px;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0.6rem;
+  z-index: 1;
+}
+
+.splash-overlay .splash-action-btn {
+  margin: 0;
+  padding: 0.48rem 0.9rem;
+  border: 1px solid rgba(38, 35, 52, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--text);
+  font: 600 0.82rem "DM Sans", system-ui, sans-serif;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
+}
+
+.splash-overlay .splash-action-btn:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(38, 35, 52, 0.55);
+  transform: translateY(-1px);
+}
+
+.splash-overlay .splash-action-btn:active {
+  transform: translateY(0);
+}
+
+.splash-overlay .splash-action-btn.splash-action-btn-primary {
+  background: rgba(38, 35, 52, 0.9);
+  border-color: rgba(38, 35, 52, 0.9);
+  color: #fff;
+}
+
+.splash-overlay .splash-action-btn.splash-action-btn-primary:hover {
+  background: rgba(38, 35, 52, 1);
+  border-color: rgba(38, 35, 52, 1);
 }
 
 .splash-overlay .splash-credits {
@@ -118,6 +162,37 @@ body {
   max-height: 100vh;
   object-fit: contain;
   pointer-events: none;
+  display: block;
+}
+
+.intro-video-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.35s ease;
+}
+
+.intro-video-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.intro-video-overlay.intro-video-dissolve {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.intro-video {
+  width: 100vw;
+  height: 100vh;
+  object-fit: contain;
+  background: #000;
   display: block;
 }
 

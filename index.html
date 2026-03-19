@@ -14,6 +14,10 @@
 <body>
   <div id="splashOverlay" class="splash-overlay" aria-label="Loading" aria-hidden="false">
     <img src="/assets/images/Splash.webp" alt="" class="splash-image" />
+    <div class="splash-actions" aria-label="Start options">
+      <button type="button" id="startTutorialBtn" class="splash-action-btn splash-action-btn-primary">Start Tutorial</button>
+      <button type="button" id="newGameBtn" class="splash-action-btn">New Game</button>
+    </div>
     <div class="splash-credits">
       <span class="splash-version" aria-hidden="true">v2.0.0</span>
       <span class="splash-build-date" aria-hidden="true"></span>
@@ -22,6 +26,9 @@
   </div>
   <div id="gameOverOverlay" class="game-over-overlay" aria-label="Game over" aria-hidden="true">
     <img src="/assets/images/GameOverSplash.webp" alt="Game Over" class="game-over-image" />
+  </div>
+  <div id="introVideoOverlay" class="intro-video-overlay" aria-label="Intro video" aria-hidden="true" hidden>
+    <video id="introVideo" class="intro-video" playsinline preload="auto"></video>
   </div>
   <div id="buildMaskHint" class="build-mask-hint hidden" aria-hidden="true">Cannot build here</div>
   <div id="app">
