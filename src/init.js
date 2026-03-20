@@ -759,8 +759,7 @@ function initMusic() {
   playNext();
   audio.addEventListener('ended', () => playNext());
 
-  // Fade in as splash dissolves (only if not muted by user).
-  window.addEventListener('splashdissolve', () => {
+  function startBgmFadeIn() {
     if (muted) return;
     audio.muted = false;
     void audio.play().then(() => {
@@ -769,6 +768,18 @@ function initMusic() {
       autoplayBlocked = true;
     });
     fadeTo(targetVolume, 1200);
+  }
+
+  // New Game path: no intro video, start music right after splash closes.
+  window.addEventListener('splashdissolve', (evt) => {
+    const playIntro = !(evt && evt.detail && evt.detail.playIntro === false);
+    if (playIntro) return;
+    startBgmFadeIn();
+  });
+
+  // Tutorial path: start music only after intro video finishes.
+  window.addEventListener('introfinished', () => {
+    startBgmFadeIn();
   });
 
   // Fade out on game over.
@@ -811,7 +822,10 @@ function initIntroVideo() {
     // If intro video is unavailable, still allow "Start Tutorial" path to continue.
     window.addEventListener('splashdissolve', (evt) => {
       const playIntro = !(evt && evt.detail && evt.detail.playIntro === false);
-      if (playIntro) ensureSimulationStarted();
+      if (playIntro) {
+        ensureSimulationStarted();
+        window.dispatchEvent(new CustomEvent('introfinished'));
+      }
     });
     return;
   }
@@ -852,6 +866,7 @@ function initIntroVideo() {
       }
     }
     ensureSimulationStarted();
+    window.dispatchEvent(new CustomEvent('introfinished'));
     overlay.classList.add('intro-video-dissolve');
     overlay.setAttribute('aria-hidden', 'true');
     overlay.addEventListener('transitionend', () => {
