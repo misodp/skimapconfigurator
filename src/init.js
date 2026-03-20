@@ -597,6 +597,7 @@ function initMusic() {
 function initIntroVideo() {
   const overlay = /** @type {HTMLDivElement | null} */ (document.getElementById('introVideoOverlay'));
   const video = /** @type {HTMLVideoElement | null} */ (document.getElementById('introVideo'));
+  const toggleBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('introVideoToggleBtn'));
   if (!overlay || !video || !introVideoUrl) {
     // If intro video is unavailable, still allow "Start Tutorial" path to continue.
     window.addEventListener('splashdissolve', (evt) => {
@@ -609,6 +610,13 @@ function initIntroVideo() {
   let finished = false;
   let autoplayBlocked = false;
   video.src = introVideoUrl;
+
+  function updateToggleButton() {
+    if (!toggleBtn) return;
+    const paused = video.paused;
+    toggleBtn.textContent = paused ? 'Play' : 'Pause';
+    toggleBtn.setAttribute('aria-label', paused ? 'Play intro video' : 'Pause intro video');
+  }
 
   function finishIntro() {
     if (finished) return;
@@ -627,9 +635,11 @@ function initIntroVideo() {
     if (finished) return;
     void video.play().then(() => {
       autoplayBlocked = false;
+      updateToggleButton();
     }).catch(() => {
       // Keep overlay visible; retry on next user gesture.
       autoplayBlocked = true;
+      updateToggleButton();
     });
   }
 
@@ -642,6 +652,7 @@ function initIntroVideo() {
     overlay.hidden = false;
     overlay.setAttribute('aria-hidden', 'false');
     requestAnimationFrame(() => overlay.classList.add('visible'));
+    updateToggleButton();
     tryPlayIntro();
   });
 
@@ -661,6 +672,23 @@ function initIntroVideo() {
     }
     finishIntro();
   });
+
+  if (toggleBtn) {
+    toggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (video.paused) {
+        tryPlayIntro();
+      } else {
+        video.pause();
+        autoplayBlocked = false;
+        updateToggleButton();
+      }
+    });
+  }
+
+  video.addEventListener('play', updateToggleButton);
+  video.addEventListener('pause', updateToggleButton);
 }
 
 function initGameOver() {

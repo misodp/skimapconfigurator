@@ -196,6 +196,33 @@ body {
   display: block;
 }
 
+.intro-video-toggle-btn {
+  position: absolute;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 0.42rem 0.85rem;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.68);
+  color: #fff;
+  font: 600 0.78rem "DM Sans", system-ui, sans-serif;
+  cursor: pointer;
+  z-index: 1;
+  transition: background 0.12s ease, transform 0.12s ease, border-color 0.12s ease;
+}
+
+.intro-video-toggle-btn:hover {
+  background: rgba(15, 23, 42, 0.86);
+  border-color: rgba(255, 255, 255, 0.7);
+  transform: translateX(-50%) translateY(-1px);
+}
+
+.intro-video-toggle-btn:active {
+  transform: translateX(-50%) translateY(0);
+}
+
 .build-mask-hint {
   position: fixed;
   z-index: 10000;
