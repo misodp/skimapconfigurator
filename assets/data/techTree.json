@@ -209,10 +209,10 @@
       "name": "Old Chuffy'",
       "image": "OldChuffy",
       "unlock_year": 1959,
-      "purchase_cost": 5000,
-      "base_operating_cost": 50,
+      "purchase_cost": 6000,
+      "base_operating_cost": 70,
       "grooming_capacity": 5,
-      "reliability": 0.75,
+      "reliability": 0.70,
       "speed": 5,
       "description": "Doma predelan traktor za enostavno urejanje krajše steze."
     },

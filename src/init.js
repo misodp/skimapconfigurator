@@ -88,9 +88,17 @@ function showTutorialDialogue(message, imageUrl = tutorialCharacterUrl, closable
       };
       closeBtn.addEventListener('click', tutorialDialogueCloseHandler);
     }
+    // Ensure first render animates too: paint once in non-visible state, then transition in.
+    el.classList.remove('visible');
     el.hidden = false;
     el.setAttribute('aria-hidden', 'false');
-    requestAnimationFrame(() => el.classList.add('visible'));
+    // Force style flush so the browser commits the pre-animation state.
+    void el.offsetWidth;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        el.classList.add('visible');
+      });
+    });
   };
 
   // If a dialog is already visible, animate out first, then swap content and animate in.
@@ -828,14 +836,17 @@ function initIntroVideo() {
       tutorialActive = true;
       try {
         applyImportedConfig(tutorialConfig);
-        showTutorialDialogue(
-          "Hans was a great guy and he loved his mountain. He wasn't best organized though...that lift is a mess. Lets see if I can get it fixed.",
-          tutorialCharacterUrl,
-          false,
-          null,
-          "Click on the lift to get it repaired.",
-        );
-        startRepairInstructionStep();
+        window.setTimeout(() => {
+          if (!tutorialActive) return;
+          showTutorialDialogue(
+            "Hans was a great guy and he loved his mountain. He wasn't best organized though...that lift is a mess. Lets see if I can get it fixed.",
+            tutorialCharacterUrl,
+            false,
+            null,
+            "Click on the lift to get it repaired.",
+          );
+          startRepairInstructionStep();
+        }, 1000);
       } catch (err) {
         window.alert('Failed to load tutorial map: ' + (err?.message || String(err)));
       }

@@ -285,8 +285,6 @@ body {
   width: 84px;
   height: 84px;
   object-fit: contain;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.75);
   flex-shrink: 0;
 }
 
