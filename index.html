@@ -4,19 +4,20 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Retro Ski Resort Tycoon</title>
+  <title>Summit '67</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/assets/index-BDiLJ0Ps.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-Docjp-cY.css">
+  <script type="module" crossorigin src="/assets/index-D3ThQEtc.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-6V9Zgw8O.css">
 </head>
 
 <body>
   <div id="splashOverlay" class="splash-overlay" aria-label="Loading" aria-hidden="false">
     <img src="/assets/Splash-lvgU8Mcb.webp" alt="" class="splash-image" />
     <div class="splash-actions" aria-label="Start options">
-      <button type="button" id="startTutorialBtn" class="splash-action-btn splash-action-btn-primary">Start Tutorial</button>
+      <button type="button" id="startTutorialBtn" class="splash-action-btn splash-action-btn-primary">Start
+        Tutorial</button>
       <button type="button" id="newGameBtn" class="splash-action-btn">New Game</button>
     </div>
     <div class="splash-credits">
@@ -30,12 +31,25 @@
   </div>
   <div id="introVideoOverlay" class="intro-video-overlay" aria-label="Intro video" aria-hidden="true" hidden>
     <video id="introVideo" class="intro-video" playsinline preload="auto"></video>
+    <button type="button" id="introVideoToggleBtn" class="intro-video-toggle-btn" aria-label="Pause intro video">
+      Pause
+    </button>
   </div>
   <div id="buildMaskHint" class="build-mask-hint hidden" aria-hidden="true">Cannot build here</div>
+  <div id="tutorialDialogue" class="tutorial-dialogue" aria-live="polite" aria-hidden="true" hidden>
+    <div class="tutorial-dialogue-card">
+      <img id="tutorialCharacterImage" class="tutorial-dialogue-character" alt="Tutorial character" />
+      <div class="tutorial-dialogue-content">
+        <p id="tutorialDialogueText" class="tutorial-dialogue-text"></p>
+        <p id="tutorialDialogueHint" class="tutorial-dialogue-hint" hidden aria-hidden="true"></p>
+        <button type="button" id="tutorialDialogueCloseBtn" class="tutorial-dialogue-close-btn">Got it</button>
+      </div>
+    </div>
+  </div>
   <div id="app">
     <header class="header">
-      <div class="header-brand" aria-label="Retro Ski Resort Tycoon">
-        <img src="/assets/Title_a-C4j8OoIt.webp" alt="Retro Ski Resort Tycoon" class="header-title-banner" />
+      <div class="header-brand" aria-label="Summit '67">
+        <img src="/assets/Title_a-C4j8OoIt.webp" alt="Summit '67" class="header-title-banner" />
       </div>
       <div class="header-news" id="newsFeedContainer" aria-live="polite" aria-label="Resort news">
         <div class="header-news-skier" id="newsSkierSprite" aria-hidden="true"></div>
@@ -373,8 +387,8 @@
           <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
           <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
           <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
-          <button type="button" id="soundToggleBtn" class="status-bar-icon-btn status-bar-sound-btn" title="Toggle sound"
-            aria-label="Toggle sound" aria-pressed="true">
+          <button type="button" id="soundToggleBtn" class="status-bar-icon-btn status-bar-sound-btn"
+            title="Toggle sound" aria-label="Toggle sound" aria-pressed="true">
             <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M11 5L6 9H2v6h4l5 4V5z" />
