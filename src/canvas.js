@@ -569,7 +569,7 @@ function getGroomerPopupHtml(groomer, groomerType, groomerIndex) {
   if (!isBroken) {
     serviceRow += '<button type="button" class="groomer-popup-sell-btn" data-groomer-index="' + String(groomerIndex) + '" title="Sell groomer (value scales with health)">Sell: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(Math.max(0, saleValue))) + '</button>';
   } else {
-    serviceRow += '<button type="button" class="groomer-popup-scrap-btn" data-groomer-index="' + String(groomerIndex) + '" title="Scrap broken groomer (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> −' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
+    serviceRow += '<button type="button" class="groomer-popup-scrap-btn" data-groomer-index="' + String(groomerIndex) + '" title="Scrap broken groomer (pay 10% disposal)">Scrap: <img src="' + escapeHtml(skidollarg2mUrl) + '" alt="" class="lift-popup-skidollar-icon" /> ' + escapeHtml(formatCurrency(scrapCost)) + '</button>';
   }
   serviceRow += '</div>';
   const capacity = (groomerType && groomerType.grooming_capacity != null) ? Number(groomerType.grooming_capacity) : 0;
@@ -1371,7 +1371,7 @@ export function onCanvasMouseUp() {
       if (rawPrev && snapEndAny && snapEndAny.y < rawPrev.y - SLOPE_UPHILL_TOLERANCE_PX) {
         window.alert('Slope end point must not be higher than the previous point.');
       } else {
-      window.alert('Slope must start/end at a lift station or on an existing slope.');
+        window.alert('Slope must start/end at a lift station or on an existing slope.');
       }
       state.slopePoints = [];
       document.getElementById('cancelSlopeBtn').classList.add('hidden');

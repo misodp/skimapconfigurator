@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "currentDate": {
+    "year": 1960,
+    "month": 1,
+    "day": 1
+  },
+  "currentWeather": "snowy",
+  "dailyVisitors": 0,
+  "dailySales": 0,
+  "dailyCost": 90,
+  "dailyProfit": -90,
+  "snowDepth": 349,
+  "dailySnowfall": 12,
+  "dailyTempLow": -16,
+  "dailyTempHigh": 6,
+  "simulationSpeed": 3,
+  "liftExperience": 100,
+  "slopeCrowdExperience": 100,
+  "slopeQualityExperience": 54.5,
+  "satisfaction": 20,
+  "mode": "groomer",
+  "liftType": "poma_b",
+  "difficulty": "blue_easy",
+  "groomerType": "tractor",
+  "slopeDrawMode": "points",
+  "resortOpen": false,
+  "imageWidth": 1920,
+  "imageHeight": 1080,
+  "lifts": [
+    {
+      "bottomStation": {
+        "x": 0.4783723612958214,
+        "y": 0.9481686608495741
+      },
+      "topStation": {
+        "x": 0.4407526873819793,
+        "y": 0.8445059825487226
+      },
+      "type": "poma_b",
+      "name": "Poma",
+      "health": 0,
+      "installedDate": {
+        "year": 1958,
+        "month": 12,
+        "day": 6
+      },
+      "broken": true,
+      "repairCost": 2550
+    }
+  ],
+  "slopes": [
+    {
+      "slopeTypeId": "blue_easy",
+      "points": [
+        {
+          "x": 0.4407526873819793,
+          "y": 0.8445059825487226
+        },
+        {
+          "x": 0.4106569482509056,
+          "y": 0.891321385652333
+        },
+        {
+          "x": 0.4313477689035187,
+          "y": 0.899681279063692
+        },
+        {
+          "x": 0.4247643259685964,
+          "y": 0.9214170019332254
+        },
+        {
+          "x": 0.44545514662120955,
+          "y": 0.924760959297769
+        },
+        {
+          "x": 0.44357416292551743,
+          "y": 0.941480746120487
+        },
+        {
+          "x": 0.47743186944797533,
+          "y": 0.9448247034850306
+        },
+        {
+          "x": 0.4783723612958214,
+          "y": 0.9481686608495741
+        }
+      ]
+    }
+  ],
+  "cottages": [],
+  "groomers": [
+    {
+      "position": {
+        "x": 0.5065871167312029,
+        "y": 0.9565285542609331
+      },
+      "groomerTypeId": "tractor",
+      "name": "Old Chuffy",
+      "health": 0,
+      "installedDate": {
+        "year": 1952,
+        "month": 11,
+        "day": 3
+      },
+      "broken": true,
+      "repairCost": 1167
+    }
+  ],
+  "budget": 68370
+}

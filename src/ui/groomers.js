@@ -3,35 +3,62 @@
  */
 
 import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
-import groomerPrinothP15 from '../../assets/images/groomers/Prinoth_p15.webp';
-import groomerRatracS from '../../assets/images/groomers/Ratrac_s.webp';
-import groomerPb145 from '../../assets/images/groomers/PistenBully_145.webp';
-import groomerPb170 from '../../assets/images/groomers/PistenBully_170.webp';
-import groomerPrinothP15t from '../../assets/images/groomers/Prinoth_p15t.webp';
-import groomerRatracSt from '../../assets/images/groomers/Ratrac_st.webp';
-import groomerPb145t from '../../assets/images/groomers/PistenBully_145t.webp';
-import groomerPb170t from '../../assets/images/groomers/PistenBully_170t.webp';
 import { state } from '../state';
 import { escapeHtml, formatNumber, formatCurrency } from '../utils.js';
 
-const GROOMER_IMAGE_URLS = {
-  'Prinoth_p15': groomerPrinothP15,
-  'Ratrac_s': groomerRatracS,
-  'PistenBully_145': groomerPb145,
-  'PistenBully_170': groomerPb170,
-};
+const groomerModules = import.meta.glob('../../assets/images/groomers/*.webp', { eager: true, import: 'default' });
 
-/** Transparent-background images for drawing groomers on the map (keyed by same name as GROOMER_IMAGE_URLS). */
-const GROOMER_IMAGE_URLS_MAP = {
-  'Prinoth_p15': groomerPrinothP15t,
-  'Ratrac_s': groomerRatracSt,
-  'PistenBully_145': groomerPb145t,
-  'PistenBully_170': groomerPb170t,
-};
+/** @type {Record<string, string>} */
+const allByBase = {};
+Object.entries(groomerModules).forEach(([path, url]) => {
+  const m = path.match(/\/([^/]+)\.webp$/);
+  if (!m || !m[1]) return;
+  allByBase[m[1]] = url;
+});
+
+/** @type {Record<string, string>} */
+const GROOMER_IMAGE_URLS = {};
+/** @type {Record<string, string>} */
+const GROOMER_IMAGE_URLS_MAP = {};
+
+// Split to normal vs transparent variants.
+Object.entries(allByBase).forEach(([base, url]) => {
+  // Transparent convention in this project is suffix "t" before extension:
+  // e.g. Prinoth_p15t.webp, OldChuffyt.webp.
+  if (base.endsWith('t') && allByBase[base.slice(0, -1)]) {
+    GROOMER_IMAGE_URLS_MAP[base.slice(0, -1)] = url;
+  } else {
+    GROOMER_IMAGE_URLS[base] = url;
+  }
+});
+
+function normalizeImageKey(key) {
+  return String(key || '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, '');
+}
+
+function findClosestImageKey(rawKey, sourceMap) {
+  if (!rawKey) return '';
+  if (sourceMap[rawKey]) return rawKey;
+  const targetNorm = normalizeImageKey(rawKey);
+  if (!targetNorm) return '';
+  const exactNorm = Object.keys(sourceMap).find((k) => normalizeImageKey(k) === targetNorm);
+  if (exactNorm) return exactNorm;
+  // Small typo tolerance (e.g. OldCuffy vs OldChuffy).
+  const near = Object.keys(sourceMap).find((k) => {
+    const n = normalizeImageKey(k);
+    return n.includes(targetNorm) || targetNorm.includes(n);
+  });
+  return near || '';
+}
 
 export function getGroomerImageUrl(groomer) {
   const filename = groomer && groomer.image;
-  return (filename && GROOMER_IMAGE_URLS[filename]) || '';
+  if (!filename) return '';
+  const key = findClosestImageKey(filename, GROOMER_IMAGE_URLS);
+  return (key && GROOMER_IMAGE_URLS[key]) || '';
 }
 
 export function setGroomerType(id) {
@@ -114,10 +141,28 @@ export function renderGroomerTypeDropdown(opts) {
 }
 
 export function getGroomerImageUrls() {
-  return { ...GROOMER_IMAGE_URLS };
+  /** @type {Record<string, string>} */
+  const resolved = {};
+  state.groomerTypes.forEach((g) => {
+    const requested = g?.image;
+    if (!requested) return;
+    const key = findClosestImageKey(requested, GROOMER_IMAGE_URLS);
+    if (key && GROOMER_IMAGE_URLS[key]) resolved[requested] = GROOMER_IMAGE_URLS[key];
+  });
+  return { ...GROOMER_IMAGE_URLS, ...resolved };
 }
 
 /** Returns URLs for groomer images with transparent background (for drawing on the map). Falls back to original if no transparent version. */
 export function getGroomerMapImageUrls() {
-  return { ...GROOMER_IMAGE_URLS_MAP };
+  /** @type {Record<string, string>} */
+  const resolved = {};
+  state.groomerTypes.forEach((g) => {
+    const requested = g?.image;
+    if (!requested) return;
+    const mapKey = findClosestImageKey(requested, GROOMER_IMAGE_URLS_MAP);
+    const baseKey = findClosestImageKey(requested, GROOMER_IMAGE_URLS);
+    if (mapKey && GROOMER_IMAGE_URLS_MAP[mapKey]) resolved[requested] = GROOMER_IMAGE_URLS_MAP[mapKey];
+    else if (baseKey && GROOMER_IMAGE_URLS[baseKey]) resolved[requested] = GROOMER_IMAGE_URLS[baseKey];
+  });
+  return { ...GROOMER_IMAGE_URLS_MAP, ...resolved };
 }

@@ -204,6 +204,19 @@
   ],
   "groomers": [
     {
+      "id": "tractor",
+      "brand": "Hans's Tractor",
+      "name": "Old Chuffy'",
+      "image": "OldChuffy",
+      "unlock_year": 1959,
+      "purchase_cost": 5000,
+      "base_operating_cost": 50,
+      "grooming_capacity": 5,
+      "reliability": 0.75,
+      "speed": 5,
+      "description": "Doma predelan traktor za enostavno urejanje krajše steze."
+    },
+    {
       "id": "prinoth_p15",
       "brand": "Prinoth",
       "name": "P-15 'The Beetle'",

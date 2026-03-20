@@ -437,91 +437,100 @@ export function onConfigImported(e) {
   reader.onload = () => {
     try {
       const config = JSON.parse(reader.result);
-
-      // Map/layout
-      if (config.imageWidth != null) state.imageWidth = config.imageWidth;
-      if (config.imageHeight != null) state.imageHeight = config.imageHeight;
-      const defaultTypeId = state.liftTypes[0] ? state.liftTypes[0].id : null;
-      state.lifts = (config.lifts ?? []).map((l, i) => ({
-        bottomStation: l.bottomStation,
-        topStation: l.topStation,
-        type: (state.liftTypes.some((lt) => lt.id === l.type) && l.type) ? l.type : defaultTypeId,
-        name: l.name || `Lift ${i + 1}`,
-        health: Math.max(0, Math.min(100, l.health ?? 100)),
-        installedDate: l.installedDate && typeof l.installedDate.year === 'number'
-          ? { year: l.installedDate.year, month: l.installedDate.month ?? 1, day: l.installedDate.day ?? 1 }
-          : { ...state.currentDate },
-        broken: l.broken === true ? true : undefined,
-        repairCost: typeof l.repairCost === 'number' && l.repairCost > 0 ? l.repairCost : undefined,
-      }));
-      state.slopes = (config.slopes ?? []).map((s) => {
-        const points = s.points ?? [];
-        let slopeTypeId = s.slopeTypeId;
-        if (!slopeTypeId && s.difficulty != null && state.slopeTypes.length) {
-          const key = String(s.difficulty).toLowerCase();
-          const st = state.slopeTypes.find((t) => t.difficulty.toLowerCase() === key || t.id === s.difficulty);
-          slopeTypeId = st?.id ?? null;
-        }
-        return { slopeTypeId: slopeTypeId ?? state.slopeTypes[0]?.id, points };
-      });
-      state.cottages = (config.cottages ?? []).map((c, i) => ({
-        position: c.position,
-        name: c.name || `Cottage ${i + 1}`,
-      }));
-      const defaultGroomerId = state.groomerTypes[0] ? state.groomerTypes[0].id : null;
-      state.groomers = (config.groomers ?? []).map((g, i) => ({
-        position: g.position,
-        groomerTypeId: (state.groomerTypes.some((t) => t.id === g.groomerTypeId) && g.groomerTypeId) ? g.groomerTypeId : defaultGroomerId,
-        name: g.name || `Groomer ${i + 1}`,
-        health: Math.max(0, Math.min(100, g.health ?? 100)),
-        installedDate: g.installedDate && typeof g.installedDate.year === 'number'
-          ? { year: g.installedDate.year, month: g.installedDate.month ?? 1, day: g.installedDate.day ?? 1 }
-          : { ...state.currentDate },
-        broken: g.broken === true ? true : undefined,
-        repairCost: typeof g.repairCost === 'number' && g.repairCost > 0 ? g.repairCost : undefined,
-      }));
-
-      // Full game state (only when present, for backward compatibility with old saves)
-      if (config.budget != null) state.budget = config.budget;
-      if (config.currentDate && typeof config.currentDate.year === 'number') {
-        state.currentDate = {
-          year: config.currentDate.year,
-          month: config.currentDate.month ?? state.currentDate.month,
-          day: config.currentDate.day ?? state.currentDate.day,
-        };
-      }
-      const validWeather = ['sunny', 'snowy', 'blizzard', 'cloudy', 'icy'];
-      if (validWeather.includes(config.currentWeather)) state.currentWeather = config.currentWeather;
-      if (config.dailyVisitors != null) state.dailyVisitors = config.dailyVisitors;
-      if (config.dailySales != null) state.dailySales = config.dailySales;
-      if (config.dailyCost != null) state.dailyCost = config.dailyCost;
-      if (config.dailyProfit != null) state.dailyProfit = config.dailyProfit;
-      if (config.snowDepth != null) state.snowDepth = config.snowDepth;
-      if (config.dailySnowfall != null) state.dailySnowfall = config.dailySnowfall;
-      if (config.dailyTempLow != null) state.dailyTempLow = config.dailyTempLow;
-      if (config.dailyTempHigh != null) state.dailyTempHigh = config.dailyTempHigh;
-      if (config.simulationSpeed != null) state.simulationSpeed = config.simulationSpeed;
-      if (config.liftExperience != null) state.liftExperience = Math.max(0, Math.min(100, Number(config.liftExperience)));
-      else if (config.liftExperienceBucket != null) state.liftExperience = config.liftExperienceBucket === 'good' ? 80 : config.liftExperienceBucket === 'medium' ? 50 : 20;
-      if (config.slopeCrowdExperience != null) state.slopeCrowdExperience = Math.max(0, Math.min(100, Number(config.slopeCrowdExperience)));
-      else if (config.slopeCrowdBucket != null) state.slopeCrowdExperience = config.slopeCrowdBucket === 'good' ? 80 : config.slopeCrowdBucket === 'medium' ? 50 : 20;
-      if (config.slopeQualityExperience != null) state.slopeQualityExperience = Math.max(0, Math.min(100, Number(config.slopeQualityExperience)));
-      else if (config.slopeQualityBucket != null) state.slopeQualityExperience = config.slopeQualityBucket === 'good' ? 80 : config.slopeQualityBucket === 'medium' ? 50 : 20;
-      if (config.satisfaction != null) state.satisfaction = Math.max(0, Math.min(100, config.satisfaction));
-      const validMode = ['lift', 'slope', 'cottage', 'groomer'];
-      if (validMode.includes(config.mode)) state.mode = config.mode;
-      if (config.liftType != null) state.liftType = config.liftType;
-      if (config.difficulty != null) state.difficulty = config.difficulty;
-      if (config.groomerType != null) state.groomerType = config.groomerType;
-      if (config.slopeDrawMode === 'points' || config.slopeDrawMode === 'pen') state.slopeDrawMode = config.slopeDrawMode;
-      if (config.resortOpen !== undefined) state.resortOpen = Boolean(config.resortOpen);
-
-      refresh();
-      if (typeof window.onGameStateRestored === 'function') window.onGameStateRestored();
+      applyImportedConfig(config);
     } catch (err) {
       alert('Invalid config file: ' + err.message);
     }
   };
   reader.readAsText(file);
   e.target.value = '';
+}
+
+/**
+ * Apply parsed save/tutorial JSON into current state.
+ * Reused by file import and built-in tutorial loading.
+ */
+export function applyImportedConfig(config, opts = {}) {
+  const pauseTicker = opts.pauseTicker !== false;
+  // Map/layout
+  if (config.imageWidth != null) state.imageWidth = config.imageWidth;
+  if (config.imageHeight != null) state.imageHeight = config.imageHeight;
+  const defaultTypeId = state.liftTypes[0] ? state.liftTypes[0].id : null;
+  state.lifts = (config.lifts ?? []).map((l, i) => ({
+    bottomStation: l.bottomStation,
+    topStation: l.topStation,
+    type: (state.liftTypes.some((lt) => lt.id === l.type) && l.type) ? l.type : defaultTypeId,
+    name: l.name || `Lift ${i + 1}`,
+    health: Math.max(0, Math.min(100, l.health ?? 100)),
+    installedDate: l.installedDate && typeof l.installedDate.year === 'number'
+      ? { year: l.installedDate.year, month: l.installedDate.month ?? 1, day: l.installedDate.day ?? 1 }
+      : { ...state.currentDate },
+    broken: l.broken === true ? true : undefined,
+    repairCost: typeof l.repairCost === 'number' && l.repairCost > 0 ? l.repairCost : undefined,
+  }));
+  state.slopes = (config.slopes ?? []).map((s) => {
+    const points = s.points ?? [];
+    let slopeTypeId = s.slopeTypeId;
+    if (!slopeTypeId && s.difficulty != null && state.slopeTypes.length) {
+      const key = String(s.difficulty).toLowerCase();
+      const st = state.slopeTypes.find((t) => t.difficulty.toLowerCase() === key || t.id === s.difficulty);
+      slopeTypeId = st?.id ?? null;
+    }
+    return { slopeTypeId: slopeTypeId ?? state.slopeTypes[0]?.id, points };
+  });
+  state.cottages = (config.cottages ?? []).map((c, i) => ({
+    position: c.position,
+    name: c.name || `Cottage ${i + 1}`,
+  }));
+  const defaultGroomerId = state.groomerTypes[0] ? state.groomerTypes[0].id : null;
+  state.groomers = (config.groomers ?? []).map((g, i) => ({
+    position: g.position,
+    groomerTypeId: (state.groomerTypes.some((t) => t.id === g.groomerTypeId) && g.groomerTypeId) ? g.groomerTypeId : defaultGroomerId,
+    name: g.name || `Groomer ${i + 1}`,
+    health: Math.max(0, Math.min(100, g.health ?? 100)),
+    installedDate: g.installedDate && typeof g.installedDate.year === 'number'
+      ? { year: g.installedDate.year, month: g.installedDate.month ?? 1, day: g.installedDate.day ?? 1 }
+      : { ...state.currentDate },
+    broken: g.broken === true ? true : undefined,
+    repairCost: typeof g.repairCost === 'number' && g.repairCost > 0 ? g.repairCost : undefined,
+  }));
+
+  // Full game state (only when present, for backward compatibility with old saves)
+  if (config.budget != null) state.budget = config.budget;
+  if (config.currentDate && typeof config.currentDate.year === 'number') {
+    state.currentDate = {
+      year: config.currentDate.year,
+      month: config.currentDate.month ?? state.currentDate.month,
+      day: config.currentDate.day ?? state.currentDate.day,
+    };
+  }
+  const validWeather = ['sunny', 'snowy', 'blizzard', 'cloudy', 'icy'];
+  if (validWeather.includes(config.currentWeather)) state.currentWeather = config.currentWeather;
+  if (config.dailyVisitors != null) state.dailyVisitors = config.dailyVisitors;
+  if (config.dailySales != null) state.dailySales = config.dailySales;
+  if (config.dailyCost != null) state.dailyCost = config.dailyCost;
+  if (config.dailyProfit != null) state.dailyProfit = config.dailyProfit;
+  if (config.snowDepth != null) state.snowDepth = config.snowDepth;
+  if (config.dailySnowfall != null) state.dailySnowfall = config.dailySnowfall;
+  if (config.dailyTempLow != null) state.dailyTempLow = config.dailyTempLow;
+  if (config.dailyTempHigh != null) state.dailyTempHigh = config.dailyTempHigh;
+  if (config.simulationSpeed != null) state.simulationSpeed = config.simulationSpeed;
+  if (config.liftExperience != null) state.liftExperience = Math.max(0, Math.min(100, Number(config.liftExperience)));
+  else if (config.liftExperienceBucket != null) state.liftExperience = config.liftExperienceBucket === 'good' ? 80 : config.liftExperienceBucket === 'medium' ? 50 : 20;
+  if (config.slopeCrowdExperience != null) state.slopeCrowdExperience = Math.max(0, Math.min(100, Number(config.slopeCrowdExperience)));
+  else if (config.slopeCrowdBucket != null) state.slopeCrowdExperience = config.slopeCrowdBucket === 'good' ? 80 : config.slopeCrowdBucket === 'medium' ? 50 : 20;
+  if (config.slopeQualityExperience != null) state.slopeQualityExperience = Math.max(0, Math.min(100, Number(config.slopeQualityExperience)));
+  else if (config.slopeQualityBucket != null) state.slopeQualityExperience = config.slopeQualityBucket === 'good' ? 80 : config.slopeQualityBucket === 'medium' ? 50 : 20;
+  if (config.satisfaction != null) state.satisfaction = Math.max(0, Math.min(100, config.satisfaction));
+  const validMode = ['lift', 'slope', 'cottage', 'groomer'];
+  if (validMode.includes(config.mode)) state.mode = config.mode;
+  if (config.liftType != null) state.liftType = config.liftType;
+  if (config.difficulty != null) state.difficulty = config.difficulty;
+  if (config.groomerType != null) state.groomerType = config.groomerType;
+  if (config.slopeDrawMode === 'points' || config.slopeDrawMode === 'pen') state.slopeDrawMode = config.slopeDrawMode;
+  if (config.resortOpen !== undefined) state.resortOpen = Boolean(config.resortOpen);
+  if (pauseTicker) state.simulationSpeed = 0;
+
+  refresh();
+  if (typeof window.onGameStateRestored === 'function') window.onGameStateRestored();
 }

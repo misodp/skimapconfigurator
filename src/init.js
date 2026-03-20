@@ -15,7 +15,7 @@ import badgeAlpineUrl from '../assets/images/badges/high_alpine_at.webp';
 import badgeFreerideUrl from '../assets/images/badges/freeride_paradise_at.webp';
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
-import { refresh, updateBudgetDisplay, exportConfig, onConfigImported } from './config.js';
+import { refresh, updateBudgetDisplay, exportConfig, onConfigImported, applyImportedConfig } from './config.js';
 import { startSimulation, stopSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
 import { updateWeatherDisplay } from './weather-icon';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup, hideGroomerHoverPopup, hideSlopeHoverPopup, handleLiftPopupClick, handleGroomerPopupClick, handleSlopePopupClick } from './canvas.js';
@@ -29,9 +29,203 @@ import { updateTicketPriceDisplay } from './config.js';
 import { initBuildMask } from './build-mask';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
 import introVideoUrl from '../assets/video/Intro.mov';
+import tutorialConfig from '../assets/data/tutorial.json';
+import tutorialCharacterUrl from '../assets/images/skiers/Character.png';
+import tutorialHansUrl from '../assets/images/skiers/Hans.png';
 const musicModules = import.meta.glob('../assets/music/*.{mp3,ogg,wav,m4a}', { eager: true, import: 'default' });
 
 let simulationStarted = false;
+let tutorialActive = false;
+let tutorialRepairWatcherTimer = null;
+let tutorialGroomerWatcherTimer = null;
+let tutorialGreenSlopeWatcherTimer = null;
+let tutorialOpenResortWatcherTimer = null;
+let tutorialDialogueCloseHandler = null;
+
+function hideTutorialDialogue() {
+  const el = /** @type {HTMLDivElement | null} */ (document.getElementById('tutorialDialogue'));
+  if (!el) return;
+  el.classList.remove('visible');
+  el.setAttribute('aria-hidden', 'true');
+  const onDone = () => {
+    el.hidden = true;
+    el.removeEventListener('transitionend', onDone);
+  };
+  el.addEventListener('transitionend', onDone);
+  // Fallback in case transitionend doesn't fire.
+  window.setTimeout(() => {
+    if (!el.classList.contains('visible')) el.hidden = true;
+  }, 320);
+}
+
+function showTutorialDialogue(message, imageUrl = tutorialCharacterUrl, closable = true, onClose = null, hint = '') {
+  const el = /** @type {HTMLDivElement | null} */ (document.getElementById('tutorialDialogue'));
+  const textEl = /** @type {HTMLParagraphElement | null} */ (document.getElementById('tutorialDialogueText'));
+  const hintEl = /** @type {HTMLParagraphElement | null} */ (document.getElementById('tutorialDialogueHint'));
+  const imageEl = /** @type {HTMLImageElement | null} */ (document.getElementById('tutorialCharacterImage'));
+  const closeBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('tutorialDialogueCloseBtn'));
+  if (!el || !textEl || !imageEl) return;
+  const applyContentAndAnimateIn = () => {
+    const isHans = imageUrl === tutorialHansUrl;
+    el.classList.toggle('is-hans', isHans);
+    textEl.textContent = message;
+    imageEl.src = imageUrl || tutorialCharacterUrl;
+    if (hintEl) {
+      const showHint = !!(hint && String(hint).trim());
+      hintEl.textContent = showHint ? String(hint) : '';
+      hintEl.hidden = !showHint;
+      hintEl.setAttribute('aria-hidden', showHint ? 'false' : 'true');
+    }
+    if (closeBtn) {
+      closeBtn.hidden = !closable;
+      closeBtn.setAttribute('aria-hidden', closable ? 'false' : 'true');
+      if (tutorialDialogueCloseHandler) {
+        closeBtn.removeEventListener('click', tutorialDialogueCloseHandler);
+      }
+      tutorialDialogueCloseHandler = () => {
+        if (onClose) onClose();
+        else hideTutorialDialogue();
+      };
+      closeBtn.addEventListener('click', tutorialDialogueCloseHandler);
+    }
+    el.hidden = false;
+    el.setAttribute('aria-hidden', 'false');
+    requestAnimationFrame(() => el.classList.add('visible'));
+  };
+
+  // If a dialog is already visible, animate out first, then swap content and animate in.
+  if (!el.hidden && el.classList.contains('visible')) {
+    const switchToken = String(Date.now() + Math.random());
+    el.dataset.dialogSwitchToken = switchToken;
+    el.classList.remove('visible');
+    const onOutDone = () => {
+      if (el.dataset.dialogSwitchToken !== switchToken) return;
+      applyContentAndAnimateIn();
+    };
+    el.addEventListener('transitionend', onOutDone, { once: true });
+    // Fallback in case transitionend doesn't fire.
+    window.setTimeout(() => {
+      if (el.dataset.dialogSwitchToken === switchToken && !el.classList.contains('visible')) {
+        applyContentAndAnimateIn();
+      }
+    }, 320);
+    return;
+  }
+
+  applyContentAndAnimateIn();
+}
+
+function startRepairInstructionStep() {
+  // Keep the first Character dialog visible while waiting for lift repair.
+  if (tutorialRepairWatcherTimer != null) window.clearInterval(tutorialRepairWatcherTimer);
+  tutorialRepairWatcherTimer = window.setInterval(() => {
+    if (!tutorialActive) return;
+    const hasBrokenLift = state.lifts.some((l) => l.broken === true);
+    if (!hasBrokenLift) {
+      window.clearInterval(tutorialRepairWatcherTimer);
+      tutorialRepairWatcherTimer = null;
+      showTutorialDialogue(
+        "Listen to that hum—my beautiful old Poma's got life in her yet! Keep those pulleys greased and the cable tight, kid. A broken lift is a broken promise to your guests, and happy skiers are the only ones who pay the tab. You keep the maintenance up and the queues moving, and maybe—just maybe—one day we’ll see some shiny new chairs reaching all the way to the Summit.",
+        tutorialHansUrl,
+        true,
+        startGroomerInstructionStep,
+      );
+    }
+  }, 220);
+}
+
+function startGroomerInstructionStep() {
+  showTutorialDialogue(
+    "Great! It wasn't cheap but the lift is fixed. Now lets see if I can get that old tractor running too!",
+    tutorialCharacterUrl,
+    false,
+    null,
+    "Click on the tractor to get it repaired.",
+  );
+  if (tutorialGroomerWatcherTimer != null) window.clearInterval(tutorialGroomerWatcherTimer);
+  tutorialGroomerWatcherTimer = window.setInterval(() => {
+    if (!tutorialActive) return;
+    const hasBrokenGroomer = state.groomers.some((g) => g.broken === true);
+    if (!hasBrokenGroomer) {
+      window.clearInterval(tutorialGroomerWatcherTimer);
+      tutorialGroomerWatcherTimer = null;
+      showTutorialDialogue(
+        "Grooming isn’t just maintenance, kid—it’s respect. It’s giving this mountain and the folks on it what they deserve. Old Chuffy there will do for now, but eventually, you’re gonna need something more serious if you want to keep these runs from turning into a mogul field.",
+        tutorialHansUrl,
+        true,
+        () => {
+          const initialGreenSlopeCount = state.slopes.filter((s) => {
+            const st = state.slopeTypes.find((t) => t.id === s.slopeTypeId);
+            if (!st) return false;
+            if (String(st.id) === 'green_beginner') return true;
+            return String(st.difficulty || '').toLowerCase() === 'green';
+          }).length;
+
+          showTutorialDialogue(
+            "Unbelievable, the bloody thing actually works! Lets use it to create a new beginners slope.",
+            tutorialCharacterUrl,
+            false,
+            null,
+            "Use the build menu on the right to select and build a new Green slope.",
+          );
+
+          if (tutorialGreenSlopeWatcherTimer != null) window.clearInterval(tutorialGreenSlopeWatcherTimer);
+          tutorialGreenSlopeWatcherTimer = window.setInterval(() => {
+            if (!tutorialActive) return;
+            const currentGreenSlopeCount = state.slopes.filter((s) => {
+              const st = state.slopeTypes.find((t) => t.id === s.slopeTypeId);
+              if (!st) return false;
+              if (String(st.id) === 'green_beginner') return true;
+              return String(st.difficulty || '').toLowerCase() === 'green';
+            }).length;
+            if (currentGreenSlopeCount > initialGreenSlopeCount) {
+              window.clearInterval(tutorialGreenSlopeWatcherTimer);
+              tutorialGreenSlopeWatcherTimer = null;
+              showTutorialDialogue(
+                "Balance is everything, kid. Build enough slopes to keep the crowds from bumping boots, but don't outrun your groomers—they can only handle so much. Green and Blue runs are your bread and butter; they're easy to buff and hold the most people. But if you want the pros to whisper our name, you’ll need the steep Reds and Blacks. And make sure you carve some Freeride lines for the likes of you and me!",
+                tutorialHansUrl,
+                true,
+                () => {
+                  showTutorialDialogue(
+                    "Yeah baby, we're ready for business! Lets see if the valley still remembers how to ski!",
+                    tutorialCharacterUrl,
+                    true,
+                    startOpenResortStep,
+                  );
+                },
+              );
+            }
+          }, 220);
+        },
+      );
+    }
+  }, 220);
+}
+
+function startOpenResortStep() {
+  showTutorialDialogue(
+    "Watch the books, kid. Every lift and groomer adds to the bill. Your ticket cash is at the mercy of the mountain—weather, the time of year, our reputation, and how many skiers the hill can actually hold will decide who shows up. Manage it smart, and have the sense to shut the gates when the snow runs thin. Now go on—open up and have some fun!",
+    tutorialHansUrl,
+    false,
+    null,
+    "Open the hill with a switch in the left menu.",
+  );
+  if (tutorialOpenResortWatcherTimer != null) window.clearInterval(tutorialOpenResortWatcherTimer);
+  tutorialOpenResortWatcherTimer = window.setInterval(() => {
+    if (!tutorialActive) return;
+    if (state.resortOpen === true) {
+      window.clearInterval(tutorialOpenResortWatcherTimer);
+      tutorialOpenResortWatcherTimer = null;
+      hideTutorialDialogue();
+      tutorialActive = false;
+      state.simulationSpeed = 1;
+      if (DOM.simSpeedButtons) {
+        DOM.simSpeedButtons.forEach((b) => b.classList.toggle('active', String(b.dataset.speed ?? '') === '1'));
+      }
+      applySimulationSpeed();
+    }
+  }, 220);
+}
 
 function ensureSimulationStarted() {
   if (simulationStarted) return;
@@ -213,6 +407,11 @@ export function init() {
   if (DOM.saveBtn) DOM.saveBtn.addEventListener('click', exportConfig);
   if (DOM.loadBtn && DOM.importInput) DOM.loadBtn.addEventListener('click', () => DOM.importInput.click());
   DOM.importInput.addEventListener('change', onConfigImported);
+  function syncSimulationSpeedButtons() {
+    if (!DOM.simSpeedButtons) return;
+    const target = String(Number.isFinite(state.simulationSpeed) ? state.simulationSpeed : 1);
+    DOM.simSpeedButtons.forEach((b) => b.classList.toggle('active', String(b.dataset.speed ?? '') === target));
+  }
   window.onGameStateRestored = () => {
     state.customMountainUrl = null;
     state.displayedMountainThreshold = null;
@@ -231,6 +430,7 @@ export function init() {
     renderSlopeTypeButtons({ skipPanelBlank: true });
     updateDateDisplay();
     updateWeatherDisplay();
+    syncSimulationSpeedButtons();
     applySimulationSpeed();
   };
 
@@ -270,11 +470,12 @@ export function init() {
       btn.addEventListener('click', () => {
         const speed = Number(btn.dataset.speed ?? '1') || 0;
         state.simulationSpeed = Math.max(0, Math.min(3, speed));
-        DOM.simSpeedButtons.forEach((b) => b.classList.toggle('active', b === btn));
+        syncSimulationSpeedButtons();
         applySimulationSpeed();
       });
     });
   }
+  syncSimulationSpeedButtons();
 
   initInvestCompactSidebar();
   document.addEventListener('invest-inventory-select', (e) => {
@@ -540,7 +741,7 @@ function initMusic() {
       }, 260);
     } else {
       audio.muted = false;
-      void audio.play().catch(() => {});
+      void audio.play().catch(() => { });
       fadeTo(targetVolume, 600);
     }
   }
@@ -579,7 +780,7 @@ function initMusic() {
     if (!autoplayBlocked) return;
     void audio.play().then(() => {
       autoplayBlocked = false;
-    }).catch(() => {});
+    }).catch(() => { });
   };
   window.addEventListener('pointerdown', unlock, { once: true });
   window.addEventListener('keydown', unlock, { once: true });
@@ -609,6 +810,7 @@ function initIntroVideo() {
 
   let finished = false;
   let autoplayBlocked = false;
+  let tutorialMode = false;
   video.src = introVideoUrl;
 
   function updateToggleButton() {
@@ -622,6 +824,22 @@ function initIntroVideo() {
     if (finished) return;
     finished = true;
     video.pause();
+    if (tutorialMode) {
+      tutorialActive = true;
+      try {
+        applyImportedConfig(tutorialConfig);
+        showTutorialDialogue(
+          "Hans was a great guy and he loved his mountain. He wasn't best organized though...that lift is a mess. Lets see if I can get it fixed.",
+          tutorialCharacterUrl,
+          false,
+          null,
+          "Click on the lift to get it repaired.",
+        );
+        startRepairInstructionStep();
+      } catch (err) {
+        window.alert('Failed to load tutorial map: ' + (err?.message || String(err)));
+      }
+    }
     ensureSimulationStarted();
     overlay.classList.add('intro-video-dissolve');
     overlay.setAttribute('aria-hidden', 'true');
@@ -646,6 +864,7 @@ function initIntroVideo() {
   window.addEventListener('splashdissolve', (evt) => {
     const playIntro = !(evt && evt.detail && evt.detail.playIntro === false);
     if (!playIntro) return;
+    tutorialMode = true;
     finished = false;
     autoplayBlocked = false;
     video.currentTime = 0;

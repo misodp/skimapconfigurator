@@ -242,6 +242,91 @@ body {
   display: none;
 }
 
+.tutorial-dialogue {
+  position: fixed;
+  left: 16px;
+  bottom: 70px;
+  z-index: 10002;
+  pointer-events: none;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+.tutorial-dialogue.is-hans {
+  left: auto;
+  right: 16px;
+}
+
+.tutorial-dialogue.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.tutorial-dialogue-card {
+  max-width: min(560px, calc(100vw - 32px));
+  display: flex;
+  gap: 0.7rem;
+  align-items: flex-end;
+  padding: 0.7rem 0.8rem;
+  border-radius: 12px;
+  border: 1px solid rgba(38, 35, 52, 0.2);
+  background: rgba(255, 249, 240, 0.95);
+  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.15);
+  pointer-events: auto;
+  transition: transform 0.28s ease, opacity 0.28s ease;
+}
+
+.tutorial-dialogue.is-hans .tutorial-dialogue-card {
+  flex-direction: row-reverse;
+}
+
+.tutorial-dialogue-character {
+  width: 84px;
+  height: 84px;
+  object-fit: contain;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
+}
+
+.tutorial-dialogue-content {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.tutorial-dialogue-text {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--text);
+}
+
+.tutorial-dialogue-hint {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.28;
+  color: var(--text-muted);
+}
+
+.tutorial-dialogue-close-btn {
+  align-self: flex-start;
+  margin: 0;
+  padding: 0.34rem 0.72rem;
+  border-radius: 999px;
+  border: 1px solid rgba(38, 35, 52, 0.22);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+  font: 600 0.78rem "DM Sans", system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.tutorial-dialogue-close-btn:hover {
+  background: #fff;
+}
+
 #app {
   display: grid;
   grid-template-columns: 260px 1fr 80px;

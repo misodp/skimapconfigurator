@@ -35,6 +35,16 @@
     </button>
   </div>
   <div id="buildMaskHint" class="build-mask-hint hidden" aria-hidden="true">Cannot build here</div>
+  <div id="tutorialDialogue" class="tutorial-dialogue" aria-live="polite" aria-hidden="true" hidden>
+    <div class="tutorial-dialogue-card">
+      <img id="tutorialCharacterImage" class="tutorial-dialogue-character" alt="Tutorial character" />
+      <div class="tutorial-dialogue-content">
+        <p id="tutorialDialogueText" class="tutorial-dialogue-text"></p>
+        <p id="tutorialDialogueHint" class="tutorial-dialogue-hint" hidden aria-hidden="true"></p>
+        <button type="button" id="tutorialDialogueCloseBtn" class="tutorial-dialogue-close-btn">Got it</button>
+      </div>
+    </div>
+  </div>
   <div id="app">
     <header class="header">
       <div class="header-brand" aria-label="Summit '67">
