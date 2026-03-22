@@ -8,18 +8,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/assets/index-BkakCA8l.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-CKUaerX6.css">
+  <script type="module" crossorigin src="/assets/index-B9AiPmnW.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-BOhu8mwp.css">
 </head>
 
 <body>
   <div id="splashOverlay" class="splash-overlay" aria-label="Loading" aria-hidden="false">
     <img src="/assets/Splash-lvgU8Mcb.webp" alt="" class="splash-image" />
-    <div class="splash-actions" aria-label="Start options">
-      <button type="button" id="startTutorialBtn" class="splash-action-btn splash-action-btn-primary">Start
-        Tutorial</button>
-      <button type="button" id="newGameBtn" class="splash-action-btn">New Game</button>
-    </div>
+    <form class="splash-actions splash-name-bar" id="splashStartForm" aria-label="Start game">
+      <div class="splash-name-form">
+        <label for="splashPlayerName" class="splash-name-label">Enter your name:</label>
+        <input type="text" id="splashPlayerName" name="playerName" class="splash-name-input" maxlength="80"
+          autocomplete="name" spellcheck="false" />
+        <button type="submit" id="splashStartAdventureBtn"
+          class="splash-action-btn splash-action-btn-primary">Start</button>
+      </div>
+    </form>
     <div class="splash-credits">
       <span class="splash-version" aria-hidden="true">v2.0.0</span>
       <span class="splash-build-date" aria-hidden="true"></span>
@@ -30,16 +34,59 @@
   <div id="gameOverOverlay" class="game-over-overlay" aria-label="Game over" aria-hidden="true">
     <img src="/assets/GameOverSplash-Bg0OMbFd.webp" alt="Game Over" class="game-over-image" />
   </div>
+  <div id="hallOfFameOverlay" class="hall-of-fame-overlay" aria-labelledby="hallOfFameTitle" aria-hidden="true" hidden>
+    <div class="hall-of-fame-backdrop" aria-hidden="true"></div>
+    <div class="hall-of-fame-panel" role="dialog" aria-modal="true">
+      <button type="button" class="hall-of-fame-close" aria-label="Close Hall of Fame">×</button>
+      <div class="hall-of-fame-brand">
+        <img src="/assets/Title_a-C4j8OoIt.webp" alt="Summit '67" class="hall-of-fame-logo" width="320" height="90" />
+      </div>
+      <h2 id="hallOfFameTitle" class="hall-of-fame-heading">HALL OF FAME</h2>
+      <p id="hallOfFameLoading" class="hall-of-fame-loading">Loading leaderboard…</p>
+      <div id="hallOfFameTableWrap" class="hall-of-fame-table-wrap hidden" hidden>
+        <table class="hall-of-fame-table" aria-label="Hall of Fame leaderboard">
+          <colgroup>
+            <col class="hall-of-fame-col-rank" />
+            <col class="hall-of-fame-col-name" />
+            <col class="hall-of-fame-col-num" />
+            <col class="hall-of-fame-col-num" />
+            <col class="hall-of-fame-col-num hall-of-fame-col-skiers" />
+            <col class="hall-of-fame-col-num" />
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col" class="hall-of-fame-th-rank">#</th>
+              <th scope="col" class="hall-of-fame-th-name">Name</th>
+              <th scope="col" class="hall-of-fame-th-num">Score</th>
+              <th scope="col" class="hall-of-fame-th-num">Reputation</th>
+              <th scope="col" class="hall-of-fame-th-skiers">Top skiers / day</th>
+              <th scope="col" class="hall-of-fame-th-num">Money</th>
+            </tr>
+          </thead>
+          <tbody id="hallOfFameTbody"></tbody>
+        </table>
+      </div>
+      <p id="hallOfFameError" class="hall-of-fame-error hidden" hidden></p>
+    </div>
+  </div>
   <div id="introVideoOverlay" class="intro-video-overlay" aria-label="Intro video" aria-hidden="true" hidden>
     <video id="introVideo" class="intro-video" playsinline preload="auto"></video>
-    <button type="button" id="introVideoToggleBtn" class="intro-video-toggle-btn" aria-label="Pause intro video">
-      Pause
-    </button>
+    <div class="intro-video-controls">
+      <button type="button" id="introVideoToggleBtn" class="intro-video-toggle-btn" aria-label="Pause intro video">
+        Pause
+      </button>
+      <button type="button" id="introVideoSkipBtn" class="intro-video-skip-btn"
+        aria-label="Skip intro video">Skip</button>
+    </div>
   </div>
   <div id="buildMaskHint" class="build-mask-hint hidden" aria-hidden="true">Cannot build here</div>
   <div id="tutorialDialogue" class="tutorial-dialogue" aria-live="polite" aria-hidden="true" hidden>
     <div class="tutorial-dialogue-card">
-      <img id="tutorialCharacterImage" class="tutorial-dialogue-character" alt="Tutorial character" />
+      <div class="tutorial-dialogue-avatar-col">
+        <img id="tutorialCharacterImage" class="tutorial-dialogue-character" alt="Tutorial character" />
+        <button type="button" id="tutorialDialogueSkipBtn" class="tutorial-dialogue-skip-btn" hidden
+          aria-hidden="true">Skip tutorial</button>
+      </div>
       <div class="tutorial-dialogue-content">
         <p id="tutorialDialogueText" class="tutorial-dialogue-text"></p>
         <p id="tutorialDialogueHint" class="tutorial-dialogue-hint" hidden aria-hidden="true"></p>
@@ -383,7 +430,7 @@
                 <line x1="12" y1="15" x2="12" y2="3" />
               </svg>
             </button>
-            <input type="file" id="importInput" accept=".json" hidden />
+            <input type="file" id="importInput" accept=".s67,.json,application/json" hidden />
           </div>
         </div>
         <div class="status-bar-center">
