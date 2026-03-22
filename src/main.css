@@ -136,6 +136,20 @@ body {
   text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
 }
 
+.splash-overlay .splash-mail {
+  pointer-events: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.9);
+  text-decoration: none;
+}
+
+.splash-overlay .splash-mail:hover,
+.splash-overlay .splash-mail:focus-visible {
+  text-decoration: underline;
+  color: var(--text-primary, #1a1528);
+}
+
 .game-over-overlay {
   position: fixed;
   inset: 0;
@@ -379,25 +393,27 @@ body {
   border-radius: var(--radius);
 }
 
+/* top/right/height/maxWidth set in syncCanvasSize() to match letterboxed mountain bounds */
 .mountain-badges {
   position: absolute;
-  top: 0.75rem;
-  right: 10px;
   left: auto;
-  height: 25%;
-  min-height: 48px;
+  bottom: auto;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 0.5rem;
   z-index: 50;
   pointer-events: none;
+  box-sizing: border-box;
 }
 
 .mountain-badge {
   display: block;
   height: 100%;
   width: auto;
+  flex-shrink: 0;
   object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.6));
@@ -827,7 +843,7 @@ body {
   color: var(--red);
 }
 
-/* Status bar at bottom: save/load (left), simulation speed (right) */
+/* Status bar at bottom: save/load (left), branding (center), speed (right) */
 .status-bar {
   grid-area: status;
   display: flex;
@@ -841,11 +857,81 @@ body {
 }
 
 .status-bar-inner {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  justify-content: space-between;
   width: 100%;
   gap: 0.5rem;
+}
+
+.status-bar-left {
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.status-bar-right {
+  justify-self: end;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+}
+
+.status-bar-center {
+  justify-self: center;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  line-height: 1;
+  white-space: nowrap;
+  pointer-events: none;
+  max-width: min(68vw, 480px);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-bar-center .status-bar-brand-sep {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  opacity: 0.7;
+  flex-shrink: 0;
+}
+
+.status-bar-center .status-bar-title {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: 0.02em;
+  flex-shrink: 0;
+}
+
+.status-bar-center .status-bar-copyright {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-bar-center .status-bar-mail {
+  pointer-events: auto;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-bar-center .status-bar-mail:hover,
+.status-bar-center .status-bar-mail:focus-visible {
+  text-decoration: underline;
+  color: var(--text);
 }
 
 .status-bar-save-load {
@@ -1225,7 +1311,8 @@ body {
 }
 
 .resort-toggle:has(.resort-btn:last-child.active) .resort-switch-thumb {
-  transform: translateX(calc(100% + 2px));
+  /* translate % is relative to thumb width → one segment; +2px on old rule overflowed right */
+  transform: translateX(100%);
   background: linear-gradient(135deg, #f26666, #ff9a9a);
   box-shadow:
     0 2px 4px rgba(0, 0, 0, 0.25),

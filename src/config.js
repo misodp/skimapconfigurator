@@ -34,7 +34,7 @@ export function updateVisitorsDisplay() {
   }
 }
 
-const TICKET_STEPS = [1.0, 1.25, 1.5, 1.75, 2.0];
+export const TICKET_STEPS = [1.0, 1.25, 1.5, 1.75, 2.0, 2.25, 2.5];
 
 export function updateTicketPriceDisplay() {
   const valueEl = document.getElementById('ticketPriceValue');

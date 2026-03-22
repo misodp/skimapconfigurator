@@ -9,13 +9,13 @@ import skiersH1Url from '../assets/images/skiers/skiers_h1.webp';
 import skiersH2Url from '../assets/images/skiers/skiers_h2.webp';
 import skiersA1Url from '../assets/images/skiers/skiers_a1.webp';
 import skiersA2Url from '../assets/images/skiers/skiers_a2.webp';
-import badgeTopWorldUrl from '../assets/images/badges/top_world_at.webp';
-import badgeFamilyUrl from '../assets/images/badges/family_friendly_at.webp';
-import badgeAlpineUrl from '../assets/images/badges/high_alpine_at.webp';
-import badgeFreerideUrl from '../assets/images/badges/freeride_paradise_at.webp';
+import badgeTopWorldUrl from '../assets/images/badges/top_world.webp';
+import badgeFamilyUrl from '../assets/images/badges/family_friendly.webp';
+import badgeAlpineUrl from '../assets/images/badges/high_alpine.webp';
+import badgeFreerideUrl from '../assets/images/badges/freeride_paradise.webp';
 import techTreeData from '../assets/data/techTree.json';
 import { state, DOM } from './state';
-import { refresh, updateBudgetDisplay, exportConfig, onConfigImported, applyImportedConfig } from './config.js';
+import { refresh, updateBudgetDisplay, exportConfig, onConfigImported, applyImportedConfig, TICKET_STEPS, updateTicketPriceDisplay } from './config.js';
 import { startSimulation, stopSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
 import { updateWeatherDisplay } from './weather-icon';
 import { syncCanvasSize, onCanvasClick, onCanvasMouseDown, onCanvasMouseMove, onCanvasMouseUp, onCanvasDblClick, hideLiftHoverPopup, hideGroomerHoverPopup, hideSlopeHoverPopup, handleLiftPopupClick, handleGroomerPopupClick, handleSlopePopupClick } from './canvas.js';
@@ -25,10 +25,9 @@ import { renderGroomerTypeDropdown, getGroomerImageUrls, getGroomerMapImageUrls,
 import { initInvestCompactSidebar } from './ui/invest-inventory.js';
 import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
-import { updateTicketPriceDisplay } from './config.js';
 import { initBuildMask } from './build-mask';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
-import introVideoUrl from '../assets/video/Intro.mov';
+import introVideoUrl from '../assets/video/Intro.mp4';
 import tutorialConfig from '../assets/data/tutorial.json';
 import tutorialCharacterUrl from '../assets/images/skiers/Character.png';
 import tutorialHansUrl from '../assets/images/skiers/Hans.png';
@@ -473,10 +472,9 @@ export function init() {
 
   const ticketSlider = /** @type {HTMLInputElement | null} */ (document.getElementById('ticketPriceSlider'));
   if (ticketSlider) {
-    const steps = [1.0, 1.25, 1.5, 1.75, 2.0];
     ticketSlider.addEventListener('input', () => {
-      const idx = Math.max(0, Math.min(steps.length - 1, Number(ticketSlider.value) || 0));
-      state.ticketPrice = steps[idx];
+      const idx = Math.max(0, Math.min(TICKET_STEPS.length - 1, Number(ticketSlider.value) || 0));
+      state.ticketPrice = TICKET_STEPS[idx];
       updateTicketPriceDisplay();
     });
   }
@@ -962,6 +960,13 @@ function initGameOver() {
 function initSplash() {
   const overlay = document.getElementById('splashOverlay');
   if (!overlay) return;
+
+  const stopBgmIfPlaying = () => {
+    const a = window.__bgm;
+    if (a && typeof a.pause === 'function' && !a.paused) a.pause();
+  };
+  stopBgmIfPlaying();
+  requestAnimationFrame(() => stopBgmIfPlaying());
 
   const versionEl = overlay.querySelector('.splash-version');
   if (versionEl) {

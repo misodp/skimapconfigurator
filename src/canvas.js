@@ -179,7 +179,19 @@ function isOperateTabActive() {
 }
 
 export function syncCanvasSize() {
-  if (!state.image || !DOM.canvas) return;
+  if (!state.image || !DOM.canvas) {
+    const badges = document.querySelector('.mountain-badges');
+    if (badges) {
+      badges.style.top = '';
+      badges.style.right = '';
+      badges.style.left = '';
+      badges.style.bottom = '';
+      badges.style.height = '';
+      badges.style.maxHeight = '';
+      badges.style.maxWidth = '';
+    }
+    return;
+  }
   const img = state.image;
   const imgRect = img.getBoundingClientRect();
   const wrapper = DOM.canvas.parentElement;
@@ -202,6 +214,7 @@ export function syncCanvasSize() {
     left: imgRect.left + offsetX,
     top: imgRect.top + offsetY,
   };
+  const rectRight = rect.left + rect.width;
 
   DOM.canvas.width = rect.width * dpr;
   DOM.canvas.height = rect.height * dpr;
@@ -211,6 +224,23 @@ export function syncCanvasSize() {
     DOM.canvas.style.left = (rect.left - wrapperRect.left) + 'px';
     DOM.canvas.style.top = (rect.top - wrapperRect.top) + 'px';
   }
+
+  /* Achievement badges: top-right inside the visible mountain (same letterbox rect as canvas). */
+  const BADGE_PAD = 10;
+  const badges = document.querySelector('.mountain-badges');
+  if (badges && wrapperRect) {
+    badges.style.position = 'absolute';
+    badges.style.left = 'auto';
+    badges.style.bottom = 'auto';
+    badges.style.top = rect.top - wrapperRect.top + BADGE_PAD + 'px';
+    badges.style.right = wrapperRect.right - rectRight + BADGE_PAD + 'px';
+    /* Match original CSS: ~25% of frame height, min 48px — scaled to visible mountain, any resolution */
+    const stripH = Math.max(48, rect.height * 0.25);
+    badges.style.height = stripH + 'px';
+    badges.style.maxHeight = stripH + 'px';
+    badges.style.maxWidth = rect.width * 0.92 + 'px';
+  }
+
   DOM.ctx.scale(dpr, dpr);
   refresh();
 }

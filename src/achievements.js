@@ -165,7 +165,8 @@ export function getEffectiveSatisfaction() {
   const base = (raw / 100) * cap;
   const liftMultiplier = getLiftReputationMultiplier();
   const slopeMultiplier = getSlopeReputationMultiplier();
-  return base * liftMultiplier * slopeMultiplier;
+  const combined = base * liftMultiplier * slopeMultiplier;
+  return Math.max(0, Math.min(cap, combined));
 }
 
 /**
