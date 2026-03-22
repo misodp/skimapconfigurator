@@ -295,6 +295,16 @@ body {
   flex-direction: row-reverse;
 }
 
+.tutorial-dialogue-avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  align-self: flex-end;
+  width: 92px;
+}
+
 .tutorial-dialogue-character {
   width: 84px;
   height: 84px;
@@ -321,6 +331,27 @@ body {
   font-size: 0.78rem;
   line-height: 1.28;
   color: var(--text-muted);
+}
+
+.tutorial-dialogue-skip-btn {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: var(--text-muted);
+  font: 500 0.7rem "DM Sans", system-ui, sans-serif;
+  line-height: 1.25;
+  text-align: center;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  white-space: normal;
+}
+
+.tutorial-dialogue-skip-btn:hover {
+  color: var(--text);
 }
 
 .tutorial-dialogue-close-btn {

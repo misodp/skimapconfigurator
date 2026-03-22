@@ -41,6 +41,38 @@ let tutorialGroomerWatcherTimer = null;
 let tutorialGreenSlopeWatcherTimer = null;
 let tutorialOpenResortWatcherTimer = null;
 let tutorialDialogueCloseHandler = null;
+let tutorialSkipHandler = null;
+
+function clearTutorialWatchers() {
+  if (tutorialRepairWatcherTimer != null) {
+    window.clearInterval(tutorialRepairWatcherTimer);
+    tutorialRepairWatcherTimer = null;
+  }
+  if (tutorialGroomerWatcherTimer != null) {
+    window.clearInterval(tutorialGroomerWatcherTimer);
+    tutorialGroomerWatcherTimer = null;
+  }
+  if (tutorialGreenSlopeWatcherTimer != null) {
+    window.clearInterval(tutorialGreenSlopeWatcherTimer);
+    tutorialGreenSlopeWatcherTimer = null;
+  }
+  if (tutorialOpenResortWatcherTimer != null) {
+    window.clearInterval(tutorialOpenResortWatcherTimer);
+    tutorialOpenResortWatcherTimer = null;
+  }
+}
+
+/** Exit tutorial immediately: stop scripted steps, clear watchers, resume normal play. */
+function endTutorialSkipped() {
+  tutorialActive = false;
+  clearTutorialWatchers();
+  state.simulationSpeed = 1;
+  if (DOM.simSpeedButtons) {
+    DOM.simSpeedButtons.forEach((b) => b.classList.toggle('active', String(b.dataset.speed ?? '') === '1'));
+  }
+  applySimulationSpeed();
+  hideTutorialDialogue();
+}
 
 function hideTutorialDialogue() {
   const el = /** @type {HTMLDivElement | null} */ (document.getElementById('tutorialDialogue'));
@@ -64,6 +96,7 @@ function showTutorialDialogue(message, imageUrl = tutorialCharacterUrl, closable
   const hintEl = /** @type {HTMLParagraphElement | null} */ (document.getElementById('tutorialDialogueHint'));
   const imageEl = /** @type {HTMLImageElement | null} */ (document.getElementById('tutorialCharacterImage'));
   const closeBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('tutorialDialogueCloseBtn'));
+  const skipBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('tutorialDialogueSkipBtn'));
   if (!el || !textEl || !imageEl) return;
   const applyContentAndAnimateIn = () => {
     const isHans = imageUrl === tutorialHansUrl;
@@ -87,6 +120,19 @@ function showTutorialDialogue(message, imageUrl = tutorialCharacterUrl, closable
         else hideTutorialDialogue();
       };
       closeBtn.addEventListener('click', tutorialDialogueCloseHandler);
+    }
+    if (skipBtn) {
+      const showSkip = Boolean(tutorialActive);
+      skipBtn.hidden = !showSkip;
+      skipBtn.setAttribute('aria-hidden', showSkip ? 'false' : 'true');
+      if (tutorialSkipHandler) {
+        skipBtn.removeEventListener('click', tutorialSkipHandler);
+        tutorialSkipHandler = null;
+      }
+      if (showSkip) {
+        tutorialSkipHandler = () => endTutorialSkipped();
+        skipBtn.addEventListener('click', tutorialSkipHandler);
+      }
     }
     // Ensure first render animates too: paint once in non-visible state, then transition in.
     el.classList.remove('visible');

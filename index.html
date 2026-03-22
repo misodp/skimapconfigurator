@@ -38,7 +38,11 @@
   <div id="buildMaskHint" class="build-mask-hint hidden" aria-hidden="true">Cannot build here</div>
   <div id="tutorialDialogue" class="tutorial-dialogue" aria-live="polite" aria-hidden="true" hidden>
     <div class="tutorial-dialogue-card">
-      <img id="tutorialCharacterImage" class="tutorial-dialogue-character" alt="Tutorial character" />
+      <div class="tutorial-dialogue-avatar-col">
+        <img id="tutorialCharacterImage" class="tutorial-dialogue-character" alt="Tutorial character" />
+        <button type="button" id="tutorialDialogueSkipBtn" class="tutorial-dialogue-skip-btn" hidden
+          aria-hidden="true">Skip tutorial</button>
+      </div>
       <div class="tutorial-dialogue-content">
         <p id="tutorialDialogueText" class="tutorial-dialogue-text"></p>
         <p id="tutorialDialogueHint" class="tutorial-dialogue-hint" hidden aria-hidden="true"></p>
