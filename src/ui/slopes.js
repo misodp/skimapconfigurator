@@ -4,7 +4,7 @@
 
 import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
 import { state } from '../state';
-import { escapeHtml, formatNumber } from '../utils.js';
+import { escapeHtml, formatNumber, isTechBuyable } from '../utils.js';
 import { COLS, ROWS } from '../constants';
 
 export function getSlopeSpritePositionStyle(slopeType) {
@@ -32,6 +32,13 @@ export function renderSlopeTypeButtons(opts) {
   const container = document.getElementById('difficultyButtons');
   const floatingPanel = document.getElementById('liftDetailFloating');
   if (!container || !state.slopeTypes.length) return;
+
+  const currentSlope = state.slopeTypes.find((s) => s.id === state.difficulty);
+  if (!currentSlope || !isTechBuyable(currentSlope)) {
+    const buyable = state.slopeTypes.filter(isTechBuyable);
+    const pick = buyable.find((s) => s.difficulty === 'Blue' || s.id === 'blue_easy') || buyable[0];
+    state.difficulty = pick?.id ?? state.slopeTypes[0]?.id ?? null;
+  }
 
   function setPanelBlank() {
     if (!floatingPanel) return;
@@ -71,6 +78,7 @@ export function renderSlopeTypeButtons(opts) {
   container.innerHTML = `<div class="slope-type-buttons" data-slope-list></div>`;
   const listContainer = container.querySelector('[data-slope-list]');
   listContainer.innerHTML = state.slopeTypes
+    .filter(isTechBuyable)
     .map((st) => {
       const isSelected = state.difficulty === st.id ? ' active' : '';
       const posStyle = getSlopeSpritePositionStyle(st);

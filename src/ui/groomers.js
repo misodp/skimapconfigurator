@@ -4,7 +4,7 @@
 
 import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
 import { state } from '../state';
-import { escapeHtml, formatNumber, formatCurrency } from '../utils.js';
+import { escapeHtml, formatNumber, formatCurrency, isTechBuyable } from '../utils.js';
 
 const groomerModules = import.meta.glob('../../assets/images/groomers/*.webp', { eager: true, import: 'default' });
 
@@ -74,6 +74,12 @@ export function renderGroomerTypeDropdown(opts) {
   const floatingPanel = document.getElementById('liftDetailFloating');
   if (!container || !state.groomerTypes.length) return;
 
+  const currentG = state.groomerTypes.find((g) => g.id === state.groomerType);
+  if (!currentG || !isTechBuyable(currentG)) {
+    const first = state.groomerTypes.find(isTechBuyable);
+    state.groomerType = first?.id ?? state.groomerTypes[0]?.id ?? null;
+  }
+
   function setPanelBlank() {
     if (!floatingPanel) return;
     floatingPanel.innerHTML = '';
@@ -112,6 +118,7 @@ export function renderGroomerTypeDropdown(opts) {
 
   const currentYear = state.currentDate ? state.currentDate.year : 0;
   container.innerHTML = state.groomerTypes
+    .filter(isTechBuyable)
     .map((g) => {
       const unlockYear = g.unlock_year != null ? Number(g.unlock_year) : null;
       const locked = unlockYear != null && currentYear < unlockYear;

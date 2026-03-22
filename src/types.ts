@@ -21,6 +21,8 @@ export interface LiftType {
   unlock_year?: number;
   /** Reliability 0–1; higher = slower health degradation (from tech tree). */
   reliability?: number;
+  /** If false, hidden from invest / buy UI (default true). */
+  can_buy?: boolean;
 }
 
 export interface SlopeType {
@@ -34,6 +36,8 @@ export interface SlopeType {
   capacity_per_meter?: number;
   description?: string;
   frame: number;
+  /** If false, hidden from invest / buy UI (default true). */
+  can_buy?: boolean;
 }
 
 export interface GroomerType {
@@ -49,6 +53,8 @@ export interface GroomerType {
   unlock_year?: number;
   /** Reliability 0–1; higher = slower health degradation (from tech tree). */
   reliability?: number;
+  /** If false, hidden from invest / buy UI (default true). */
+  can_buy?: boolean;
 }
 
 export interface NormalizedPoint {

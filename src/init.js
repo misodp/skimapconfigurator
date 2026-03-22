@@ -23,6 +23,7 @@ import { renderLiftTypeDropdown, setLiftType, updateCancelLiftButton } from './u
 import { renderSlopeTypeButtons, setDifficulty } from './ui/slopes.js';
 import { renderGroomerTypeDropdown, getGroomerImageUrls, getGroomerMapImageUrls, setGroomerType } from './ui/groomers.js';
 import { initInvestCompactSidebar } from './ui/invest-inventory.js';
+import { isTechBuyable } from './utils.js';
 import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
 import { initBuildMask } from './build-mask';
@@ -157,7 +158,7 @@ function startGroomerInstructionStep() {
       window.clearInterval(tutorialGroomerWatcherTimer);
       tutorialGroomerWatcherTimer = null;
       showTutorialDialogue(
-        "Grooming isn’t just maintenance, kid—it’s respect. It’s giving this mountain and the folks on it what they deserve. Old Chuffy there will do for now, but eventually, you’re gonna need something more serious if you want to keep these runs from turning into a mogul field.",
+        "Grooming isn’t just maintenance, kid—it’s respect. It’s giving this mountain and the folks on it what they deserve. Old Chuffy there will do for now, but she’s got more heart than horsepower and eventually, you’re gonna need some more muscle if you want to keep these runs from turning into a mogul field.",
         tutorialHansUrl,
         true,
         () => {
@@ -608,13 +609,16 @@ export function init() {
   });
 
   state.liftTypes = (techTreeData && techTreeData.lifts) ? [...techTreeData.lifts] : [];
-  state.liftType = state.liftTypes.length > 0 ? state.liftTypes[0].id : null;
+  const buyableLifts = state.liftTypes.filter(isTechBuyable);
+  state.liftType = buyableLifts[0]?.id ?? state.liftTypes[0]?.id ?? null;
   state.slopeTypes = (techTreeData && techTreeData.slopes) ? [...techTreeData.slopes] : [];
-  state.difficulty = state.slopeTypes.length > 0
-    ? (state.slopeTypes.find((s) => s.difficulty === 'Blue' || s.id === 'blue_easy') || state.slopeTypes[0]).id
-    : null;
+  const buyableSlopes = state.slopeTypes.filter(isTechBuyable);
+  state.difficulty = buyableSlopes.length > 0
+    ? (buyableSlopes.find((s) => s.difficulty === 'Blue' || s.id === 'blue_easy') || buyableSlopes[0]).id
+    : state.slopeTypes[0]?.id ?? null;
   state.groomerTypes = (techTreeData && techTreeData.groomers) ? [...techTreeData.groomers] : [];
-  state.groomerType = state.groomerTypes.length > 0 ? state.groomerTypes[0].id : null;
+  const buyableGroomers = state.groomerTypes.filter(isTechBuyable);
+  state.groomerType = buyableGroomers[0]?.id ?? state.groomerTypes[0]?.id ?? null;
 
   loadSpriteSheet();
   loadCottageIcon();

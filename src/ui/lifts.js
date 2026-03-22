@@ -5,7 +5,7 @@
 import spriteSheetUrl from '../../assets/images/SpriteSheet.webp';
 import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
 import { state } from '../state';
-import { escapeHtml, formatNumber, scale1to3, skidollarIconsHtml } from '../utils.js';
+import { escapeHtml, formatNumber, scale1to3, skidollarIconsHtml, isTechBuyable } from '../utils.js';
 import { COLS, ROWS } from '../constants';
 
 const LIFT_DETAIL_BLANK_HTML = '';
@@ -37,6 +37,12 @@ export function renderLiftTypeDropdown(opts) {
   const container = document.getElementById('liftTypeDropdown');
   const floatingPanel = document.getElementById('liftDetailFloating');
   if (!container || !state.liftTypes.length) return;
+
+  const currentLift = state.liftTypes.find((l) => l.id === state.liftType);
+  if (!currentLift || !isTechBuyable(currentLift)) {
+    const first = state.liftTypes.find(isTechBuyable);
+    state.liftType = first?.id ?? state.liftTypes[0]?.id ?? null;
+  }
 
   container.innerHTML = `<div class="lift-type-buttons" data-lift-list></div>`;
   const listContainer = container.querySelector('[data-lift-list]');
@@ -103,6 +109,7 @@ export function renderLiftTypeDropdown(opts) {
 
   const currentYear = state.currentDate ? state.currentDate.year : 0;
   listContainer.innerHTML = state.liftTypes
+    .filter(isTechBuyable)
     .map((lift) => {
       const unlockYear = lift.unlock_year != null ? Number(lift.unlock_year) : null;
       const locked = unlockYear != null && currentYear < unlockYear;

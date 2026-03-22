@@ -214,6 +214,7 @@
       "grooming_capacity": 5,
       "reliability": 0.70,
       "speed": 5,
+      "can_buy": "false",
       "description": "Doma predelan traktor za enostavno urejanje krajše steze."
     },
     {

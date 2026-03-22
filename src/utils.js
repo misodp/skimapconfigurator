@@ -2,6 +2,16 @@
  * Formatting and UI helpers.
  */
 
+/**
+ * Tech tree entries may set `can_buy: false` to hide them from the invest UI.
+ * Missing or true means the item can be purchased (default).
+ * @param {{ can_buy?: boolean } | null | undefined} entry
+ * @returns {boolean}
+ */
+export function isTechBuyable(entry) {
+  return Boolean(entry) && entry.can_buy !== false;
+}
+
 export function formatNumber(n) {
   if (n === undefined || n === null) return '—';
   if (Number.isInteger(n)) return String(n);

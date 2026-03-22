@@ -3,7 +3,7 @@
  */
 
 import { state } from '../state';
-import { escapeHtml } from '../utils.js';
+import { escapeHtml, isTechBuyable } from '../utils.js';
 import { getLiftSpriteStyle } from './lifts.js';
 import { getSlopeSpritePositionStyle } from './slopes.js';
 import { getGroomerImageUrl } from './groomers.js';
@@ -37,11 +37,30 @@ function fillList(mode) {
   const titleEl = document.getElementById(TITLE_ID);
   if (!listEl || !titleEl) return;
 
+  // Keep selected type buyable for list highlighting (same rules as Invest panel renders).
+  const curL = state.liftTypes.find((l) => l.id === state.liftType);
+  if (!curL || !isTechBuyable(curL)) {
+    const first = state.liftTypes.find(isTechBuyable);
+    state.liftType = first?.id ?? state.liftTypes[0]?.id ?? null;
+  }
+  const curS = state.slopeTypes.find((s) => s.id === state.difficulty);
+  if (!curS || !isTechBuyable(curS)) {
+    const buyable = state.slopeTypes.filter(isTechBuyable);
+    const pick = buyable.find((s) => s.difficulty === 'Blue' || s.id === 'blue_easy') || buyable[0];
+    state.difficulty = pick?.id ?? state.slopeTypes[0]?.id ?? null;
+  }
+  const curG = state.groomerTypes.find((g) => g.id === state.groomerType);
+  if (!curG || !isTechBuyable(curG)) {
+    const first = state.groomerTypes.find(isTechBuyable);
+    state.groomerType = first?.id ?? state.groomerTypes[0]?.id ?? null;
+  }
+
   titleEl.textContent = TITLES[mode];
   const currentYear = state.currentDate ? state.currentDate.year : 0;
 
   if (mode === 'lift' && state.liftTypes.length) {
     listEl.innerHTML = state.liftTypes
+      .filter(isTechBuyable)
       .map((lift) => {
         const unlockYear = lift.unlock_year != null ? Number(lift.unlock_year) : null;
         const locked = unlockYear != null && currentYear < unlockYear;
@@ -96,6 +115,7 @@ function fillList(mode) {
 
   if (mode === 'groomer' && state.groomerTypes.length) {
     listEl.innerHTML = state.groomerTypes
+      .filter(isTechBuyable)
       .map((g) => {
         const unlockYear = g.unlock_year != null ? Number(g.unlock_year) : null;
         const locked = unlockYear != null && currentYear < unlockYear;
