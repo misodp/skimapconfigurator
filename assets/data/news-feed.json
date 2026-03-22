@@ -1,0 +1,81 @@
+{
+  "defaultMessage": "First run of the day. Let's see what the mountain has in store!",
+  "lift": {
+    "positive": [
+      "No point in sitting down; you're already at the top. Express service!",
+      "Reached the peak faster than I could buckle my boots. Warp speed!",
+      "No queues? I'll clock more miles today than my car did getting here!",
+      "The lifties are working like a Swiss watch today. Hats off!",
+      "Pure luxury: straight from the skis to the chair without a pause.",
+      "Finally, a resort where I don't spend half the day standing still.",
+      "Wow! Before I even tucked my gloves in, I was at the summit!",
+      "This is what you pay for - skiing, not loitering at the base.",
+      "The lifts are moving faster than my legs can handle today!",
+      "Feels like a private mountain. I hope no one else finds out about this!"
+    ],
+    "negative": [
+      "Spent more time in the queue than on my skis! A total disaster.",
+      "My beard has grown an inch since we started waiting for this Girak.",
+      "Is there free goulash at the top? Why is everyone waiting here?",
+      "Management, are you asleep? The line stretches to the next village!",
+      "Three more songs on the radio and we might actually reach the ramp.",
+      "This isn't a ski resort; it's an exercise in patience in the cold.",
+      "If I wanted to stand in line, I'd go to the bank, not the mountain.",
+      "The coffee in my thermos went cold and we're still not at the front.",
+      "This Poma is moving like a snail on anti-inflammatory cream.",
+      "Next time I'm bringing a chair and a chessboard for this queue."
+    ]
+  },
+  "crowd": {
+    "positive": [
+      "Finally, room to carve a turn so sharp even the legends would cheer!",
+      "Peace and quiet... just me, my thoughts, and the fresh powder.",
+      "No slalom around people! Skiing like a king on his private estate.",
+      "The slope is so empty I could practically ski with my eyes closed.",
+      "This is the life - freedom on the mountain without fear of collision.",
+      "Proper space for high-speed turns without hitting the brakes.",
+      "The mountain is all mine today. Heaven on earth!",
+      "Skiing an empty run is like dancing in an empty ballroom.",
+      "No beginners cutting me off today. Absolute perfection!",
+      "Finally, a place where you can actually relax and enjoy the speed."
+    ],
+    "negative": [
+      "This isn't a slope; it's a highway at rush hour! Dangerous.",
+      "Someone nearly flattened me! There's no room left to even turn.",
+      "Everyone is out today - from infants to great-grandmothers. A total anthill!",
+      "Watch your head! People are flying past like unguided rockets.",
+      "Crowdier here than the town market on a Saturday morning.",
+      "Skiing in this mob feels more like survival than a sport.",
+      "I have to stop every ten meters just to avoid a pile-up.",
+      "This run has become a collision course. I'm heading home!",
+      "Did they only open one run for a thousand people? Catastrophic crowds.",
+      "There's more legroom on the city bus than on this slope."
+    ]
+  },
+  "quality": {
+    "positive": [
+      "These corduroy ridges are so perfect I want to frame them!",
+      "Snow like butter - the skis turn themselves. Kudos to the cat crew!",
+      "First-class powder. Even the clouds are jealous of this surface!",
+      "The edges hold like they're glued. The groomers did a masterclass.",
+      "Morning skiing on these fresh tracks was pure poetry.",
+      "The run is as flat as if it were pressed with a hot iron. Pure joy!",
+      "Even this afternoon, the snow is holding its shape. Brilliant base!",
+      "No ice, no moguls, just pure bliss on the snow.",
+      "Hats off to whoever was driving the Ratrac last night. A master!",
+      "Best grooming of the season. No debate."
+    ],
+    "negative": [
+      "Am I skiing or ice-skating? The slope is hard as concrete!",
+      "These moguls are going to ruin my knees. Like skiing on a washing machine.",
+      "I made one turn and ended up in the woods. The snow is appalling.",
+      "I need skates here, not skis. Nothing but sheets of ice!",
+      "The run looks like a battlefield after a bombardment. Pits and piles.",
+      "Did they sell the groomers or are they all broken? This snow is a disaster.",
+      "Hard to enjoy yourself when you're fighting bumps as high as a house.",
+      "My skis are vibrating more than an old spin-cycle on a washer.",
+      "Pure ice. Management is clearly cutting corners on grooming.",
+      "A run like this only brings sore legs and zero pleasure."
+    ]
+  }
+}

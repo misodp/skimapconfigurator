@@ -71,7 +71,8 @@ export function updateSnowDepthDisplay() {
   /** @type {number | null} */
   // @ts-ignore - attach to function for simple module-local state
   const prev = updateSnowDepthDisplay._prevDepth ?? null;
-  const current = state.snowDepth ?? 0;
+  const rawDepth = Number(state.snowDepth);
+  const current = Number.isFinite(rawDepth) ? Math.max(0, Math.min(450, rawDepth)) : 0;
 
   if (DOM.snowDepthDisplay) {
     DOM.snowDepthDisplay.textContent = formatNumber(current) + ' cm';
@@ -285,6 +286,7 @@ export function refresh() {
   updateExperienceDisplay();
   updateSatisfactionDisplay();
   updateAchievementBadges();
+  updateSnowDepthDisplay();
 }
 
 export function renderLists() {
@@ -510,8 +512,12 @@ export function applyImportedConfig(config, opts = {}) {
   if (config.dailySales != null) state.dailySales = config.dailySales;
   if (config.dailyCost != null) state.dailyCost = config.dailyCost;
   if (config.dailyProfit != null) state.dailyProfit = config.dailyProfit;
-  if (config.snowDepth != null) state.snowDepth = config.snowDepth;
-  if (config.dailySnowfall != null) state.dailySnowfall = config.dailySnowfall;
+  {
+    const raw = config.snowDepth;
+    const n = raw != null ? Number(raw) : NaN;
+    state.snowDepth = Number.isFinite(n) ? Math.max(0, Math.min(450, n)) : 50;
+  }
+  if (config.dailySnowfall != null) state.dailySnowfall = Number(config.dailySnowfall);
   if (config.dailyTempLow != null) state.dailyTempLow = config.dailyTempLow;
   if (config.dailyTempHigh != null) state.dailyTempHigh = config.dailyTempHigh;
   if (config.simulationSpeed != null) state.simulationSpeed = config.simulationSpeed;
@@ -530,6 +536,10 @@ export function applyImportedConfig(config, opts = {}) {
   if (config.slopeDrawMode === 'points' || config.slopeDrawMode === 'pen') state.slopeDrawMode = config.slopeDrawMode;
   if (config.resortOpen !== undefined) state.resortOpen = Boolean(config.resortOpen);
   if (pauseTicker) state.simulationSpeed = 0;
+
+  // Match snow depth trend widget to loaded snapshot (avoid stale arrow vs previous session).
+  // @ts-ignore - module-local cache on updateSnowDepthDisplay
+  updateSnowDepthDisplay._prevDepth = state.snowDepth;
 
   refresh();
   if (typeof window.onGameStateRestored === 'function') window.onGameStateRestored();

@@ -5,10 +5,10 @@
 import cottageIconUrl from '../assets/images/cottage.webp';
 import spriteSheetUrl from '../assets/images/SpriteSheet.webp';
 import skidollarg2mUrl from '../assets/images/Skidollar_g2m.webp';
-import animalsH1Url from '../assets/images/skiers/animals_h1.webp';
-import animalsH2Url from '../assets/images/skiers/animals_h2.webp';
-import animalsA1Url from '../assets/images/skiers/animals_a1.webp';
-import animalsA2Url from '../assets/images/skiers/animals_a2.webp';
+import skiersH1Url from '../assets/images/skiers/skiers_h1.webp';
+import skiersH2Url from '../assets/images/skiers/skiers_h2.webp';
+import skiersA1Url from '../assets/images/skiers/skiers_a1.webp';
+import skiersA2Url from '../assets/images/skiers/skiers_a2.webp';
 import badgeTopWorldUrl from '../assets/images/badges/top_world_at.webp';
 import badgeFamilyUrl from '../assets/images/badges/family_friendly_at.webp';
 import badgeAlpineUrl from '../assets/images/badges/high_alpine_at.webp';
@@ -224,13 +224,21 @@ function startOpenResortStep() {
     if (state.resortOpen === true) {
       window.clearInterval(tutorialOpenResortWatcherTimer);
       tutorialOpenResortWatcherTimer = null;
-      hideTutorialDialogue();
-      tutorialActive = false;
-      state.simulationSpeed = 1;
-      if (DOM.simSpeedButtons) {
-        DOM.simSpeedButtons.forEach((b) => b.classList.toggle('active', String(b.dataset.speed ?? '') === '1'));
-      }
-      applySimulationSpeed();
+      showTutorialDialogue(
+        "Yeah! Summit '67 is open for business! I'll keep the ticket prices as low as possible until we get the word out and reputation back up. Now I deserve a quick lap or two on the slopes myself!",
+        tutorialCharacterUrl,
+        true,
+        () => {
+          tutorialActive = false;
+          state.simulationSpeed = 1;
+          if (DOM.simSpeedButtons) {
+            DOM.simSpeedButtons.forEach((b) => b.classList.toggle('active', String(b.dataset.speed ?? '') === '1'));
+          }
+          applySimulationSpeed();
+          hideTutorialDialogue();
+        },
+        'You can control the speed of simulation as well as save or load the game in the status menu.',
+      );
     }
   }, 220);
 }
@@ -616,7 +624,7 @@ export function init() {
   initBuildMask(buildMaskUrl).catch(() => {
     // Fail open if mask fails to load; building remains allowed.
   });
-  initNewsFeed([animalsH1Url, animalsH2Url], [animalsA1Url, animalsA2Url]);
+  initNewsFeed([skiersH1Url, skiersH2Url], [skiersA1Url, skiersA2Url]);
   renderLiftTypeDropdown();
   renderSlopeTypeButtons();
   renderGroomerTypeDropdown();

@@ -64,7 +64,7 @@ export function getSlopeCrowdRawScore(visitors: number, slopeCapacity: number): 
   return utilizationToScore(visitors / slopeCapacity);
 }
 
-/** 1 grooming_capacity point = 100 m of slope with grooming_load 1. */
+/** 1 grooming_capacity point = 200 m of slope with grooming_load 1. */
 const GROOMING_UNITS_PER_100M_LOAD_1 = 0.5;
 
 /** Bad weather increases grooming demand (snow, ice, wind). */

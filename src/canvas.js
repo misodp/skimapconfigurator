@@ -365,9 +365,9 @@ export function findSnapPoint(px, py) {
   return best;
 }
 
-/** Return index of lift at image point (px, py), or null if none within threshold of the lift line. */
+/** Return index of lift at image point (px, py), or -1 if none within threshold of the lift line. */
 function getLiftIndexAtImage(px, py) {
-  let bestIdx = null;
+  let bestIdx = -1;
   let bestDistSq = LIFT_HOVER_THRESHOLD_SQ;
 
   state.lifts.forEach((lift, idx) => {
@@ -604,6 +604,28 @@ let lastHoveredSlopeClientY = 0;
 let isPopupPinned = false;
 let isGroomerPopupPinned = false;
 let isSlopePopupPinned = false;
+
+function isOperatePopupVisible(id) {
+  const el = document.getElementById(id);
+  return !!(el && !el.hidden);
+}
+
+/**
+ * After dismissing unpinned lift/slope, still block groomer if a pinned lift/slope menu is open,
+ * another groomer's menu is open, or hover is over a different groomer than the visible menu.
+ */
+function otherMenusBlockGroomerHover(groomerIdx) {
+  if (isOperatePopupVisible('liftHoverPopup')) return true;
+  if (isOperatePopupVisible('slopeHoverPopup')) return true;
+  if (
+    isOperatePopupVisible('groomerHoverPopup') &&
+    lastHoveredGroomerIndex != null &&
+    lastHoveredGroomerIndex !== groomerIdx
+  ) {
+    return true;
+  }
+  return false;
+}
 
 function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   const popup = document.getElementById('liftHoverPopup');
@@ -1314,13 +1336,25 @@ export function onCanvasMouseMove(e) {
   if (isPopupPinned && isGroomerPopupPinned && isSlopePopupPinned) return;
   const groomerIdx = getGroomerIndexAtImage(pt.x, pt.y);
   if (groomerIdx >= 0 && !isGroomerPopupPinned) {
-    updateGroomerHoverPopup(groomerIdx, e.clientX, e.clientY);
     if (!isPopupPinned) {
       const liftPopup = document.getElementById('liftHoverPopup');
-      if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
+      if (liftPopup && !liftPopup.hidden) {
+        liftPopup.hidden = true;
+        liftPopup.setAttribute('aria-hidden', 'true');
+        lastHoveredLiftIndex = null;
+      }
     }
-    const slopePopupEl = document.getElementById('slopeHoverPopup');
-    if (slopePopupEl) { slopePopupEl.hidden = true; slopePopupEl.setAttribute('aria-hidden', 'true'); lastHoveredSlopeIndex = null; }
+    if (!isSlopePopupPinned) {
+      const slopePopupEl = document.getElementById('slopeHoverPopup');
+      if (slopePopupEl && !slopePopupEl.hidden) {
+        slopePopupEl.hidden = true;
+        slopePopupEl.setAttribute('aria-hidden', 'true');
+        lastHoveredSlopeIndex = null;
+      }
+    }
+    if (!otherMenusBlockGroomerHover(groomerIdx)) {
+      updateGroomerHoverPopup(groomerIdx, e.clientX, e.clientY);
+    }
     return;
   }
   if (isGroomerPopupPinned) return;
@@ -1328,12 +1362,19 @@ export function onCanvasMouseMove(e) {
   updateGroomerHoverPopup(-1, e.clientX, e.clientY);
   const slopeIdx = getSlopeIndexAtImage(pt.x, pt.y);
   if (slopeIdx >= 0 && !isSlopePopupPinned) {
-    // Do not show a slope popup while a lift popup is pinned.
     if (isPopupPinned) {
       hideSlopeHoverPopup();
       return;
     }
-
+    const slopePopupEl = document.getElementById('slopeHoverPopup');
+    if (
+      slopePopupEl &&
+      !slopePopupEl.hidden &&
+      lastHoveredSlopeIndex != null &&
+      lastHoveredSlopeIndex !== slopeIdx
+    ) {
+      return;
+    }
     updateSlopeHoverPopup(slopeIdx, e.clientX, e.clientY);
     const liftPopup = document.getElementById('liftHoverPopup');
     if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
@@ -1341,7 +1382,24 @@ export function onCanvasMouseMove(e) {
   }
   if (isSlopePopupPinned) return;
   const liftIdx = getLiftIndexAtImage(pt.x, pt.y);
-  updateLiftHoverPopup(liftIdx, e.clientX, e.clientY);
+  const liftPopupEl = document.getElementById('liftHoverPopup');
+  if (liftIdx < 0) {
+    updateLiftHoverPopup(-1, e.clientX, e.clientY);
+  } else {
+    const showingOtherUnpinnedLift =
+      !isPopupPinned &&
+      liftPopupEl &&
+      !liftPopupEl.hidden &&
+      lastHoveredLiftIndex != null &&
+      lastHoveredLiftIndex !== liftIdx;
+    const hoveringDifferentLiftWhilePinned =
+      isPopupPinned &&
+      lastHoveredLiftIndex != null &&
+      liftIdx !== lastHoveredLiftIndex;
+    if (!showingOtherUnpinnedLift && !hoveringDifferentLiftWhilePinned) {
+      updateLiftHoverPopup(liftIdx, e.clientX, e.clientY);
+    }
+  }
   const slopePopupEl = document.getElementById('slopeHoverPopup');
   if (!isPopupPinned && slopePopupEl) {
     isSlopePopupPinned = false;
@@ -1433,6 +1491,14 @@ export function onCanvasClick(e) {
     const placingLiftTop = state.mode === 'lift' && state.liftBottom && !state.liftTop;
     const groomerPopup = document.getElementById('groomerHoverPopup');
     if (groomerPopup && !groomerPopup.hidden && !isGroomerPopupPinned && groomerIdx >= 0) {
+      if (isOperatePopupVisible('liftHoverPopup') || isOperatePopupVisible('slopeHoverPopup')) {
+        e.stopPropagation();
+        return;
+      }
+      if (lastHoveredGroomerIndex != null && groomerIdx !== lastHoveredGroomerIndex) {
+        e.stopPropagation();
+        return;
+      }
       isGroomerPopupPinned = true;
       groomerPopup.setAttribute('data-pinned', 'true');
       e.stopPropagation();
@@ -1447,6 +1513,10 @@ export function onCanvasClick(e) {
     }
     const popup = document.getElementById('liftHoverPopup');
     if (popup && !popup.hidden && !isPopupPinned && liftIdx >= 0 && !placingLiftTop) {
+      if (isOperatePopupVisible('groomerHoverPopup') || isOperatePopupVisible('slopeHoverPopup')) {
+        e.stopPropagation();
+        return;
+      }
       isPopupPinned = true;
       popup.setAttribute('data-pinned', 'true');
       e.stopPropagation();

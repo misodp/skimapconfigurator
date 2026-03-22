@@ -42,17 +42,19 @@ function normalizeAngleForDisplay(angle) {
 
 function drawLiftLabel(ctx, scaleX, scaleY, name, ax, ay, bx, by, liftColor) {
   if (!name) return;
-  const midX = (ax + bx) / 2;
-  const midY = (ay + by) / 2;
-  const angle = Math.atan2(by - ay, bx - ax);
-  const drawAngle = normalizeAngleForDisplay(angle);
-  const offset = 20;
-  const perpX = -Math.sin(angle) * offset;
-  const perpY = Math.cos(angle) * offset;
-  const tx = midX + perpX;
-  const ty = midY + perpY;
+  // Offset in canvas pixels so the label stays a fixed distance from the line at any zoom.
+  const ddx = (bx - ax) * scaleX;
+  const ddy = (by - ay) * scaleY;
+  const len = Math.hypot(ddx, ddy) || 1;
+  const perpNx = -ddy / len;
+  const perpNy = ddx / len;
+  const offsetPx = 10;
+  const midSx = ((ax + bx) / 2) * scaleX;
+  const midSy = ((ay + by) / 2) * scaleY;
+  const angleScreen = Math.atan2(ddy, ddx);
+  const drawAngle = normalizeAngleForDisplay(angleScreen);
   ctx.save();
-  ctx.translate(tx * scaleX, ty * scaleY);
+  ctx.translate(midSx + perpNx * offsetPx, midSy + perpNy * offsetPx);
   ctx.rotate(drawAngle);
   ctx.fillStyle = liftColor;
   ctx.font = 'bold 12px "DM Sans", system-ui, sans-serif';

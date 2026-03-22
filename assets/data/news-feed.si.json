@@ -1,0 +1,81 @@
+{
+  "defaultMessage": "Prvi spust danes. Bomo videli!",
+  "lift": {
+    "positive": [
+      "Sploh se ne splača usesti, ker si že na vrsti. Ekspresno!",
+      "Hitreje sem na vrhu kot pa moji pancarji na nogah. Svetlobna hitrost!",
+      "Nobene vrste? Danes bom naredil več kilometrov kot moj avto na poti sem!",
+      "Žičničarji danes delajo kot švicarska ura. Kapo dol!",
+      "Tole je pa luksuz, direktno iz smuči na sedežnico brez čakanja.",
+      "Končno smučišče, kjer ne zapravim pol dneva v vrsti.",
+      "Vau, še preden sem odpel rokavice, sem bil že na vrhu!",
+      "To je tisto, kar plačaš – smučanje, ne pa stanje na mestu.",
+      "Danes gredo naprave hitreje kot moje noge dopuščajo!",
+      "Pravo privatno smučišče. Upam, da nihče ne izve zanj!"
+    ],
+    "negative": [
+      "Več časa sem stal v vrsti kot na smučeh! Katastrofa.",
+      "Moja brada je zrasla za dva centimetra, odkar čakamo na ta Girak.",
+      "A delijo zastonj golaž na vrhu, da vsi čakajo tukaj?",
+      "Uprava, a spite? Vrsta sega že do sosednje vasi!",
+      "Še tri pesmi na radiu, pa bomo morda prišli do vstopne rampe.",
+      "Tole ni smučišče, to je vaja iz potrpežljivosti v mrazu.",
+      "Če bi hotel stati v vrsti, bi šel v banko, ne pa na goro.",
+      "Moja kava v termovki se je že ohladila, pa še vedno nismo na vrsti.",
+      "Tale Poma se premika kot polž s protivnetno kremo.",
+      "Naslednjič prinesem stol in šahovnico za v tole vrsto."
+    ]
+  },
+  "crowd": {
+    "positive": [
+      "Končno lahko zarežem takšen zavoj, da bi me še Križaj pohvalil. Cela proga je moja!",
+      "Mir in tišina... na progi sem sam s svojimi mislimi in snegom. Čisti užitek.",
+      "Nobenega slalomiranja med ljudmi! Danes smučam kot kralj na svojem posestvu.",
+      "Proga je tako prazna, da bi lahko smučal z zaprtimi očmi.",
+      "To je tisto pravo – svoboda na gori brez strahu pred trkom.",
+      "Končno prostor za prave hitrostne zavoje brez zaviranja.",
+      "Danes je gora samo moja. Raj na zemlji!",
+      "Smučati na tako prazni progi je kot plesati v prazni dvorani.",
+      "Nobenih začetnikov, ki bi mi sekali pot. Popolno!",
+      "Tukaj se človek res lahko sprosti in uživa v hitrosti."
+    ],
+    "negative": [
+      "To ni smučišče, to je avtocesta v konici! Nevarno.",
+      "Nekdo me je skoraj povozil! Tukaj se sploh ne da več zavijati.",
+      "Danes smučajo vsi, od dojenčkov do prababic. Čisto mravljišče!",
+      "Pazi glavo! Ljudje letijo mimo mene kot nevodene rakete.",
+      "Tukaj je večja gneča kot v soboto na tržnici.",
+      "Smučanje v takšni množici je bolj podobno preživetju kot športu.",
+      "Vsakih deset metrov se moram ustaviti, da ne koga ne 'pobremzam'.",
+      "Tale proga je postala poligon za trčenja. Odhajam domov!",
+      "A so odprli samo eno progo za tisoč ljudi? Katastrofalna gneča.",
+      "Še v mestnem avtobusu je več prostora kot na tej strmini."
+    ]
+  },
+  "quality": {
+    "positive": [
+      "Te rebrce so tako popolne, da bi jih najraje fotografiral in uokviril!",
+      "Sneg je kot maslo – smuči kar same zavijajo. Čestitke ekipi z ratraki!",
+      "Tole je pa puhek prve klase. Še oblaki so ljubosumni na podlago!",
+      "Sneg drži kot pribit. Ratraki so opravili vrhunsko delo.",
+      "Zjutraj je bilo smučanje po teh rebrcih čista poezija.",
+      "Proga je zravnana kot z likalnikom. Užitek v vsakem zavoju!",
+      "Tudi popoldne sneg še vedno drži obliko. Odlična podlaga!",
+      "Brez ledu, brez grbin, samo čist užitek na snegu.",
+      "Kapo dol tistemu, ki je vozil ratrak danes ponoči. Mojster!",
+      "Tole je najboljša priprava proge v tej sezoni. Brez debate."
+    ],
+    "negative": [
+      "Smučam ali drsam? Proga je trda kot beton, kje so ratraki?!",
+      "Te grbine mi bodo uničile kolena. Kot bi se vozil po pralnem stroju.",
+      "Naredil sem en zavoj in končal v gozdu. Sneg je obupen.",
+      "Tukaj bi potreboval drsalke, ne pa smuči. Same ledene ploskve!",
+      "Proga izgleda kot bojišče po bombardiranju. Same jame in kupi.",
+      "A so ratrake prodali ali so vsi v okvari? Sneg je katastrofalen.",
+      "Težko je uživati, ko se boriš z grbinami visokimi kot hiše.",
+      "Smuči mi tresejo bolj kot stari pralni stroj pri centrfugi.",
+      "Čisti led. Uprava očitno varčuje pri urejanju prog.",
+      "Od takšne proge te samo noge bolijo, užitka pa nobenega."
+    ]
+  }
+}
