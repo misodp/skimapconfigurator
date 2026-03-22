@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
-  <script type="module" crossorigin src="/assets/index-D7WH25Jv.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-6V9Zgw8O.css">
+  <script type="module" crossorigin src="/assets/index-CqJ7tvx5.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CKUaerX6.css">
 </head>
 
 <body>
@@ -24,6 +24,7 @@
       <span class="splash-version" aria-hidden="true">v2.0.0</span>
       <span class="splash-build-date" aria-hidden="true"></span>
       <span class="splash-copyright" aria-hidden="true">© 2026 Mišo Duplančič</span>
+      <a class="splash-mail" href="mailto:miso@summit67.ski">miso@summit67.ski</a>
     </div>
   </div>
   <div id="gameOverOverlay" class="game-over-overlay" aria-label="Game over" aria-hidden="true">
@@ -194,7 +195,7 @@
                   </span>
                 </div>
                 <div class="tickets-slider-row">
-                  <input type="range" id="ticketPriceSlider" min="0" max="4" step="1" value="0"
+                  <input type="range" id="ticketPriceSlider" min="0" max="6" step="1" value="0"
                     aria-label="Ticket price">
                   <div class="tickets-ticks" aria-hidden="true">
                     <span>1.0</span>
@@ -202,6 +203,8 @@
                     <span>1.5</span>
                     <span>1.75</span>
                     <span>2.0</span>
+                    <span>2.25</span>
+                    <span>2.5</span>
                   </div>
                 </div>
               </div>
@@ -362,42 +365,53 @@
 
     <footer class="status-bar" aria-label="Status and controls">
       <div class="status-bar-inner">
-        <div class="status-bar-save-load" aria-label="Save and load game">
-          <button type="button" id="saveBtn" class="status-bar-icon-btn" title="Save game" aria-label="Save game">
-            <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-          </button>
-          <button type="button" id="loadBtn" class="status-bar-icon-btn" title="Load game" aria-label="Load game">
-            <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-          </button>
-          <input type="file" id="importInput" accept=".json" hidden />
+        <div class="status-bar-left">
+          <div class="status-bar-save-load" aria-label="Save and load game">
+            <button type="button" id="saveBtn" class="status-bar-icon-btn" title="Save game" aria-label="Save game">
+              <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                <polyline points="17 21 17 13 7 13 7 21" />
+                <polyline points="7 3 7 8 15 8" />
+              </svg>
+            </button>
+            <button type="button" id="loadBtn" class="status-bar-icon-btn" title="Load game" aria-label="Load game">
+              <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+            <input type="file" id="importInput" accept=".json" hidden />
+          </div>
         </div>
-        <div class="status-bar-speed" aria-label="Simulation speed">
-          <span class="status-bar-label">Speed:</span>
-          <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
-          <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
-          <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
-          <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
-          <button type="button" id="soundToggleBtn" class="status-bar-icon-btn status-bar-sound-btn"
-            title="Toggle sound" aria-label="Toggle sound" aria-pressed="true">
-            <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-              stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M11 5L6 9H2v6h4l5 4V5z" />
-              <path class="sound-wave" d="M15.5 8.5a5 5 0 0 1 0 7" />
-              <path class="sound-wave" d="M18 6a8.5 8.5 0 0 1 0 12" />
-              <path class="sound-mute" d="M22 9l-6 6" />
-              <path class="sound-mute" d="M16 9l6 6" />
-            </svg>
-          </button>
+        <div class="status-bar-center">
+          <span class="status-bar-title">Summit '67</span>
+          <span class="status-bar-brand-sep" aria-hidden="true">·</span>
+          <span class="status-bar-copyright">© 2026 Mišo Duplančič</span>
+          <span class="status-bar-brand-sep" aria-hidden="true">·</span>
+          <a class="status-bar-mail" href="mailto:miso@summit67.ski">miso@summit67.ski</a>
+        </div>
+        <div class="status-bar-right">
+          <div class="status-bar-speed" aria-label="Simulation speed">
+            <span class="status-bar-label">Speed:</span>
+            <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
+            <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
+            <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
+            <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
+            <button type="button" id="soundToggleBtn" class="status-bar-icon-btn status-bar-sound-btn"
+              title="Toggle sound" aria-label="Toggle sound" aria-pressed="true">
+              <svg class="status-bar-icon-btn-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" />
+                <path class="sound-wave" d="M15.5 8.5a5 5 0 0 1 0 7" />
+                <path class="sound-wave" d="M18 6a8.5 8.5 0 0 1 0 12" />
+                <path class="sound-mute" d="M22 9l-6 6" />
+                <path class="sound-mute" d="M16 9l6 6" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
     </footer>
@@ -417,7 +431,9 @@
     <div id="badgeUnlockOverlay" class="badge-unlock-overlay" aria-hidden="true" hidden>
       <img id="badgeUnlockFlyer" class="badge-unlock-flyer" alt="" />
     </div>
-  </div>
+  </div>
+  <!-- GoatCounter: privacy-friendly page views -->
+  <script data-goatcounter="https://summit67.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 </body>
 
 </html>
