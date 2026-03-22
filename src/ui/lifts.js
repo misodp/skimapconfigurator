@@ -3,7 +3,7 @@
  */
 
 import spriteSheetUrl from '../../assets/images/SpriteSheet.webp';
-import skidollarg2mUrl from '../../assets/images/Skidollar_g2m.webp';
+import skidollarg2mUrl from '../../assets/images/Skidollar_gold.webp';
 import { state } from '../state';
 import { escapeHtml, formatNumber, scale1to3, skidollarIconsHtml, isTechBuyable } from '../utils.js';
 import { COLS, ROWS } from '../constants';
@@ -133,7 +133,7 @@ export function renderLiftTypeDropdown(opts) {
 
   if (!skipPanelBlank) setPanelBlank();
 
-  window.liftDropdownUpdateTrigger = () => {};
+  window.liftDropdownUpdateTrigger = () => { };
   window.liftDetailSetBlank = setPanelBlank;
   window.liftDetailShowById = showFloatingPanel;
 }

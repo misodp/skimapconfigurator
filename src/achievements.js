@@ -90,6 +90,16 @@ function getSlopeReputationMultiplier() {
   return mult;
 }
 
+/**
+ * Lift × slope reputation multipliers (used for visitors / effective satisfaction and leaderboard).
+ * @returns {{ lift: number; slope: number; combined: number }}
+ */
+export function getReputationMultipliers() {
+  const lift = getLiftReputationMultiplier();
+  const slope = getSlopeReputationMultiplier();
+  return { lift, slope, combined: lift * slope };
+}
+
 function hasTwoSeaterLift() {
   return state.lifts.some((lift) => TWO_SEATER_LIFT_IDS.includes(lift.type));
 }

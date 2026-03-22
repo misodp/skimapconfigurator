@@ -2,7 +2,7 @@
  * Tycoon game loop: advances simulation date every TICK_MS, updates header display.
  */
 
-import { state, DOM } from './state';
+import { state, DOM, recordPeakDailyVisitors } from './state';
 import type { SimulationDate } from './types';
 import { getSeason, generateWeatherForSeason, getDailySnowfall, getDailyMelt, getTempRange } from './weather-simulation';
 import { updateWeatherDisplay } from './weather-icon';
@@ -58,6 +58,7 @@ function advanceDay(): void {
   const dailyMelt = getDailyMelt(season, state.currentWeather);
   state.snowDepth = Math.max(0, Math.min(450, state.snowDepth + dailySnowfall - dailyMelt));
   state.dailyVisitors = getDailyVisitors();
+  recordPeakDailyVisitors(state.dailyVisitors);
   const effectiveLiftCap = getEffectiveLiftCapacity();
   const slopeCap = getTotalSlopeCapacity();
   const groomingDemand = getTotalGroomingDemand();
@@ -164,6 +165,7 @@ export function startSimulation(): void {
   state.dailyTempLow = tLow;
   state.dailyTempHigh = tHigh;
   state.dailyVisitors = getDailyVisitors();
+  recordPeakDailyVisitors(state.dailyVisitors);
   const effectiveLiftCap = getEffectiveLiftCapacity();
   const slopeCap = getTotalSlopeCapacity();
   const groomingDemand = getTotalGroomingDemand();

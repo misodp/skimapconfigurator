@@ -27,6 +27,8 @@ export interface AppState {
   currentWeather: WeatherType;
   /** Daily visitors (recalculated each day from lift capacity and weather). */
   dailyVisitors: number;
+  /** Highest daily visitors reached this session (persisted in saves; used for leaderboard). */
+  peakDailyVisitors: number;
   /** Last day's ticket sales (visitors × ticket price). */
   dailySales: number;
   /** Last day's operating costs (lifts + groomers). */
@@ -101,6 +103,8 @@ export interface AppState {
   mountainDaysAtPending: number;
   /** Unlocked achievement badges (computed from lifts/slopes). */
   achievements: { family: boolean; highAlpine: boolean; freeride: boolean; topOfWorld: boolean };
+  /** Player / manager name from splash (used for flavour / saves). */
+  playerName: string;
 }
 
 const START_DATE: SimulationDate = { year: 1960, month: 1, day: 1 };
@@ -159,7 +163,14 @@ export const state: AppState = {
   mountainPendingThreshold: null,
   mountainDaysAtPending: 0,
   achievements: { family: false, highAlpine: false, freeride: false, topOfWorld: false },
+  playerName: '',
 };
+
+/** Update session peak when daily visitors are recalculated (simulation tick or refresh). */
+export function recordPeakDailyVisitors(currentVisitors: number): void {
+  const v = Math.max(0, Math.round(Number(currentVisitors) || 0));
+  if (v > state.peakDailyVisitors) state.peakDailyVisitors = v;
+}
 
 export const DOM: DOMRefs = {
   mountainImage: null,

@@ -2,13 +2,14 @@
  * Config export/import, sidebar lists, budget display, and central refresh().
  */
 
-import { state, DOM, getSlopeType, getDiffColor } from './state';
+import { state, DOM, getSlopeType, getDiffColor, recordPeakDailyVisitors } from './state';
 import { draw } from './draw.js';
 import { escapeHtml, formatCurrency, formatNumber } from './utils.js';
 import { getDailyVisitors } from './economics.js';
 import { getSlopePathLengthM, getLiftLengthM, fromNormalized } from './geometry.js';
 import { getTotalLiftCapacity, getTotalSlopeCapacity, getTotalGroomingDemand, getTotalGroomingCapacity } from './experience-simulator';
 import { updateAchievementBadges, getEffectiveSatisfaction } from './achievements.js';
+import { openHallOfFameAfterSave } from './ui/hall-of-fame.js';
 import { getEffectiveLiftCapacity } from './maintenance_simulator';
 
 export function updateBudgetDisplay() {
@@ -47,6 +48,25 @@ export function updateTicketPriceDisplay() {
     const idx = TICKET_STEPS.indexOf(Number(price));
     slider.value = String(idx >= 0 ? idx : 0);
   }
+}
+
+/** Map a numeric save value to the nearest allowed ticket step. */
+export function normalizeTicketPriceFromSave(raw) {
+  const n = raw != null ? Number(raw) : NaN;
+  if (!Number.isFinite(n)) return TICKET_STEPS[0];
+  const exact = TICKET_STEPS.find((s) => Math.abs(s - n) < 1e-6);
+  if (exact != null) return exact;
+  let best = TICKET_STEPS[0];
+  let bestD = Math.abs(best - n);
+  for (let i = 1; i < TICKET_STEPS.length; i++) {
+    const s = TICKET_STEPS[i];
+    const d = Math.abs(s - n);
+    if (d < bestD) {
+      best = s;
+      bestD = d;
+    }
+  }
+  return best;
 }
 
 export function updateDailyFinanceDisplay() {
@@ -392,12 +412,14 @@ export function renderLists() {
 /** Save format version for future migrations. */
 const SAVE_VERSION = 1;
 
-export function exportConfig() {
-  const config = {
+/** Full game snapshot for download / Supabase (single source of truth). */
+export function buildGameSaveConfig() {
+  return {
     version: SAVE_VERSION,
     currentDate: state.currentDate,
     currentWeather: state.currentWeather,
     dailyVisitors: state.dailyVisitors,
+    peakDailyVisitors: state.peakDailyVisitors,
     dailySales: state.dailySales,
     dailyCost: state.dailyCost,
     dailyProfit: state.dailyProfit,
@@ -423,13 +445,23 @@ export function exportConfig() {
     cottages: state.cottages,
     groomers: state.groomers,
     budget: state.budget,
+    playerName: state.playerName,
+    ticketPrice: state.ticketPrice,
   };
+}
+
+export function exportConfig() {
+  const config = buildGameSaveConfig();
   const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'ski-map-save.json';
   a.click();
   URL.revokeObjectURL(a.href);
+
+  void openHallOfFameAfterSave(config).catch((err) => {
+    console.warn('[Hall of Fame]', err);
+  });
 }
 
 export function onConfigImported(e) {
@@ -509,6 +541,11 @@ export function applyImportedConfig(config, opts = {}) {
   const validWeather = ['sunny', 'snowy', 'blizzard', 'cloudy', 'icy'];
   if (validWeather.includes(config.currentWeather)) state.currentWeather = config.currentWeather;
   if (config.dailyVisitors != null) state.dailyVisitors = config.dailyVisitors;
+  if (config.peakDailyVisitors != null) {
+    state.peakDailyVisitors = Math.max(0, Math.round(Number(config.peakDailyVisitors)));
+  } else if (config.dailyVisitors != null) {
+    state.peakDailyVisitors = Math.max(0, Math.round(Number(config.dailyVisitors)));
+  }
   if (config.dailySales != null) state.dailySales = config.dailySales;
   if (config.dailyCost != null) state.dailyCost = config.dailyCost;
   if (config.dailyProfit != null) state.dailyProfit = config.dailyProfit;
@@ -535,6 +572,12 @@ export function applyImportedConfig(config, opts = {}) {
   if (config.groomerType != null) state.groomerType = config.groomerType;
   if (config.slopeDrawMode === 'points' || config.slopeDrawMode === 'pen') state.slopeDrawMode = config.slopeDrawMode;
   if (config.resortOpen !== undefined) state.resortOpen = Boolean(config.resortOpen);
+  if (config.playerName != null && typeof config.playerName === 'string') {
+    state.playerName = config.playerName.slice(0, 200);
+  }
+  if (config.ticketPrice != null) {
+    state.ticketPrice = normalizeTicketPriceFromSave(config.ticketPrice);
+  }
   if (pauseTicker) state.simulationSpeed = 0;
 
   // Match snow depth trend widget to loaded snapshot (avoid stale arrow vs previous session).

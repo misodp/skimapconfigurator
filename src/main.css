@@ -73,14 +73,129 @@ body {
   display: block;
 }
 
-.splash-overlay .splash-actions {
+.splash-overlay .splash-actions.splash-name-bar {
   position: absolute;
-  left: 50%;
-  bottom: 42px;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  top: auto;
   display: flex;
-  gap: 0.6rem;
-  z-index: 1;
+  justify-content: center;
+  align-items: center;
+  padding: 0.55rem 1rem 52px;
+  z-index: 2;
+  width: 100%;
+  box-sizing: border-box;
+  pointer-events: none;
+  background: none;
+  border: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+.splash-overlay .splash-actions.splash-name-bar .splash-name-form {
+  pointer-events: auto;
+}
+
+.splash-name-form {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem 0.65rem;
+  width: 100%;
+  max-width: min(720px, calc(100vw - 2rem));
+  min-width: 0;
+}
+
+.splash-name-label {
+  margin: 0;
+  flex-shrink: 0;
+  padding: 0.32rem 0.75rem;
+  font: 700 0.82rem "DM Sans", system-ui, sans-serif;
+  letter-spacing: 0.02em;
+  color: #1e1b2e;
+  white-space: nowrap;
+  background: rgba(255, 246, 230, 0.95);
+  border: 1px solid rgba(38, 35, 52, 0.22);
+  border-radius: 999px;
+  box-shadow:
+    0 2px 12px rgba(15, 23, 42, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+.splash-name-input {
+  margin: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 0;
+  max-width: 11rem;
+  box-sizing: border-box;
+  padding: 0.48rem 0.75rem;
+  border: 1px solid rgba(38, 35, 52, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--text);
+  font: 500 0.85rem "DM Sans", system-ui, sans-serif;
+  box-shadow: 0 2px 10px rgba(15, 23, 42, 0.1);
+}
+
+.splash-name-input::placeholder {
+  color: var(--text-muted);
+}
+
+.splash-name-input::selection {
+  background: #e5d4b8;
+  color: #1e1b2e;
+}
+
+.splash-name-input::-moz-selection {
+  background: #e5d4b8;
+  color: #1e1b2e;
+}
+
+.splash-name-input:focus {
+  outline: none;
+  border-color: rgba(38, 35, 52, 0.55);
+  box-shadow:
+    0 2px 10px rgba(15, 23, 42, 0.1),
+    0 0 0 2px rgba(212, 196, 160, 0.55);
+}
+
+.splash-name-form .splash-action-btn {
+  flex: 0 0 auto;
+  margin: 0;
+  white-space: nowrap;
+  padding: 0.48rem 1rem;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 520px) {
+  .splash-overlay .splash-actions.splash-name-bar {
+    padding-left: 0.65rem;
+    padding-right: 0.65rem;
+    padding-bottom: 48px;
+  }
+
+  .splash-name-form {
+    gap: 0.4rem 0.45rem;
+  }
+
+  .splash-name-label {
+    font-size: 0.72rem;
+    padding: 0.28rem 0.55rem;
+  }
+
+  .splash-name-input {
+    max-width: min(11rem, calc(100vw - 10rem));
+  }
+
+  .splash-name-form .splash-action-btn {
+    padding: 0.45rem 0.7rem;
+    font-size: 0.76rem;
+  }
 }
 
 .splash-overlay .splash-action-btn {
@@ -121,6 +236,7 @@ body {
   position: absolute;
   right: 12px;
   bottom: 12px;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -179,6 +295,299 @@ body {
   display: block;
 }
 
+/* Hall of Fame — after save, top 10 by score */
+.hall-of-fame-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10005;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.32s ease;
+}
+
+.hall-of-fame-overlay.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.hall-of-fame-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(10, 8, 18, 0.72);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+}
+
+.hall-of-fame-panel {
+  position: relative;
+  z-index: 1;
+  width: min(720px, calc(100vw - 2rem));
+  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 1.35rem 1rem 1.5rem;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 230, 200, 0.35);
+  background: linear-gradient(165deg, rgba(255, 248, 235, 0.98) 0%, rgba(255, 228, 198, 0.96) 100%);
+  box-shadow:
+    0 24px 48px rgba(15, 10, 30, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.4) inset;
+  font-family: "DM Sans", system-ui, sans-serif;
+}
+
+.hall-of-fame-close {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 2.25rem;
+  height: 2.25rem;
+  margin: 0;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(26, 21, 40, 0.08);
+  color: #1a1528;
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease;
+}
+
+.hall-of-fame-close:hover {
+  background: rgba(26, 21, 40, 0.14);
+  transform: scale(1.05);
+}
+
+.hall-of-fame-brand {
+  margin-top: 0.25rem;
+  margin-bottom: 0.35rem;
+  align-self: center;
+}
+
+.hall-of-fame-logo {
+  display: block;
+  width: auto;
+  max-width: min(280px, 78vw);
+  height: auto;
+  max-height: 72px;
+  object-fit: contain;
+}
+
+.hall-of-fame-heading {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.38em;
+  text-indent: 0.38em;
+  text-align: center;
+  color: #3d2f4a;
+}
+
+.hall-of-fame-loading {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #5c4d6b;
+  text-align: center;
+  align-self: center;
+}
+
+.hall-of-fame-error {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: #8b2942;
+  text-align: center;
+  align-self: center;
+}
+
+.hall-of-fame-table-wrap {
+  width: 100%;
+  max-height: min(400px, 52vh);
+  overflow: auto;
+  border-radius: 10px;
+  border: 1px solid rgba(61, 47, 74, 0.1);
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.hall-of-fame-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  table-layout: fixed;
+}
+
+/* Column widths: rank + name flexible, numeric columns even for alignment */
+.hall-of-fame-col-rank {
+  width: 2.25rem;
+}
+
+.hall-of-fame-col-name {
+  width: 26%;
+  min-width: 5rem;
+}
+
+.hall-of-fame-col-num {
+  width: 14%;
+  min-width: 3.25rem;
+}
+
+.hall-of-fame-col-skiers {
+  width: 18%;
+  min-width: 4.25rem;
+}
+
+.hall-of-fame-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 0.5rem 0.4rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #5c4d6b;
+  background: rgba(255, 236, 210, 0.95);
+  border-bottom: 1px solid rgba(61, 47, 74, 0.12);
+  vertical-align: bottom;
+  line-height: 1.25;
+}
+
+.hall-of-fame-table thead th.hall-of-fame-th-name {
+  text-align: left;
+}
+
+.hall-of-fame-table thead th.hall-of-fame-th-num {
+  text-align: right;
+  padding-left: 0.5rem;
+  padding-right: 0.45rem;
+}
+
+/* Long label: center above right-aligned numbers so it doesn’t hug the wrong edge */
+.hall-of-fame-table thead th.hall-of-fame-th-skiers {
+  text-align: center;
+  padding-left: 0.35rem;
+  padding-right: 0.35rem;
+  hyphens: auto;
+  word-break: break-word;
+}
+
+.hall-of-fame-th-rank {
+  text-align: center !important;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.hall-of-fame-table tbody td {
+  padding: 0.45rem 0.35rem;
+  border-bottom: 1px solid rgba(61, 47, 74, 0.06);
+  vertical-align: middle;
+  color: #1a1528;
+}
+
+.hall-of-fame-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.hall-of-fame-table tbody tr {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.hall-of-fame-table tbody tr.hall-of-fame-row--first {
+  background: linear-gradient(90deg, rgba(255, 215, 140, 0.35), rgba(255, 255, 255, 0.55));
+}
+
+.hall-of-fame-table tbody tr.hall-of-fame-row--you {
+  box-shadow: inset 0 0 0 2px rgba(59, 130, 246, 0.55);
+  background: linear-gradient(90deg, rgba(219, 234, 254, 0.75), rgba(255, 255, 255, 0.8));
+}
+
+.hall-of-fame-table tbody tr.hall-of-fame-row--first.hall-of-fame-row--you {
+  background: linear-gradient(90deg, rgba(255, 215, 140, 0.4), rgba(191, 219, 254, 0.65));
+  box-shadow: inset 0 0 0 2px rgba(37, 99, 235, 0.5);
+}
+
+.hall-of-fame-you-badge {
+  display: inline-block;
+  flex-shrink: 0;
+  margin-left: 0.15rem;
+  padding: 0.1rem 0.4rem;
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  background: rgba(37, 99, 235, 0.18);
+  color: #1d4ed8;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+
+.hall-of-fame-td-rank {
+  font-weight: 700;
+  color: #6b5a7a;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+}
+
+.hall-of-fame-td-name {
+  font-weight: 600;
+  text-align: left;
+  max-width: 0;
+  overflow: hidden;
+  padding-right: 0.5rem;
+}
+
+.hall-of-fame-name-inner {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.hall-of-fame-podium-coin {
+  width: 1.375rem;
+  height: 1.375rem;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.hall-of-fame-name-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.hall-of-fame-td-num {
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+  padding-left: 0.5rem;
+  padding-right: 0.45rem;
+}
+
+.hall-of-fame-td-score {
+  font-weight: 700;
+  color: #2d6a4f;
+}
+
+.hall-of-fame-empty-row td.hall-of-fame-empty {
+  padding: 1.25rem 0.75rem;
+  text-align: center;
+  font-size: 0.88rem;
+  color: #5c4d6b;
+  font-weight: 500;
+}
+
 .intro-video-overlay {
   position: fixed;
   inset: 0;
@@ -210,31 +619,58 @@ body {
   display: block;
 }
 
-.intro-video-toggle-btn {
+.intro-video-controls {
   position: absolute;
   left: 50%;
   bottom: 22px;
   transform: translateX(-50%);
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.65rem;
+  z-index: 1;
+}
+
+.intro-video-toggle-btn,
+.intro-video-skip-btn {
   margin: 0;
   padding: 0.42rem 0.85rem;
-  border: 1px solid rgba(255, 255, 255, 0.45);
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.68);
-  color: #fff;
   font: 600 0.78rem "DM Sans", system-ui, sans-serif;
   cursor: pointer;
-  z-index: 1;
   transition: background 0.12s ease, transform 0.12s ease, border-color 0.12s ease;
+}
+
+.intro-video-toggle-btn {
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  background: rgba(15, 23, 42, 0.68);
+  color: #fff;
 }
 
 .intro-video-toggle-btn:hover {
   background: rgba(15, 23, 42, 0.86);
   border-color: rgba(255, 255, 255, 0.7);
-  transform: translateX(-50%) translateY(-1px);
+  transform: translateY(-1px);
 }
 
 .intro-video-toggle-btn:active {
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
+}
+
+.intro-video-skip-btn {
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(15, 23, 42, 0.45);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+.intro-video-skip-btn:hover {
+  background: rgba(15, 23, 42, 0.72);
+  border-color: rgba(255, 255, 255, 0.5);
+  transform: translateY(-1px);
+}
+
+.intro-video-skip-btn:active {
+  transform: translateY(0);
 }
 
 .build-mask-hint {

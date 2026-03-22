@@ -4,7 +4,7 @@
 
 import cottageIconUrl from '../assets/images/cottage.webp';
 import spriteSheetUrl from '../assets/images/SpriteSheet.webp';
-import skidollarg2mUrl from '../assets/images/Skidollar_g2m.webp';
+import skidollarg2mUrl from '../assets/images/Skidollar_gold.webp';
 import skiersH1Url from '../assets/images/skiers/skiers_h1.webp';
 import skiersH2Url from '../assets/images/skiers/skiers_h2.webp';
 import skiersA1Url from '../assets/images/skiers/skiers_a1.webp';
@@ -27,6 +27,7 @@ import { isTechBuyable } from './utils.js';
 import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed } from './news-feed.js';
 import { initBuildMask } from './build-mask';
+import { pickRandomSixtiesName } from './splash-names.js';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
 import introVideoUrl from '../assets/video/Intro.mp4';
 import tutorialConfig from '../assets/data/tutorial.json';
@@ -874,6 +875,7 @@ function initIntroVideo() {
   const overlay = /** @type {HTMLDivElement | null} */ (document.getElementById('introVideoOverlay'));
   const video = /** @type {HTMLVideoElement | null} */ (document.getElementById('introVideo'));
   const toggleBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('introVideoToggleBtn'));
+  const skipBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('introVideoSkipBtn'));
   if (!overlay || !video || !introVideoUrl) {
     // If intro video is unavailable, still allow "Start Tutorial" path to continue.
     window.addEventListener('splashdissolve', (evt) => {
@@ -965,26 +967,39 @@ function initIntroVideo() {
   window.addEventListener('pointerdown', unlockIntroPlayback);
   window.addEventListener('keydown', unlockIntroPlayback);
 
-  overlay.addEventListener('click', () => {
-    // If autoplay was blocked, first click should start playback, not skip.
+  function toggleIntroVideoPlayPause() {
+    if (finished) return;
     if (autoplayBlocked) {
       tryPlayIntro();
       return;
     }
-    finishIntro();
+    if (video.paused) {
+      tryPlayIntro();
+    } else {
+      video.pause();
+      autoplayBlocked = false;
+      updateToggleButton();
+    }
+  }
+
+  video.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleIntroVideoPlayPause();
   });
+
+  if (skipBtn) {
+    skipBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      finishIntro();
+    });
+  }
 
   if (toggleBtn) {
     toggleBtn.addEventListener('click', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      if (video.paused) {
-        tryPlayIntro();
-      } else {
-        video.pause();
-        autoplayBlocked = false;
-        updateToggleButton();
-      }
+      toggleIntroVideoPlayPause();
     });
   }
 
@@ -1041,20 +1056,45 @@ function initSplash() {
     }, { once: true });
   }
 
-  const startTutorialBtn = document.getElementById('startTutorialBtn');
-  const newGameBtn = document.getElementById('newGameBtn');
-  if (startTutorialBtn) {
-    startTutorialBtn.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      dissolve(true);
-    }, { once: true });
+  const splashForm = /** @type {HTMLFormElement | null} */ (document.getElementById('splashStartForm'));
+  const nameInput = /** @type {HTMLInputElement | null} */ (document.getElementById('splashPlayerName'));
+
+  if (nameInput) {
+    nameInput.value = pickRandomSixtiesName();
+    requestAnimationFrame(() => {
+      try {
+        nameInput.focus();
+        nameInput.select();
+      } catch {
+        /* ignore */
+      }
+    });
+    // If focus was blocked until user gesture, select all on first click so typing replaces the random name.
+    nameInput.addEventListener(
+      'focus',
+      function splashNameSelectOnce() {
+        nameInput.select();
+        nameInput.removeEventListener('focus', splashNameSelectOnce);
+      },
+      { once: true },
+    );
   }
-  if (newGameBtn) {
-    newGameBtn.addEventListener('click', (e) => {
+
+  let splashStartCommitted = false;
+  function startAdventure() {
+    if (splashStartCommitted) return;
+    splashStartCommitted = true;
+    const raw = nameInput && typeof nameInput.value === 'string' ? nameInput.value.trim() : '';
+    state.playerName = raw || pickRandomSixtiesName();
+    state.peakDailyVisitors = 0;
+    dissolve(true);
+  }
+
+  if (splashForm) {
+    splashForm.addEventListener('submit', (e) => {
       e.preventDefault();
       e.stopPropagation();
-      dissolve(false);
-    }, { once: true });
+      startAdventure();
+    });
   }
 }

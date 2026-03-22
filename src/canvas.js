@@ -17,7 +17,7 @@ import { getGroomerImageUrl } from './ui/groomers.js';
 import { getSlopeSpritePositionStyle } from './ui/slopes.js';
 import { COLS, ROWS } from './constants';
 import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier, getGroomerHealthZone, getGroomerServiceCost, getGroomerEffectiveCapacityMultiplier } from './maintenance_simulator';
-import skidollarg2mUrl from '../assets/images/Skidollar_g2m.webp';
+import skidollarg2mUrl from '../assets/images/Skidollar_gold.webp';
 import { isBuildableAtImagePoint } from './build-mask';
 
 const PEN_SMOOTH_SAMPLES = 24;
