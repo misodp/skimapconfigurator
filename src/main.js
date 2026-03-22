@@ -6,4 +6,6 @@
 
 import { init } from './init.js';
 
-init();
+void init().catch((err) => {
+  console.error(err);
+});

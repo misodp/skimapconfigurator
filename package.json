@@ -1,7 +1,7 @@
 {
   "name": "ski-map-configurator",
   "private": true,
-  "version": "0.9.6 Alpha",
+  "version": "0.9.8 Beta",
   "type": "module",
   "scripts": {
     "encrypt-assets": "node scripts/encrypt-s67.mjs",

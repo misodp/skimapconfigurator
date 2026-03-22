@@ -9,11 +9,20 @@ import skiersH1Url from '../assets/images/skiers/skiers_h1.webp';
 import skiersH2Url from '../assets/images/skiers/skiers_h2.webp';
 import skiersA1Url from '../assets/images/skiers/skiers_a1.webp';
 import skiersA2Url from '../assets/images/skiers/skiers_a2.webp';
+import skiersH1SiUrl from '../assets/images/skiers/animals/skiers_h1.webp';
+import skiersH2SiUrl from '../assets/images/skiers/animals/skiers_h2.webp';
+import skiersA1SiUrl from '../assets/images/skiers/animals/skiers_a1.webp';
+import skiersA2SiUrl from '../assets/images/skiers/animals/skiers_a2.webp';
 import badgeTopWorldUrl from '../assets/images/badges/top_world.webp';
 import badgeFamilyUrl from '../assets/images/badges/family_friendly.webp';
 import badgeAlpineUrl from '../assets/images/badges/high_alpine.webp';
 import badgeFreerideUrl from '../assets/images/badges/freeride_paradise.webp';
-import techTreeData from '../assets/data/techTree.json';
+import badgeTopWorldSiUrl from '../assets/images/badges/animals/top_world.webp';
+import badgeFamilySiUrl from '../assets/images/badges/animals/family_friendly.webp';
+import badgeAlpineSiUrl from '../assets/images/badges/animals/high_alpine.webp';
+import badgeFreerideSiUrl from '../assets/images/badges/animals/freeride_paradise.webp';
+import techTreeDefault from '../assets/data/techTree.json';
+import { isSlovenianLocaleActive, toggleSlovenianLocaleAndReload } from './locale-si.js';
 import { state, DOM } from './state';
 import { refresh, updateBudgetDisplay, exportConfig, onConfigImported, applyImportedConfig, TICKET_STEPS, updateTicketPriceDisplay } from './config.js';
 import { startSimulation, stopSimulation, updateDateDisplay, applySimulationSpeed } from './simulation';
@@ -25,15 +34,21 @@ import { renderGroomerTypeDropdown, getGroomerImageUrls, getGroomerMapImageUrls,
 import { initInvestCompactSidebar } from './ui/invest-inventory.js';
 import { isTechBuyable } from './utils.js';
 import { updateMountainImage, setMountainMode } from './mountain-images.js';
-import { initNewsFeed } from './news-feed.js';
+import { initNewsFeed, setNewsFeedCopy } from './news-feed.js';
 import { initBuildMask } from './build-mask';
 import { pickRandomSixtiesName } from './splash-names.js';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
 import introVideoUrl from '../assets/video/Intro.mp4';
 import tutorialS67Url from '../assets/data/tutorial.s67?url';
 import { loadEncryptedJsonFromUrl } from './save-crypto.js';
-import tutorialCharacterUrl from '../assets/images/skiers/Character.png';
-import tutorialHansUrl from '../assets/images/skiers/Hans.png';
+import tutorialCharacterDefaultUrl from '../assets/images/skiers/Character.png';
+import tutorialHansDefaultUrl from '../assets/images/skiers/Hans.png';
+import tutorialCharacterSiUrl from '../assets/images/skiers/animals/Character.png';
+import tutorialHansSiUrl from '../assets/images/skiers/animals/Hans.png';
+
+/** Tutorial dialogue portraits (Slovenian hidden locale uses animals/). */
+let tutorialCharacterUrl = tutorialCharacterDefaultUrl;
+let tutorialHansUrl = tutorialHansDefaultUrl;
 const musicModules = import.meta.glob('../assets/music/*.{mp3,ogg,wav,m4a}', { eager: true, import: 'default' });
 
 let simulationStarted = false;
@@ -433,7 +448,7 @@ function onImageSelected(e) {
   DOM.mountainImage.src = url;
 }
 
-export function init() {
+export async function init() {
   DOM.mountainImage = document.getElementById('mountainImage');
   DOM.canvas = document.getElementById('drawCanvas');
   DOM.ctx = DOM.canvas.getContext('2d');
@@ -656,6 +671,42 @@ export function init() {
     }
   });
 
+  const useSi = isSlovenianLocaleActive();
+  /** @type {typeof techTreeDefault} */
+  let techTreeData = techTreeDefault;
+  if (useSi) {
+    tutorialCharacterUrl = tutorialCharacterSiUrl;
+    tutorialHansUrl = tutorialHansSiUrl;
+    try {
+      const techUrl = new URL('../assets/data/techTree.si.json', import.meta.url).href;
+      const res = await fetch(techUrl);
+      if (res.ok) {
+        techTreeData = await res.json();
+      }
+    } catch {
+      /* keep default tech tree */
+    }
+    try {
+      const newsUrl = new URL('../assets/data/news-feed.si.json', import.meta.url).href;
+      const resN = await fetch(newsUrl);
+      if (resN.ok) {
+        setNewsFeedCopy(await resN.json());
+      }
+    } catch {
+      /* keep default news copy */
+    }
+  } else {
+    tutorialCharacterUrl = tutorialCharacterDefaultUrl;
+    tutorialHansUrl = tutorialHansDefaultUrl;
+  }
+
+  const newsHappyUrls = useSi ? [skiersH1SiUrl, skiersH2SiUrl] : [skiersH1Url, skiersH2Url];
+  const newsAngryUrls = useSi ? [skiersA1SiUrl, skiersA2SiUrl] : [skiersA1Url, skiersA2Url];
+  const badgeTopSrc = useSi ? badgeTopWorldSiUrl : badgeTopWorldUrl;
+  const badgeFamilySrc = useSi ? badgeFamilySiUrl : badgeFamilyUrl;
+  const badgeAlpineSrc = useSi ? badgeAlpineSiUrl : badgeAlpineUrl;
+  const badgeFreerideSrc = useSi ? badgeFreerideSiUrl : badgeFreerideUrl;
+
   state.liftTypes = (techTreeData && techTreeData.lifts) ? [...techTreeData.lifts] : [];
   const buyableLifts = state.liftTypes.filter(isTechBuyable);
   state.liftType = buyableLifts[0]?.id ?? state.liftTypes[0]?.id ?? null;
@@ -674,7 +725,7 @@ export function init() {
   initBuildMask(buildMaskUrl).catch(() => {
     // Fail open if mask fails to load; building remains allowed.
   });
-  initNewsFeed([skiersH1Url, skiersH2Url], [skiersA1Url, skiersA2Url]);
+  initNewsFeed(newsHappyUrls, newsAngryUrls);
   renderLiftTypeDropdown();
   renderSlopeTypeButtons();
   renderGroomerTypeDropdown();
@@ -693,10 +744,10 @@ export function init() {
   const badgeFamily = document.getElementById('badgeFamily');
   const badgeAlpine = document.getElementById('badgeAlpine');
   const badgeFreeride = document.getElementById('badgeFreeride');
-  if (badgeTopWorld) badgeTopWorld.src = badgeTopWorldUrl;
-  if (badgeFamily) badgeFamily.src = badgeFamilyUrl;
-  if (badgeAlpine) badgeAlpine.src = badgeAlpineUrl;
-  if (badgeFreeride) badgeFreeride.src = badgeFreerideUrl;
+  if (badgeTopWorld) badgeTopWorld.src = badgeTopSrc;
+  if (badgeFamily) badgeFamily.src = badgeFamilySrc;
+  if (badgeAlpine) badgeAlpine.src = badgeAlpineSrc;
+  if (badgeFreeride) badgeFreeride.src = badgeFreerideSrc;
 
   DOM.mountainImage.onload = () => {
     state.image = DOM.mountainImage;
@@ -1101,4 +1152,23 @@ function initSplash() {
       startAdventure();
     });
   }
+
+  /** Hidden: Ctrl+Q toggles Slovenian session (techTree.si, news-feed.si, animals art) and reloads. */
+  document.addEventListener(
+    'keydown',
+    (e) => {
+      const el = document.getElementById('splashOverlay');
+      if (!el || el.classList.contains('splash-dissolve')) return;
+      if (!e.ctrlKey || e.shiftKey || e.altKey || e.metaKey) return;
+      if (e.code !== 'KeyQ' && e.key !== 'q' && e.key !== 'Q') return;
+      const t = e.target;
+      if (t instanceof HTMLInputElement || t instanceof HTMLTextAreaElement || t instanceof HTMLSelectElement) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      toggleSlovenianLocaleAndReload();
+    },
+    true,
+  );
 }

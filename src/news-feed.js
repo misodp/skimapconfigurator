@@ -1,32 +1,45 @@
 /**
  * Header news feed: shows a new item every 3 simulation ticks based on lift wait, slope crowds and slope quality.
  *
- * Default copy: assets/data/news-feed.json (bundled at build time).
- * For another language, keep the same JSON shape in e.g. news-feed.si.json and change the import path below.
+ * Default copy: assets/data/news-feed.json. Slovenian: news-feed.si.json (loaded when locale session flag is set).
  */
 
+import defaultNewsFeedCopy from '../assets/data/news-feed.json';
 import { state } from './state';
-import newsFeedCopy from '../assets/data/news-feed.json';
 
 const NEWS_TICK_INTERVAL = 3;
 const SKIER_FRAMES = 5;
 /** Experience 0–100: above this = positive news, else negative. */
 const POSITIVE_THRESHOLD = 50;
 
-const NEWS_LIFT_POSITIVE = newsFeedCopy.lift.positive;
-const NEWS_LIFT_NEGATIVE = newsFeedCopy.lift.negative;
-const NEWS_CROWD_POSITIVE = newsFeedCopy.crowd.positive;
-const NEWS_CROWD_NEGATIVE = newsFeedCopy.crowd.negative;
-const NEWS_QUALITY_POSITIVE = newsFeedCopy.quality.positive;
-const NEWS_QUALITY_NEGATIVE = newsFeedCopy.quality.negative;
-const DEFAULT_MESSAGE = newsFeedCopy.defaultMessage;
+/** @type {typeof defaultNewsFeedCopy} */
+let activeNewsFeedCopy = defaultNewsFeedCopy;
+
+/**
+ * Replace news strings (same JSON shape as news-feed.json). Used after fetch of news-feed.si.json.
+ * @param {unknown} copy
+ */
+export function setNewsFeedCopy(copy) {
+  if (!copy || typeof copy !== 'object') return;
+  const n = /** @type {typeof defaultNewsFeedCopy} */ (copy);
+  if (typeof n.defaultMessage !== 'string') return;
+  if (!Array.isArray(n.lift?.positive) || !Array.isArray(n.lift?.negative)) return;
+  if (!Array.isArray(n.crowd?.positive) || !Array.isArray(n.crowd?.negative)) return;
+  if (!Array.isArray(n.quality?.positive) || !Array.isArray(n.quality?.negative)) return;
+  activeNewsFeedCopy = n;
+}
+
+function getCopy() {
+  return activeNewsFeedCopy;
+}
 
 /** Picks a message and whether it's positive (happy) or negative (angry). */
 function pickMessageAndMood() {
+  const news = getCopy();
   const categories = [
-    { value: state.liftExperience, positive: NEWS_LIFT_POSITIVE, negative: NEWS_LIFT_NEGATIVE },
-    { value: state.slopeCrowdExperience, positive: NEWS_CROWD_POSITIVE, negative: NEWS_CROWD_NEGATIVE },
-    { value: state.slopeQualityExperience, positive: NEWS_QUALITY_POSITIVE, negative: NEWS_QUALITY_NEGATIVE },
+    { value: state.liftExperience, positive: news.lift.positive, negative: news.lift.negative },
+    { value: state.slopeCrowdExperience, positive: news.crowd.positive, negative: news.crowd.negative },
+    { value: state.slopeQualityExperience, positive: news.quality.positive, negative: news.quality.negative },
   ];
   const category = categories[Math.floor(Math.random() * categories.length)];
   const v = Math.max(0, Math.min(100, category.value));
@@ -61,8 +74,9 @@ export function initNewsFeed(happyUrls, angryUrls) {
     skierEl.style.backgroundImage = `url(${newsSpriteUrlsHappy[0]})`;
     skierEl.style.backgroundPosition = '0% 0';
   }
+  const defaultMsg = getCopy().defaultMessage;
   if (textEl && hasNews()) {
-    textEl.textContent = `"${DEFAULT_MESSAGE}"`;
+    textEl.textContent = `"${defaultMsg}"`;
   }
   if (container) {
     container.classList.toggle('header-news--no-news', !hasNews());
