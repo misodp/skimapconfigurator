@@ -30,7 +30,8 @@ import { initBuildMask } from './build-mask';
 import { pickRandomSixtiesName } from './splash-names.js';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
 import introVideoUrl from '../assets/video/Intro.mp4';
-import tutorialConfig from '../assets/data/tutorial.json';
+import tutorialS67Url from '../assets/data/tutorial.s67?url';
+import { loadEncryptedJsonFromUrl } from './save-crypto.js';
 import tutorialCharacterUrl from '../assets/images/skiers/Character.png';
 import tutorialHansUrl from '../assets/images/skiers/Hans.png';
 const musicModules = import.meta.glob('../assets/music/*.{mp3,ogg,wav,m4a}', { eager: true, import: 'default' });
@@ -906,22 +907,25 @@ function initIntroVideo() {
     video.pause();
     if (tutorialMode) {
       tutorialActive = true;
-      try {
-        applyImportedConfig(tutorialConfig);
-        window.setTimeout(() => {
-          if (!tutorialActive) return;
-          showTutorialDialogue(
-            "Hans was a great guy and he loved his mountain. He wasn't best organized though...that lift is a mess. Lets see if I can get it fixed.",
-            tutorialCharacterUrl,
-            false,
-            null,
-            "Click on the lift to get it repaired.",
-          );
-          startRepairInstructionStep();
-        }, 1000);
-      } catch (err) {
-        window.alert('Failed to load tutorial map: ' + (err?.message || String(err)));
-      }
+      void (async () => {
+        try {
+          const tutorialConfig = await loadEncryptedJsonFromUrl(tutorialS67Url);
+          applyImportedConfig(tutorialConfig);
+          window.setTimeout(() => {
+            if (!tutorialActive) return;
+            showTutorialDialogue(
+              "Hans was a great guy and he loved his mountain. He wasn't best organized though...that lift is a mess. Lets see if I can get it fixed.",
+              tutorialCharacterUrl,
+              false,
+              null,
+              "Click on the lift to get it repaired.",
+            );
+            startRepairInstructionStep();
+          }, 1000);
+        } catch (err) {
+          window.alert('Failed to load tutorial map: ' + (err?.message || String(err)));
+        }
+      })();
     }
     ensureSimulationStarted();
     window.dispatchEvent(new CustomEvent('introfinished'));

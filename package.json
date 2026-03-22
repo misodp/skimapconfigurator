@@ -4,8 +4,9 @@
   "version": "0.9.6 Alpha",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "vite build",
+    "encrypt-assets": "node scripts/encrypt-s67.mjs",
+    "dev": "npm run encrypt-assets && vite",
+    "build": "npm run encrypt-assets && vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"

@@ -10,6 +10,7 @@ import { getSlopePathLengthM, getLiftLengthM, fromNormalized } from './geometry.
 import { getTotalLiftCapacity, getTotalSlopeCapacity, getTotalGroomingDemand, getTotalGroomingCapacity } from './experience-simulator';
 import { updateAchievementBadges, getEffectiveSatisfaction } from './achievements.js';
 import { openHallOfFameAfterSave } from './ui/hall-of-fame.js';
+import { encryptSaveFileUtf8, parseSaveOrLegacyJson } from './save-crypto.js';
 import { getEffectiveLiftCapacity } from './maintenance_simulator';
 
 export function updateBudgetDisplay() {
@@ -450,14 +451,21 @@ export function buildGameSaveConfig() {
   };
 }
 
-export function exportConfig() {
+export async function exportConfig() {
   const config = buildGameSaveConfig();
-  const blob = new Blob([JSON.stringify(config, null, 2)], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'ski-map-save.json';
-  a.click();
-  URL.revokeObjectURL(a.href);
+  try {
+    const encrypted = await encryptSaveFileUtf8(JSON.stringify(config, null, 2));
+    const blob = new Blob([encrypted], { type: 'application/octet-stream' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ski-map-save.s67';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  } catch (err) {
+    console.warn('[Save] encryption failed', err);
+    alert('Could not encrypt save. Use a secure context (https or localhost).');
+    return;
+  }
 
   void openHallOfFameAfterSave(config).catch((err) => {
     console.warn('[Hall of Fame]', err);
@@ -469,12 +477,15 @@ export function onConfigImported(e) {
   if (!file) return;
   const reader = new FileReader();
   reader.onload = () => {
-    try {
-      const config = JSON.parse(reader.result);
-      applyImportedConfig(config);
-    } catch (err) {
-      alert('Invalid config file: ' + err.message);
-    }
+    void (async () => {
+      try {
+        const text = typeof reader.result === 'string' ? reader.result : '';
+        const config = await parseSaveOrLegacyJson(text);
+        applyImportedConfig(config);
+      } catch (err) {
+        alert('Invalid save file: ' + (err && err.message ? err.message : String(err)));
+      }
+    })();
   };
   reader.readAsText(file);
   e.target.value = '';
