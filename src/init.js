@@ -46,6 +46,30 @@ import tutorialHansDefaultUrl from '../assets/images/skiers/Hans.png';
 import tutorialCharacterSiUrl from '../assets/images/skiers/animals/Character.png';
 import tutorialHansSiUrl from '../assets/images/skiers/animals/Hans.png';
 
+/** Remember last chosen splash name across page reloads (localStorage). */
+const SPLASH_PLAYER_NAME_KEY = 'summit67_player_name';
+
+function readSavedSplashPlayerName() {
+  try {
+    const s = window.localStorage?.getItem(SPLASH_PLAYER_NAME_KEY);
+    if (typeof s !== 'string') return '';
+    const t = s.trim();
+    return t.length > 0 ? t : '';
+  } catch {
+    return '';
+  }
+}
+
+function saveSplashPlayerName(name) {
+  try {
+    const t = typeof name === 'string' ? name.trim() : '';
+    if (!t) return;
+    window.localStorage?.setItem(SPLASH_PLAYER_NAME_KEY, t);
+  } catch {
+    /* private mode / quota */
+  }
+}
+
 /** Tutorial dialogue portraits (Slovenian hidden locale uses animals/). */
 let tutorialCharacterUrl = tutorialCharacterDefaultUrl;
 let tutorialHansUrl = tutorialHansDefaultUrl;
@@ -1115,24 +1139,28 @@ function initSplash() {
   const nameInput = /** @type {HTMLInputElement | null} */ (document.getElementById('splashPlayerName'));
 
   if (nameInput) {
-    nameInput.value = pickRandomSixtiesName();
+    const savedName = readSavedSplashPlayerName();
+    const useRandom = !savedName;
+    nameInput.value = savedName || pickRandomSixtiesName();
     requestAnimationFrame(() => {
       try {
         nameInput.focus();
-        nameInput.select();
+        if (useRandom) nameInput.select();
       } catch {
         /* ignore */
       }
     });
-    // If focus was blocked until user gesture, select all on first click so typing replaces the random name.
-    nameInput.addEventListener(
-      'focus',
-      function splashNameSelectOnce() {
-        nameInput.select();
-        nameInput.removeEventListener('focus', splashNameSelectOnce);
-      },
-      { once: true },
-    );
+    // If focus was blocked until user gesture, select all on first focus so typing replaces the random name.
+    if (useRandom) {
+      nameInput.addEventListener(
+        'focus',
+        function splashNameSelectOnce() {
+          nameInput.select();
+          nameInput.removeEventListener('focus', splashNameSelectOnce);
+        },
+        { once: true },
+      );
+    }
   }
 
   let splashStartCommitted = false;
@@ -1141,6 +1169,7 @@ function initSplash() {
     splashStartCommitted = true;
     const raw = nameInput && typeof nameInput.value === 'string' ? nameInput.value.trim() : '';
     state.playerName = raw || pickRandomSixtiesName();
+    saveSplashPlayerName(state.playerName);
     state.peakDailyVisitors = 0;
     dissolve(true);
   }
