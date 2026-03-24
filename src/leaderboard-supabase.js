@@ -13,31 +13,11 @@ const anonKey = typeof import.meta !== 'undefined' && import.meta.env ? import.m
 /** @type {import('@supabase/supabase-js').SupabaseClient | null} */
 let client = null;
 
-const LEADERBOARD_CLIENT_ID_KEY = 'summit67_leaderboard_client_id';
-
-function randomLeaderboardClientId() {
+function randomGameSessionId() {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
   }
-  return `s67-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
-}
-
-/**
- * Stable id per browser (localStorage). Same "PC" session updates one leaderboard row when score improves.
- * @returns {string | null}
- */
-export function getOrCreateLeaderboardClientId() {
-  if (typeof localStorage === 'undefined') return null;
-  try {
-    let id = localStorage.getItem(LEADERBOARD_CLIENT_ID_KEY);
-    if (!id || id.length < 8) {
-      id = randomLeaderboardClientId();
-      localStorage.setItem(LEADERBOARD_CLIENT_ID_KEY, id);
-    }
-    return id.slice(0, 200);
-  } catch {
-    return null;
-  }
+  return `s67-game-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 14)}`;
 }
 
 function getSupabase() {
@@ -95,43 +75,47 @@ export async function submitLeaderboardFromSave(saveConfig) {
     save_json: saveConfig,
   };
 
-  const clientId = getOrCreateLeaderboardClientId();
+  let sessionGameId = String(state.sessionGameId || '').trim();
+  if (!sessionGameId) {
+    // Safety net for legacy state; normal flow assigns this at "Start Game".
+    sessionGameId = randomGameSessionId();
+    state.sessionGameId = sessionGameId;
+  }
+  sessionGameId = sessionGameId.slice(0, 200);
 
-  if (clientId) {
-    const payload = {
-      player_client_id: clientId,
-      player_name: row.player_name,
-      score: row.score,
-      satisfaction_raw: row.satisfaction_raw,
-      satisfaction_effective: row.satisfaction_effective,
-      achievements: row.achievements,
-      reputation_lift: row.reputation_lift,
-      reputation_slope: row.reputation_slope,
-      reputation_combined: row.reputation_combined,
-      top_skiers_in_day: row.top_skiers_in_day,
-      money: row.money,
-      save_json: saveConfig,
-    };
+  const payload = {
+    game_session_id: sessionGameId,
+    player_name: row.player_name,
+    score: row.score,
+    satisfaction_raw: row.satisfaction_raw,
+    satisfaction_effective: row.satisfaction_effective,
+    achievements: row.achievements,
+    reputation_lift: row.reputation_lift,
+    reputation_slope: row.reputation_slope,
+    reputation_combined: row.reputation_combined,
+    top_skiers_in_day: row.top_skiers_in_day,
+    money: row.money,
+    save_json: saveConfig,
+  };
 
-    const { data: rpcId, error: rpcError } = await supabase.rpc('upsert_game_save', { p_payload: payload });
+  const { data: rpcId, error: rpcError } = await supabase.rpc('upsert_game_save', { p_payload: payload });
 
-    if (!rpcError) {
-      const insertedId = rpcId != null ? String(rpcId) : null;
-      return { ok: true, insertedId };
-    }
+  if (!rpcError) {
+    const insertedId = rpcId != null ? String(rpcId) : null;
+    return { ok: true, insertedId };
+  }
 
-    const msg = rpcError.message || '';
-    const missingFn =
-      rpcError.code === '42883' ||
-      /upsert_game_save|function public\.upsert_game_save|does not exist/i.test(msg);
-    if (missingFn) {
-      console.warn(
-        '[Summit leaderboard] upsert_game_save RPC missing — run supabase/upsert_game_save.sql. Falling back to plain insert.',
-      );
-    } else {
-      console.warn('[Summit leaderboard] upsert_game_save failed:', msg);
-      return { error: rpcError };
-    }
+  const msg = rpcError.message || '';
+  const missingFn =
+    rpcError.code === '42883' ||
+    /upsert_game_save|function public\.upsert_game_save|does not exist/i.test(msg);
+  if (missingFn) {
+    console.warn(
+      '[Summit leaderboard] upsert_game_save RPC missing — run supabase/upsert_game_save.sql. Falling back to plain insert.',
+    );
+  } else {
+    // Also fall back when RPC exists but payload/schema is out of date.
+    console.warn('[Summit leaderboard] upsert_game_save failed, falling back to plain insert:', msg);
   }
 
   const { data: inserted, error } = await supabase.from('game_saves').insert(row).select('id').single();

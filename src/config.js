@@ -447,6 +447,7 @@ export function buildGameSaveConfig() {
     groomers: state.groomers,
     budget: state.budget,
     playerName: state.playerName,
+    sessionGameId: state.sessionGameId,
     ticketPrice: state.ticketPrice,
   };
 }
@@ -585,6 +586,9 @@ export function applyImportedConfig(config, opts = {}) {
   if (config.resortOpen !== undefined) state.resortOpen = Boolean(config.resortOpen);
   if (config.playerName != null && typeof config.playerName === 'string') {
     state.playerName = config.playerName.slice(0, 200);
+  }
+  if (config.sessionGameId != null && typeof config.sessionGameId === 'string') {
+    state.sessionGameId = config.sessionGameId.slice(0, 200);
   }
   if (config.ticketPrice != null) {
     state.ticketPrice = normalizeTicketPriceFromSave(config.ticketPrice);

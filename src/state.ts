@@ -105,6 +105,8 @@ export interface AppState {
   achievements: { family: boolean; highAlpine: boolean; freeride: boolean; topOfWorld: boolean };
   /** Player / manager name from splash (used for flavour / saves). */
   playerName: string;
+  /** Unique id for this game session/run; persisted into save files. */
+  sessionGameId: string;
 }
 
 const START_DATE: SimulationDate = { year: 1960, month: 1, day: 1 };
@@ -113,6 +115,7 @@ export const state: AppState = {
   currentDate: { ...START_DATE },
   currentWeather: 'cloudy',
   dailyVisitors: 0,
+  peakDailyVisitors: 0,
   dailySales: 0,
   dailyCost: 0,
   dailyProfit: 0,
@@ -164,6 +167,7 @@ export const state: AppState = {
   mountainDaysAtPending: 0,
   achievements: { family: false, highAlpine: false, freeride: false, topOfWorld: false },
   playerName: '',
+  sessionGameId: '',
 };
 
 /** Update session peak when daily visitors are recalculated (simulation tick or refresh). */

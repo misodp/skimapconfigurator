@@ -17,15 +17,38 @@ create table if not exists public.game_saves (
   top_skiers_in_day integer not null default 0,
   money numeric not null default 0,
   save_json jsonb not null,
-  -- Stable id per browser (localStorage); used to upsert when score improves — see upsert_game_save.sql
-  player_client_id text
+  -- Stable id per game run/session; saved in .s67 and used for upsert — see upsert_game_save.sql
+  game_session_id text
 );
+
+-- Existing installations: add new column when table already existed.
+alter table public.game_saves
+  add column if not exists game_session_id text;
+
+-- Optional migration from legacy per-browser id (if present).
+do $$
+begin
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public'
+      and table_name = 'game_saves'
+      and column_name = 'player_client_id'
+  ) then
+    execute $sql$
+      update public.game_saves
+      set game_session_id = player_client_id
+      where game_session_id is null
+        and player_client_id is not null
+    $sql$;
+  end if;
+end $$;
 
 create index if not exists game_saves_created_at_idx on public.game_saves (created_at desc);
 create index if not exists game_saves_score_idx on public.game_saves (score desc);
 
-create unique index if not exists game_saves_player_client_id_uidx
-  on public.game_saves (player_client_id);
+create unique index if not exists game_saves_game_session_id_uidx
+  on public.game_saves (game_session_id);
 
 alter table public.game_saves enable row level security;
 
@@ -45,5 +68,5 @@ create policy "Allow anon select game_saves"
   to anon
   using (true);
 
--- Optional: run supabase/upsert_game_save.sql for per-client upsert (higher score only).
+-- Optional: run supabase/upsert_game_save.sql for per-session upsert (higher score only).
 -- After that, the app calls rpc("upsert_game_save") instead of a plain insert.

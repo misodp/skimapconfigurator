@@ -70,6 +70,13 @@ function saveSplashPlayerName(name) {
   }
 }
 
+function randomSessionGameId() {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `s67-game-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
 /** Tutorial dialogue portraits (Slovenian hidden locale uses animals/). */
 let tutorialCharacterUrl = tutorialCharacterDefaultUrl;
 let tutorialHansUrl = tutorialHansDefaultUrl;
@@ -1169,6 +1176,7 @@ function initSplash() {
     splashStartCommitted = true;
     const raw = nameInput && typeof nameInput.value === 'string' ? nameInput.value.trim() : '';
     state.playerName = raw || pickRandomSixtiesName();
+    state.sessionGameId = randomSessionGameId();
     saveSplashPlayerName(state.playerName);
     state.peakDailyVisitors = 0;
     dissolve(true);

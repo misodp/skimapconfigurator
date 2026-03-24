@@ -1,12 +1,12 @@
--- Summit '67 — upsert leaderboard row per browser/client id (run after leaderboard.sql).
--- Same PC/browser keeps one row; new save updates only if score is strictly higher.
+-- Summit '67 — upsert leaderboard row per game session id (run after leaderboard.sql).
+-- Same loaded game session keeps one row; new game gets a new id and therefore a new row.
 
 alter table public.game_saves
-  add column if not exists player_client_id text;
+  add column if not exists game_session_id text;
 
--- One row per client id; PostgreSQL UNIQUE allows multiple NULLs (legacy rows without id).
-create unique index if not exists game_saves_player_client_id_uidx
-  on public.game_saves (player_client_id);
+-- One row per session id; PostgreSQL UNIQUE allows multiple NULLs (legacy rows without id).
+create unique index if not exists game_saves_game_session_id_uidx
+  on public.game_saves (game_session_id);
 
 create or replace function public.upsert_game_save(p_payload jsonb)
 returns uuid
@@ -15,7 +15,7 @@ security definer
 set search_path = public
 as $$
 declare
-  v_client_id text;
+  v_game_session_id text;
   v_id uuid;
   v_name text;
   v_score numeric;
@@ -29,9 +29,9 @@ declare
   v_money numeric;
   v_save jsonb;
 begin
-  v_client_id := nullif(trim(p_payload->>'player_client_id'), '');
-  if v_client_id is null or length(v_client_id) > 200 then
-    raise exception 'invalid player_client_id';
+  v_game_session_id := nullif(trim(p_payload->>'game_session_id'), '');
+  if v_game_session_id is null or length(v_game_session_id) > 200 then
+    raise exception 'invalid game_session_id';
   end if;
 
   v_name := coalesce(nullif(trim(p_payload->>'player_name'), ''), 'Anonymous');
@@ -50,7 +50,7 @@ begin
   end if;
 
   insert into public.game_saves (
-    player_client_id,
+    game_session_id,
     player_name,
     score,
     satisfaction_raw,
@@ -63,7 +63,7 @@ begin
     money,
     save_json
   ) values (
-    v_client_id,
+    v_game_session_id,
     v_name,
     v_score,
     v_sat_raw,
@@ -76,7 +76,7 @@ begin
     v_money,
     v_save
   )
-  on conflict (player_client_id)
+  on conflict (game_session_id)
   do update set
     player_name = excluded.player_name,
     score = excluded.score,
@@ -93,7 +93,7 @@ begin
 
   select id into v_id
   from public.game_saves
-  where player_client_id = v_client_id
+  where game_session_id = v_game_session_id
   limit 1;
 
   return v_id;
