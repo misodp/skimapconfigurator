@@ -8,6 +8,7 @@ import { WEATHER_VISITOR_MODIFIERS, SEASON_VISITOR_MODIFIERS, getSeason } from '
 import { getEffectiveSatisfaction } from './achievements.js';
 import { getTotalSlopeCapacity } from './experience-simulator';
 import { getEffectiveLiftCapacity } from './maintenance_simulator';
+import { getBalanceProfile } from './balance-profile.js';
 
 /**
  * Total daily operating cost for all built lifts and groomers.
@@ -43,6 +44,20 @@ export function getDailyOperatingCost() {
       total += state.resortOpen !== false ? cost : cost * 0.3;
     }
   }
+  const p = getBalanceProfile();
+  if (Number.isFinite(p.sizeCostThreshold) && p.sizeCostThreshold < Infinity && p.sizeCostMaxExtra > 0) {
+    let totalLiftCap = 0;
+    for (const lift of state.lifts) {
+      const type = state.liftTypes.find((t) => t.id === lift.type);
+      if (!type || type.capacity == null) continue;
+      totalLiftCap += Number(type.capacity) || 0;
+    }
+    if (totalLiftCap > p.sizeCostThreshold) {
+      const growth = (totalLiftCap - p.sizeCostThreshold) / Math.max(1, p.sizeCostSpan);
+      const extra = Math.max(0, Math.min(p.sizeCostMaxExtra, growth * p.sizeCostMaxExtra));
+      total *= 1 + extra;
+    }
+  }
   return Math.round(total);
 }
 
@@ -53,6 +68,12 @@ const VISITOR_RANDOMNESS = 0.1;
 function getSatisfactionVisitorFactor() {
   const s = Math.max(0, Math.min(100, getEffectiveSatisfaction()));
   return 0.6 + (s / 100) * 0.8;
+}
+
+function getServicePenaltyFactor() {
+  const p = getBalanceProfile();
+  const weakest = Math.max(0, Math.min(100, Math.min(state.liftExperience, state.slopeCrowdExperience, state.slopeQualityExperience)));
+  return p.servicePenaltyMin + (1 - p.servicePenaltyMin) * (weakest / 100);
 }
 
 /** Snow depth (cm): < 20 → no visitors; 20–200 → ramp 0→1; > 200 → slight increase. */
@@ -81,6 +102,7 @@ export function getDailyVisitors() {
   const seasonFactor = SEASON_VISITOR_MODIFIERS[season] ?? 1;
   const weatherFactor = WEATHER_VISITOR_MODIFIERS[state.currentWeather] ?? 0.85;
   const satisfactionFactor = getSatisfactionVisitorFactor();
+  const servicePenaltyFactor = getServicePenaltyFactor();
   // Price penalty: if percent price increase above base (1.0) is higher than effective satisfaction,
   // visitors drop by double the % difference.
   const price = getTicketPrice();
@@ -100,6 +122,7 @@ export function getDailyVisitors() {
     seasonFactor *
     weatherFactor *
     satisfactionFactor *
+    servicePenaltyFactor *
     priceVisitorFactor *
     randomFactor
   );

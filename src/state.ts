@@ -17,6 +17,7 @@ import type {
   ImagePoint,
   SimulationDate,
   DOMRefs,
+  GameDifficulty,
 } from './types';
 import type { WeatherType } from './weather-simulation';
 
@@ -42,7 +43,7 @@ export interface AppState {
   /** Today's temp range in °C (for display). */
   dailyTempLow: number;
   dailyTempHigh: number;
-  /** Simulation speed: 0 = paused, 1 = 1x, 2 = 2x, 3 = 3x days per tick. */
+  /** Simulation speed: 0 = paused, 1 = 1x, 2 = 2x, 3 = 3x, 6 = 6x days per tick. */
   simulationSpeed: number;
   /** Lift wait experience 0–100, drifts daily. */
   liftExperience: number;
@@ -107,6 +108,8 @@ export interface AppState {
   playerName: string;
   /** Unique id for this game session/run; persisted into save files. */
   sessionGameId: string;
+  /** Game economy balance profile selected on splash. */
+  gameDifficulty: GameDifficulty;
 }
 
 const START_DATE: SimulationDate = { year: 1960, month: 1, day: 1 };
@@ -168,6 +171,7 @@ export const state: AppState = {
   achievements: { family: false, highAlpine: false, freeride: false, topOfWorld: false },
   playerName: '',
   sessionGameId: '',
+  gameDifficulty: 'medium',
 };
 
 /** Update session peak when daily visitors are recalculated (simulation tick or refresh). */

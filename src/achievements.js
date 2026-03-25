@@ -8,6 +8,7 @@
 import { state, getSlopeType } from './state';
 import { getSlopePathLengthM, fromNormalized } from './geometry.js';
 import { getLiftHealthZone } from './maintenance_simulator';
+import { getBalanceProfile } from './balance-profile.js';
 
 /** Lift type ids that count as two-seater (duo or agamatic) for Family achievement. */
 const TWO_SEATER_LIFT_IDS = ['graffer_double', 'agamatic_duo'];
@@ -97,7 +98,11 @@ function getSlopeReputationMultiplier() {
 export function getReputationMultipliers() {
   const lift = getLiftReputationMultiplier();
   const slope = getSlopeReputationMultiplier();
-  return { lift, slope, combined: lift * slope };
+  const p = getBalanceProfile();
+  const liftBonus = Math.max(-0.3, Math.min(0.2, lift - 1));
+  const slopeBonus = Math.max(-0.3, Math.min(0.2, slope - 1));
+  const combined = 1 + p.repLiftWeight * liftBonus + p.repSlopeWeight * slopeBonus;
+  return { lift, slope, combined: Math.max(0.5, Math.min(1.5, combined)) };
 }
 
 function hasTwoSeaterLift() {
@@ -162,21 +167,22 @@ function checkTopOfWorld() {
   return state.lifts.some((lift) => lift.topStation.y < TOP_FIFTH_Y);
 }
 
-/** Max satisfaction (0–100) by number of unlocked badges: 0→20, 1→40, 2→60, 3→80, 4→100. */
+/** Legacy cap helper kept for compatibility with older references. */
 export function getSatisfactionCap() {
   const n = [state.achievements.family, state.achievements.highAlpine, state.achievements.freeride, state.achievements.topOfWorld].filter(Boolean).length;
   return [20, 40, 60, 80, 100][n];
 }
 
-/** Raw satisfaction (0–100) from experience, normalized into 0–cap for display and visitors. */
+/** Smooth badge scaling + blended reputation so no single subsystem dominates. */
 export function getEffectiveSatisfaction() {
   const raw = Math.max(0, Math.min(100, state.satisfaction));
-  const cap = getSatisfactionCap();
-  const base = (raw / 100) * cap;
-  const liftMultiplier = getLiftReputationMultiplier();
-  const slopeMultiplier = getSlopeReputationMultiplier();
-  const combined = base * liftMultiplier * slopeMultiplier;
-  return Math.max(0, Math.min(cap, combined));
+  const unlocked = [state.achievements.family, state.achievements.highAlpine, state.achievements.freeride, state.achievements.topOfWorld].filter(Boolean).length;
+  const p = getBalanceProfile();
+  const u = unlocked / 4;
+  const badgeFactor = 0.2 + 0.8 * Math.pow(u, p.badgeExponent);
+  const rep = getReputationMultipliers();
+  const combined = raw * badgeFactor * rep.combined;
+  return Math.max(0, Math.min(100, combined));
 }
 
 /**

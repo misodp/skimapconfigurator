@@ -106,7 +106,7 @@ let lastRenderedDropdownYear: number | null = null;
 let simulationTickCount = 0;
 
 function getIntervalMsFromSpeed(): number | null {
-  const speed = Number.isFinite(state.simulationSpeed) ? Math.max(0, Math.min(3, state.simulationSpeed)) : 1;
+  const speed = Number.isFinite(state.simulationSpeed) ? Math.max(0, Math.min(6, state.simulationSpeed)) : 1;
   if (speed <= 0) return null; // paused
   return BASE_TICK_MS / speed;
 }
@@ -186,7 +186,7 @@ export function startSimulation(): void {
 }
 
 /**
- * Apply the current simulationSpeed (pause / 1x / 2x / 3x) to the loop.
+ * Apply the current simulationSpeed (pause / 1x / 2x / 3x / 6x) to the loop.
  */
 export function applySimulationSpeed(): void {
   startLoopWithCurrentSpeed();

@@ -21,6 +21,12 @@
         <label for="splashPlayerName" class="splash-name-label">Enter your name:</label>
         <input type="text" id="splashPlayerName" name="playerName" class="splash-name-input" maxlength="80"
           autocomplete="name" spellcheck="false" />
+        <label for="splashDifficulty" class="splash-name-label">Difficulty:</label>
+        <select id="splashDifficulty" name="difficulty" class="splash-difficulty-select" aria-label="Game difficulty">
+          <option value="easy">Easy</option>
+          <option value="medium" selected>Normal</option>
+          <option value="hard">Hard</option>
+        </select>
         <button type="submit" id="splashStartAdventureBtn"
           class="splash-action-btn splash-action-btn-primary">Start</button>
       </div>
@@ -447,6 +453,7 @@
             <button type="button" class="sim-speed-btn active" data-speed="1">1x</button>
             <button type="button" class="sim-speed-btn" data-speed="2">2x</button>
             <button type="button" class="sim-speed-btn" data-speed="3">3x</button>
+            <button type="button" class="sim-speed-btn" data-speed="6">6x</button>
             <button type="button" class="sim-speed-btn" data-speed="0" title="Pause">⏸</button>
             <button type="button" id="soundToggleBtn" class="status-bar-icon-btn status-bar-sound-btn"
               title="Toggle sound" aria-label="Toggle sound" aria-pressed="true">

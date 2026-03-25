@@ -578,7 +578,7 @@ export async function init() {
     DOM.simSpeedButtons.forEach((btn) => {
       btn.addEventListener('click', () => {
         const speed = Number(btn.dataset.speed ?? '1') || 0;
-        state.simulationSpeed = Math.max(0, Math.min(3, speed));
+        state.simulationSpeed = Math.max(0, Math.min(6, speed));
         syncSimulationSpeedButtons();
         applySimulationSpeed();
       });
@@ -1144,6 +1144,11 @@ function initSplash() {
 
   const splashForm = /** @type {HTMLFormElement | null} */ (document.getElementById('splashStartForm'));
   const nameInput = /** @type {HTMLInputElement | null} */ (document.getElementById('splashPlayerName'));
+  const difficultyInput = /** @type {HTMLSelectElement | null} */ (document.getElementById('splashDifficulty'));
+
+  if (difficultyInput) {
+    difficultyInput.value = state.gameDifficulty === 'easy' || state.gameDifficulty === 'hard' ? state.gameDifficulty : 'medium';
+  }
 
   if (nameInput) {
     const savedName = readSavedSplashPlayerName();
@@ -1176,6 +1181,12 @@ function initSplash() {
     splashStartCommitted = true;
     const raw = nameInput && typeof nameInput.value === 'string' ? nameInput.value.trim() : '';
     state.playerName = raw || pickRandomSixtiesName();
+    if (difficultyInput) {
+      const d = difficultyInput.value;
+      state.gameDifficulty = d === 'easy' || d === 'hard' ? d : 'medium';
+    } else {
+      state.gameDifficulty = 'medium';
+    }
     state.sessionGameId = randomSessionGameId();
     saveSplashPlayerName(state.playerName);
     state.peakDailyVisitors = 0;

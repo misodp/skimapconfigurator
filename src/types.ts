@@ -2,6 +2,7 @@
 
 export type AppMode = 'lift' | 'slope' | 'cottage' | 'groomer';
 export type SlopeDrawMode = 'points' | 'pen';
+export type GameDifficulty = 'easy' | 'medium' | 'hard';
 
 export interface LiftType {
   id: string;

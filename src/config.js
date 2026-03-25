@@ -288,9 +288,12 @@ export function updateSatisfactionDisplay() {
   if (valueEl) valueEl.textContent = `${pct}%`;
   const descEl = DOM.satisfactionDisplay.querySelector('.satisfaction-description');
   if (descEl) {
-    if (pct <= 20) descEl.textContent = '"Local hill"';
-    else if (pct <= 55) descEl.textContent = '"Regional highlight"';
-    else descEl.textContent = '"National champion"';
+    let status = 'National champion';
+    if (pct <= 20) status = 'Local hill';
+    else if (pct <= 55) status = 'Regional highlight';
+    const name = String(state.playerName || 'Anonymous').trim() || 'Anonymous';
+    const difficulty = state.gameDifficulty === 'easy' ? 'Easy' : state.gameDifficulty === 'hard' ? 'Hard' : 'Medium';
+    descEl.textContent = `${name} - ${status} - ${difficulty}`;
   }
 }
 
@@ -448,6 +451,7 @@ export function buildGameSaveConfig() {
     budget: state.budget,
     playerName: state.playerName,
     sessionGameId: state.sessionGameId,
+    gameDifficulty: state.gameDifficulty,
     ticketPrice: state.ticketPrice,
   };
 }
@@ -569,7 +573,9 @@ export function applyImportedConfig(config, opts = {}) {
   if (config.dailySnowfall != null) state.dailySnowfall = Number(config.dailySnowfall);
   if (config.dailyTempLow != null) state.dailyTempLow = config.dailyTempLow;
   if (config.dailyTempHigh != null) state.dailyTempHigh = config.dailyTempHigh;
-  if (config.simulationSpeed != null) state.simulationSpeed = config.simulationSpeed;
+  if (config.simulationSpeed != null) {
+    state.simulationSpeed = Math.max(0, Math.min(6, Number(config.simulationSpeed) || 0));
+  }
   if (config.liftExperience != null) state.liftExperience = Math.max(0, Math.min(100, Number(config.liftExperience)));
   else if (config.liftExperienceBucket != null) state.liftExperience = config.liftExperienceBucket === 'good' ? 80 : config.liftExperienceBucket === 'medium' ? 50 : 20;
   if (config.slopeCrowdExperience != null) state.slopeCrowdExperience = Math.max(0, Math.min(100, Number(config.slopeCrowdExperience)));
@@ -589,6 +595,9 @@ export function applyImportedConfig(config, opts = {}) {
   }
   if (config.sessionGameId != null && typeof config.sessionGameId === 'string') {
     state.sessionGameId = config.sessionGameId.slice(0, 200);
+  }
+  if (config.gameDifficulty === 'easy' || config.gameDifficulty === 'medium' || config.gameDifficulty === 'hard') {
+    state.gameDifficulty = config.gameDifficulty;
   }
   if (config.ticketPrice != null) {
     state.ticketPrice = normalizeTicketPriceFromSave(config.ticketPrice);
