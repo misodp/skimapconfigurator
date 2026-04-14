@@ -18,6 +18,9 @@ export function initDesktopUI(ctx) {
     onCanvasMouseDown,
     onCanvasMouseMove,
     onCanvasMouseUp,
+    cancelLift,
+    cancelSlope,
+    updateBudgetDisplay,
     hideLiftHoverPopup,
     hideGroomerHoverPopup,
     hideSlopeHoverPopup,
@@ -100,5 +103,24 @@ export function initDesktopUI(ctx) {
       if (typeof onCanvasMouseUp === 'function') onCanvasMouseUp(e);
     });
   }
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (state.mode === 'lift' && state.liftBottom) {
+        if (typeof cancelLift === 'function') cancelLift();
+      } else if (typeof cancelSlope === 'function') {
+        cancelSlope();
+      }
+      state.buildArmed = false;
+      state.mouseImage = null;
+      const cancelBuildBtn = document.getElementById('cancelBuildBtn');
+      if (cancelBuildBtn) cancelBuildBtn.classList.add('hidden');
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+      e.preventDefault();
+      state.budget += 10000;
+      if (typeof updateBudgetDisplay === 'function') updateBudgetDisplay();
+    }
+  });
 }
 

@@ -578,6 +578,9 @@ export async function init() {
     onCanvasMouseDown,
     onCanvasMouseMove,
     onCanvasMouseUp,
+    cancelLift,
+    cancelSlope,
+    updateBudgetDisplay,
     hideLiftHoverPopup,
     hideGroomerHoverPopup,
     hideSlopeHoverPopup,
@@ -588,21 +591,6 @@ export async function init() {
 
   document.getElementById('cancelSlopeBtn').addEventListener('click', cancelSlope);
   document.getElementById('cancelLiftBtn').addEventListener('click', cancelLift);
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      if (state.mode === 'lift' && state.liftBottom) cancelLift();
-      else cancelSlope();
-      state.buildArmed = false;
-      state.mouseImage = null;
-      const cancelBuildBtn = document.getElementById('cancelBuildBtn');
-      if (cancelBuildBtn) cancelBuildBtn.classList.add('hidden');
-    }
-    if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
-      e.preventDefault();
-      state.budget += 10000;
-      updateBudgetDisplay();
-    }
-  });
 
   const useSi = isSlovenianLocaleActive();
   /** @type {typeof techTreeDefault} */
