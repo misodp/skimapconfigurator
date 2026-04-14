@@ -13,6 +13,7 @@ export function initDesktopUI(ctx) {
     state,
     syncSimulationSpeedButtons,
     applySimulationSpeed,
+    onCanvasMouseUp,
     hideLiftHoverPopup,
     hideGroomerHoverPopup,
     hideSlopeHoverPopup,
@@ -69,5 +70,25 @@ export function initDesktopUI(ctx) {
   document.addEventListener('click', handleLiftPopupClick);
   document.addEventListener('click', handleGroomerPopupClick);
   document.addEventListener('click', handleSlopePopupClick);
+
+  if (DOM?.canvas) {
+    DOM.canvas.addEventListener('mouseleave', (e) => {
+      if (state.mode === 'lift') state.mouseImage = null;
+      state.buildBlocked = false;
+      const hint = document.getElementById('buildMaskHint');
+      if (hint) {
+        hint.classList.add('hidden');
+        hint.setAttribute('aria-hidden', 'true');
+      }
+      DOM.canvas.style.cursor = '';
+      const popup = document.getElementById('liftHoverPopup');
+      if (!popup || !popup.contains(e.relatedTarget)) hideLiftHoverPopup();
+      const groomerPopup = document.getElementById('groomerHoverPopup');
+      if (!groomerPopup || !groomerPopup.contains(e.relatedTarget)) hideGroomerHoverPopup();
+      const slopePopup = document.getElementById('slopeHoverPopup');
+      if (!slopePopup || !slopePopup.contains(e.relatedTarget)) hideSlopeHoverPopup();
+      if (typeof onCanvasMouseUp === 'function') onCanvasMouseUp(e);
+    });
+  }
 }
 

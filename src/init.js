@@ -560,20 +560,6 @@ export async function init() {
   DOM.canvas.addEventListener('mousedown', onCanvasMouseDown);
   DOM.canvas.addEventListener('mousemove', onCanvasMouseMove);
   DOM.canvas.addEventListener('mouseup', onCanvasMouseUp);
-  DOM.canvas.addEventListener('mouseleave', (e) => {
-    if (state.mode === 'lift') state.mouseImage = null;
-    state.buildBlocked = false;
-    const hint = document.getElementById('buildMaskHint');
-    if (hint) { hint.classList.add('hidden'); hint.setAttribute('aria-hidden', 'true'); }
-    if (DOM.canvas) DOM.canvas.style.cursor = '';
-    const popup = document.getElementById('liftHoverPopup');
-    if (!popup || !popup.contains(e.relatedTarget)) hideLiftHoverPopup();
-    const groomerPopup = document.getElementById('groomerHoverPopup');
-    if (!groomerPopup || !groomerPopup.contains(e.relatedTarget)) hideGroomerHoverPopup();
-    const slopePopup = document.getElementById('slopeHoverPopup');
-    if (!slopePopup || !slopePopup.contains(e.relatedTarget)) hideSlopeHoverPopup();
-    onCanvasMouseUp(e);
-  });
   // Commit 2 mobile refactor seam: initialize platform-specific UI bindings.
   initPlatformUI({
     state,
@@ -592,6 +578,7 @@ export async function init() {
     renderSlopeTypeButtons,
     updateDateDisplay,
     updateWeatherDisplay,
+    onCanvasMouseUp,
     hideLiftHoverPopup,
     hideGroomerHoverPopup,
     hideSlopeHoverPopup,
