@@ -37,6 +37,7 @@ import { updateMountainImage, setMountainMode } from './mountain-images.js';
 import { initNewsFeed, setNewsFeedCopy } from './news-feed.js';
 import { initBuildMask } from './build-mask';
 import { pickRandomSixtiesName } from './splash-names.js';
+import { initPlatformUI } from './ui/platform-init.js';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
 import introVideoUrl from '../assets/video/Intro.mp4';
 import tutorialS67Url from '../assets/data/tutorial.s67?url';
@@ -512,6 +513,13 @@ export async function init() {
   DOM.slopeExperienceDisplay = document.getElementById('slopeExperienceDisplay');
   DOM.slopeQualityDisplay = document.getElementById('slopeQualityDisplay');
   DOM.satisfactionDisplay = document.getElementById('satisfactionDisplay');
+
+  // Commit 1 mobile refactor seam: select platform UI module.
+  // Existing UI behavior still remains in this file until follow-up extraction commits.
+  initPlatformUI({
+    state,
+    DOM,
+  });
 
   DOM.imageInput.addEventListener('change', onImageSelected);
   if (DOM.saveBtn) DOM.saveBtn.addEventListener('click', exportConfig);
