@@ -3,7 +3,7 @@ function clickIfExists(el) {
 }
 
 export function initMobileShellController(ctx) {
-  const { DOM, state, setMode, syncSimulationSpeedButtons, onCanvasDblClick } = ctx || {};
+  const { DOM, state, setMode, syncSimulationSpeedButtons, applySimulationSpeed, onCanvasDblClick } = ctx || {};
   if (typeof document === 'undefined') return;
 
   const shell = document.getElementById('mobileShell');
@@ -122,22 +122,35 @@ export function initMobileShellController(ctx) {
   const mobileOperateDate = document.getElementById('mobileOperateDate');
   const mobileOperateWeatherIcon = document.getElementById('mobileOperateWeatherIcon');
   const mobileOperateWeather = document.getElementById('mobileOperateWeather');
+  const mobileOperateBudget = document.getElementById('mobileOperateBudget');
+  const mobileOperateDailyProfit = document.getElementById('mobileOperateDailyProfit');
   const currentDateDisplay = document.getElementById('currentDateDisplay');
   const weatherDisplay = document.getElementById('weatherDisplay');
+  const budgetAmount = document.getElementById('budgetAmount');
+  const headerDailyProfit = document.getElementById('headerDailyProfit');
   const resortOpenBtn = document.getElementById('resortOpenBtn');
   const resortClosedBtn = document.getElementById('resortClosedBtn');
   const ticketSlider = document.getElementById('ticketPriceSlider');
   const ticketValue = document.getElementById('ticketPriceValue');
   const snowDepthDisplay = document.getElementById('snowDepthDisplay');
+  const visitorsDisplay = document.getElementById('visitorsDisplay');
+  const snowInfoFill = document.getElementById('snowInfoFill');
+  const snowTrendSymbol = document.querySelector('.snow-depth-label .snow-change');
   const liftExperienceDisplay = document.getElementById('liftExperienceDisplay');
   const slopeExperienceDisplay = document.getElementById('slopeExperienceDisplay');
   const slopeQualityDisplay = document.getElementById('slopeQualityDisplay');
   const satisfactionDisplay = document.getElementById('satisfactionDisplay');
   const reputationDescription = document.getElementById('reputationDescription');
   const mobileSnowDepthValue = document.getElementById('mobileSnowDepthValue');
+  const mobileVisitorsValue = document.getElementById('mobileVisitorsValue');
+  const mobileSnowTrend = document.getElementById('mobileSnowTrend');
+  const mobileSnowFill = document.getElementById('mobileSnowFill');
   const mobileLiftWaitValue = document.getElementById('mobileLiftWaitValue');
   const mobileSlopeCrowdsValue = document.getElementById('mobileSlopeCrowdsValue');
   const mobileSlopeQualityValue = document.getElementById('mobileSlopeQualityValue');
+  const mobileLiftWaitTrend = document.getElementById('mobileLiftWaitTrend');
+  const mobileSlopeCrowdsTrend = document.getElementById('mobileSlopeCrowdsTrend');
+  const mobileSlopeQualityTrend = document.getElementById('mobileSlopeQualityTrend');
   const mobileReputationValue = document.getElementById('mobileReputationValue');
   const mobileLiftWaitFill = document.getElementById('mobileLiftWaitFill');
   const mobileSlopeCrowdsFill = document.getElementById('mobileSlopeCrowdsFill');
@@ -169,7 +182,7 @@ export function initMobileShellController(ctx) {
     if (mobileTicketPlusBtn) mobileTicketPlusBtn.addEventListener('click', () => stepTicket(1));
   }
 
-  const mobileSpeedButtons = document.querySelectorAll('.mobile-speed-btn');
+  const mobileSpeedButtons = document.querySelectorAll('.mobile-speed-btn, .mobile-right-speed-btn');
   const syncMobileSpeedButtons = () => {
     const speed = String(Number.isFinite(state.simulationSpeed) ? state.simulationSpeed : 1);
     mobileSpeedButtons.forEach((b) => b.classList.toggle('active', String(b.getAttribute('data-speed') || '') === speed));
@@ -177,6 +190,8 @@ export function initMobileShellController(ctx) {
   mobileSpeedButtons.forEach((btn) => {
     btn.addEventListener('click', () => {
       const speed = Number(btn.getAttribute('data-speed') || '1');
+      state.simulationSpeed = Math.max(0, Math.min(6, speed));
+      if (typeof applySimulationSpeed === 'function') applySimulationSpeed();
       const desktopBtn = document.querySelector(`.sim-speed-btn[data-speed="${speed}"]`);
       clickIfExists(desktopBtn);
       if (typeof syncSimulationSpeedButtons === 'function') syncSimulationSpeedButtons();
@@ -254,6 +269,17 @@ export function initMobileShellController(ctx) {
   };
 
   const syncOperateCompact = () => {
+    const applyTrendClass = (el, sourceEl) => {
+      if (!el) return;
+      el.classList.remove('change-up', 'change-down', 'change-stable');
+      if (sourceEl?.classList.contains('change-up')) { el.classList.add('change-up'); return; }
+      if (sourceEl?.classList.contains('change-down')) { el.classList.add('change-down'); return; }
+      if (sourceEl?.classList.contains('change-stable')) { el.classList.add('change-stable'); return; }
+      const txt = (el.textContent || '').trim();
+      if (txt.includes('↑') || txt.includes('+')) el.classList.add('change-up');
+      else if (txt.includes('↓') || txt.includes('-')) el.classList.add('change-down');
+      else el.classList.add('change-stable');
+    };
     const openActive = !!resortOpenBtn?.classList.contains('active');
     if (mobileResortToggleBtn) {
       mobileResortToggleBtn.classList.toggle('active', openActive);
@@ -273,11 +299,34 @@ export function initMobileShellController(ctx) {
         mobileOperateWeatherIcon.innerHTML = weatherSvg ? weatherSvg.outerHTML : '';
       }
     }
+    if (budgetAmount && mobileOperateBudget) {
+      mobileOperateBudget.textContent = budgetAmount.textContent || mobileOperateBudget.textContent;
+    }
+    if (headerDailyProfit && mobileOperateDailyProfit) {
+      mobileOperateDailyProfit.textContent = headerDailyProfit.textContent || mobileOperateDailyProfit.textContent;
+      mobileOperateDailyProfit.classList.remove('profit', 'loss');
+      if (headerDailyProfit.classList.contains('profit')) mobileOperateDailyProfit.classList.add('profit');
+      if (headerDailyProfit.classList.contains('loss')) mobileOperateDailyProfit.classList.add('loss');
+    }
     if (ticketValue && mobileTicketValue) {
       mobileTicketValue.textContent = ticketValue.textContent || mobileTicketValue.textContent;
     }
+    if (visitorsDisplay && mobileVisitorsValue) {
+      mobileVisitorsValue.textContent = visitorsDisplay.textContent || mobileVisitorsValue.textContent;
+    }
     if (snowDepthDisplay && mobileSnowDepthValue) {
       mobileSnowDepthValue.textContent = snowDepthDisplay.textContent || mobileSnowDepthValue.textContent;
+    }
+    if (snowTrendSymbol && mobileSnowTrend) {
+      mobileSnowTrend.textContent = snowTrendSymbol.textContent || mobileSnowTrend.textContent;
+      applyTrendClass(mobileSnowTrend, snowTrendSymbol);
+    }
+    if (snowInfoFill && mobileSnowFill) {
+      mobileSnowFill.style.width = snowInfoFill.style.width || mobileSnowFill.style.width;
+      mobileSnowFill.classList.remove('snow-info-fill-low', 'snow-info-fill-mid', 'snow-info-fill-high');
+      if (snowInfoFill.classList.contains('snow-info-fill-high')) mobileSnowFill.classList.add('snow-info-fill-high');
+      else if (snowInfoFill.classList.contains('snow-info-fill-mid')) mobileSnowFill.classList.add('snow-info-fill-mid');
+      else mobileSnowFill.classList.add('snow-info-fill-low');
     }
     if (mobileLiftWaitValue) {
       mobileLiftWaitValue.textContent = '';
@@ -301,6 +350,15 @@ export function initMobileShellController(ctx) {
     syncMetricFill(liftExperienceDisplay, mobileLiftWaitFill);
     syncMetricFill(slopeExperienceDisplay, mobileSlopeCrowdsFill);
     syncMetricFill(slopeQualityDisplay, mobileSlopeQualityFill);
+    const syncTrend = (sourceMetricEl, targetEl) => {
+      if (!sourceMetricEl || !targetEl) return;
+      const changeEl = sourceMetricEl.closest('.experience-metric')?.querySelector('.experience-change');
+      if (changeEl?.textContent) targetEl.textContent = changeEl.textContent;
+      applyTrendClass(targetEl, changeEl);
+    };
+    syncTrend(liftExperienceDisplay, mobileLiftWaitTrend);
+    syncTrend(slopeExperienceDisplay, mobileSlopeCrowdsTrend);
+    syncTrend(slopeQualityDisplay, mobileSlopeQualityTrend);
     if (mobileReputationValue && satisfactionDisplay) {
       const repValue = satisfactionDisplay.querySelector('.satisfaction-value')?.textContent?.trim() || '';
       if (repValue) mobileReputationValue.textContent = repValue;

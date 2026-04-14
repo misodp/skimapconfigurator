@@ -12,5 +12,22 @@ export function initMobileUI(ctx) {
   }
   initMobileShellController(ctx);
   attachMobileCanvasInput(ctx);
+
+  const {
+    handleLiftPopupClick,
+    handleGroomerPopupClick,
+    handleSlopePopupClick,
+  } = ctx || {};
+
+  // Mobile needs the same delegated popup interactions as desktop.
+  if (typeof handleLiftPopupClick === 'function') {
+    document.addEventListener('click', handleLiftPopupClick);
+  }
+  if (typeof handleGroomerPopupClick === 'function') {
+    document.addEventListener('click', handleGroomerPopupClick);
+  }
+  if (typeof handleSlopePopupClick === 'function') {
+    document.addEventListener('click', handleSlopePopupClick);
+  }
 }
 

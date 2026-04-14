@@ -331,6 +331,7 @@ export function attachMobileCanvasInput(ctx) {
     const isLiftBuild = state?.mode === 'lift' && state?.buildArmed === true;
     const isSlopeBuild = state?.mode === 'slope' && state?.buildArmed === true;
     const isGroomerBuild = state?.mode === 'groomer' && state?.buildArmed === true;
+    const isOperateInteraction = state?.buildArmed !== true;
     if (isLiftBuild && liftDragSession && state?.liftBottom && typeof onCanvasClick === 'function') {
       // Release shows confirmation near top station.
       pendingLiftReleasePoint = { clientX: e.clientX, clientY: e.clientY };
@@ -373,6 +374,10 @@ export function attachMobileCanvasInput(ctx) {
       // On mobile, groomer placement should happen on touch release location.
       onCanvasClick(e);
       hideLiftConfirm();
+    } else if (isOperateInteraction && typeof onCanvasClick === 'function') {
+      // In mobile operate interactions, always forward release as a click so popups pin
+      // reliably even when touch introduces small movement.
+      onCanvasClick(e);
     } else if (!moved && typeof onCanvasClick === 'function') {
       onCanvasClick(e);
       hideLiftConfirm();
@@ -401,9 +406,6 @@ export function attachMobileCanvasInput(ctx) {
   });
 
   DOM.canvas.addEventListener('pointerleave', () => {
-    // Keep lift confirmation visible after release.
-    hideLiftHoverPopup?.();
-    hideGroomerHoverPopup?.();
-    hideSlopeHoverPopup?.();
+    // On mobile, pointerleave is noisy; avoid auto-hiding popups so action buttons remain tappable.
   });
 }

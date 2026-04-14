@@ -1224,7 +1224,15 @@ export function handleSlopePopupClick(e) {
   if (!popup || popup.hidden) return;
   if (!isOperateTabActive()) return;
   const insideSlopePopup = popup && popup.contains(e.target);
-  if (!insideSlopePopup) return;
+  const clickOnMapArea = e.target && e.target.closest && (e.target.closest('#drawCanvas') || e.target.closest('.canvas-wrapper'));
+  if (!insideSlopePopup && !clickOnMapArea) {
+    isSlopePopupPinned = false;
+    popup.removeAttribute('data-pinned');
+    popup.hidden = true;
+    popup.setAttribute('aria-hidden', 'true');
+    lastHoveredSlopeIndex = null;
+    return;
+  }
 
   if (e.target && e.target.closest && e.target.closest('.slope-popup-close-btn')) {
     e.preventDefault();

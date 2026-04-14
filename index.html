@@ -430,6 +430,13 @@
           <span class="invest-compact-cancel-icon" aria-hidden="true">✕</span>
           <span class="invest-compact-cancel-label">Cancel</span>
         </button>
+        <div class="invest-compact-speed" aria-label="Simulation speed controls">
+          <button type="button" class="mobile-right-speed-btn active" data-speed="1">1x</button>
+          <button type="button" class="mobile-right-speed-btn" data-speed="2">2x</button>
+          <button type="button" class="mobile-right-speed-btn" data-speed="3">3x</button>
+          <button type="button" class="mobile-right-speed-btn" data-speed="6">6x</button>
+          <button type="button" class="mobile-right-speed-btn" data-speed="0" title="Pause">||</button>
+        </div>
       </div>
     </aside>
 
@@ -442,31 +449,48 @@
             <span id="mobileOperateWeatherIcon" class="mobile-operate-weather-icon" aria-hidden="true"></span>
             <span id="mobileOperateWeather" class="mobile-operate-weather-text">Weather</span>
           </div>
+          <div class="mobile-operate-meta-line mobile-operate-meta-visitors">
+            <span>Visitors</span>
+            <span id="mobileVisitorsValue">0</span>
+          </div>
+          <div class="mobile-operate-meta-line mobile-operate-meta-budget">
+            <span class="mobile-operate-budget-label">Budget</span>
+            <span class="mobile-operate-budget-value">
+              <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+              <span id="mobileOperateBudget">0</span>
+            </span>
+          </div>
+          <div id="mobileOperateDailyProfit" class="mobile-operate-meta-line mobile-operate-meta-profit">+0</div>
         </div>
-        <button type="button" id="mobileResortToggleBtn" class="mobile-operate-btn active" aria-pressed="true">Open</button>
-        <div class="mobile-operate-ticket-label">
-          <span>Ticket price:</span>
-          <span class="mobile-operate-ticket-value">
-            <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
-            <span id="mobileTicketPriceValue">1.00</span>
-          </span>
-        </div>
-        <div class="mobile-operate-ticket-stepper">
-          <button type="button" id="mobileTicketMinusBtn" class="mobile-ticket-step-btn" aria-label="Decrease ticket price">−</button>
-          <button type="button" id="mobileTicketPlusBtn" class="mobile-ticket-step-btn" aria-label="Increase ticket price">+</button>
+        <div class="mobile-operate-controls" aria-label="Resort controls">
+          <button type="button" id="mobileResortToggleBtn" class="mobile-operate-btn active" aria-pressed="true">Open</button>
+          <div class="mobile-operate-ticket-label">
+            <span>Ticket price:</span>
+            <span class="mobile-operate-ticket-value">
+              <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+              <span id="mobileTicketPriceValue">1.00</span>
+            </span>
+          </div>
+          <div class="mobile-operate-ticket-stepper">
+            <button type="button" id="mobileTicketMinusBtn" class="mobile-ticket-step-btn" aria-label="Decrease ticket price">−</button>
+            <button type="button" id="mobileTicketPlusBtn" class="mobile-ticket-step-btn" aria-label="Increase ticket price">+</button>
+          </div>
         </div>
         <div class="mobile-operate-stats" aria-label="Operate statistics">
-          <div class="mobile-operate-stat-row"><span>Snow</span><span id="mobileSnowDepthValue">0 cm</span></div>
           <div class="mobile-operate-stat-row">
-            <span>Lift wait</span><span id="mobileLiftWaitValue"></span>
+            <span>Snow <span id="mobileSnowTrend" class="mobile-operate-trend">−</span></span><span id="mobileSnowDepthValue">0 cm</span>
+            <span class="mobile-operate-stat-bar"><span id="mobileSnowFill" class="mobile-operate-stat-fill snow-info-fill-low" style="width:0%"></span></span>
+          </div>
+          <div class="mobile-operate-stat-row">
+            <span>Lift wait <span id="mobileLiftWaitTrend" class="mobile-operate-trend">−</span></span><span id="mobileLiftWaitValue"></span>
             <span class="mobile-operate-stat-bar"><span id="mobileLiftWaitFill" class="mobile-operate-stat-fill experience-fill-mid" style="width:50%"></span></span>
           </div>
           <div class="mobile-operate-stat-row">
-            <span>Slope crowds</span><span id="mobileSlopeCrowdsValue"></span>
+            <span>Slope crowds <span id="mobileSlopeCrowdsTrend" class="mobile-operate-trend">−</span></span><span id="mobileSlopeCrowdsValue"></span>
             <span class="mobile-operate-stat-bar"><span id="mobileSlopeCrowdsFill" class="mobile-operate-stat-fill experience-fill-mid" style="width:50%"></span></span>
           </div>
           <div class="mobile-operate-stat-row">
-            <span>Slope quality</span><span id="mobileSlopeQualityValue"></span>
+            <span>Slope quality <span id="mobileSlopeQualityTrend" class="mobile-operate-trend">−</span></span><span id="mobileSlopeQualityValue"></span>
             <span class="mobile-operate-stat-bar"><span id="mobileSlopeQualityFill" class="mobile-operate-stat-fill experience-fill-mid" style="width:50%"></span></span>
           </div>
           <div class="mobile-operate-stat-row mobile-operate-stat-row-reputation">
