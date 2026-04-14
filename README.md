@@ -17,6 +17,16 @@ Open the app in your browser, then:
 
 Use **Export config JSON** to save your configuration, or **Import config** to load a previous one.
 
+### Encrypted asset refresh
+
+`tutorial.s67` uses randomized encryption output, so regenerating it produces different bytes each run.
+
+- Normal local workflows do not regenerate encrypted assets:
+  - `npm run dev`
+  - `npm run build`
+- Regenerate encrypted assets only when needed:
+  - `npm run refresh-encrypted-assets`
+
 ## Config JSON format
 
 Exported file: `ski-map-config.json`

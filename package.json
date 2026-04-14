@@ -5,8 +5,9 @@
   "type": "module",
   "scripts": {
     "encrypt-assets": "node scripts/encrypt-s67.mjs",
-    "dev": "npm run encrypt-assets && vite",
-    "build": "npm run encrypt-assets && vite build",
+    "refresh-encrypted-assets": "npm run encrypt-assets",
+    "dev": "vite",
+    "build": "vite build",
     "preview": "vite preview",
     "predeploy": "npm run build",
     "deploy": "gh-pages -d dist"
