@@ -1,5 +1,6 @@
 import { initDesktopUI } from './desktop/init-desktop-ui.js';
 import { initMobileUI } from './mobile/init-mobile-ui.js';
+import { initSharedUI } from './shared/init-shared-ui.js';
 
 function isMobileLikeUi() {
   if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
@@ -13,11 +14,13 @@ function isMobileLikeUi() {
  * Commit 1: scaffolding only (desktop/mobile logic still lives in init.js).
  */
 export function initPlatformUI(ctx) {
+  const shared = initSharedUI(ctx) || {};
+  const mergedCtx = { ...ctx, ...shared };
   if (isMobileLikeUi()) {
-    initMobileUI(ctx);
+    initMobileUI(mergedCtx);
     return 'mobile';
   }
-  initDesktopUI(ctx);
+  initDesktopUI(mergedCtx);
   return 'desktop';
 }
 
