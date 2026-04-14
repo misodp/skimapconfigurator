@@ -1,7 +1,7 @@
 {
   "version": 1,
   "currentDate": {
-    "year": 1960,
+    "year": 1970,
     "month": 1,
     "day": 1
   },
@@ -107,5 +107,5 @@
       "repairCost": 1167
     }
   ],
-  "budget": 10000
+  "budget": 100000
 }

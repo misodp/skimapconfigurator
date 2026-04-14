@@ -159,13 +159,13 @@ function showTutorialDialogue(message, imageUrl = tutorialCharacterUrl, closable
       hintEl.setAttribute('aria-hidden', showHint ? 'false' : 'true');
     }
     if (closeBtn) {
-      closeBtn.hidden = !closable;
-      closeBtn.setAttribute('aria-hidden', closable ? 'false' : 'true');
+      closeBtn.hidden = false;
+      closeBtn.setAttribute('aria-hidden', 'false');
       if (tutorialDialogueCloseHandler) {
         closeBtn.removeEventListener('click', tutorialDialogueCloseHandler);
       }
       tutorialDialogueCloseHandler = () => {
-        if (onClose) onClose();
+        if (closable && onClose) onClose();
         else hideTutorialDialogue();
       };
       closeBtn.addEventListener('click', tutorialDialogueCloseHandler);

@@ -18,7 +18,7 @@
     <img src="/assets/images/Splash.webp" alt="" class="splash-image" />
     <form class="splash-actions splash-name-bar" id="splashStartForm" aria-label="Start game">
       <div class="splash-name-form">
-        <label for="splashPlayerName" class="splash-name-label">Enter your name:</label>
+        <label for="splashPlayerName" class="splash-name-label">Player:</label>
         <input type="text" id="splashPlayerName" name="playerName" class="splash-name-input" maxlength="80"
           autocomplete="name" spellcheck="false" />
         <label for="splashDifficulty" class="splash-name-label">Difficulty:</label>
@@ -132,6 +132,43 @@
         </div>
       </div>
     </header>
+
+    <section id="mobileShell" class="mobile-shell" aria-label="Mobile controls" aria-hidden="true" hidden>
+      <div class="mobile-shell-top">
+        <button type="button" id="mobileSaveBtn" class="mobile-shell-icon-btn" aria-label="Save game">Save</button>
+        <button type="button" id="mobileLoadBtn" class="mobile-shell-icon-btn" aria-label="Load game">Load</button>
+        <button type="button" id="mobileSoundBtn" class="mobile-shell-icon-btn" aria-label="Toggle sound">Sound</button>
+        <div class="mobile-speed-group" aria-label="Simulation speed">
+          <button type="button" class="mobile-speed-btn active" data-speed="1">1x</button>
+          <button type="button" class="mobile-speed-btn" data-speed="2">2x</button>
+          <button type="button" class="mobile-speed-btn" data-speed="3">3x</button>
+          <button type="button" class="mobile-speed-btn" data-speed="6">6x</button>
+          <button type="button" class="mobile-speed-btn" data-speed="0" title="Pause">||</button>
+        </div>
+      </div>
+      <div class="mobile-shell-rail" aria-label="Build and operate modes">
+        <button type="button" id="mobileBuildMenuBtn" class="mobile-rail-btn mobile-rail-btn-build"
+          aria-expanded="false" aria-controls="investInventoryPopup">Build</button>
+        <button type="button" class="mobile-rail-btn" data-mobile-mode="lift">Lift</button>
+        <button type="button" class="mobile-rail-btn" data-mobile-mode="slope">Slope</button>
+        <button type="button" class="mobile-rail-btn" data-mobile-mode="groomer">Groomer</button>
+        <button type="button" class="mobile-rail-btn" data-mobile-mode="operate">Operate</button>
+        <button type="button" id="mobileFinishSlopeBtn"
+          class="mobile-rail-btn mobile-rail-btn-muted hidden">Finish</button>
+        <button type="button" id="mobileCancelBuildBtn"
+          class="mobile-rail-btn mobile-rail-btn-muted hidden">Cancel</button>
+      </div>
+      <div class="mobile-shell-sheet-controls">
+        <button type="button" id="mobileSheetToggleBtn" class="mobile-sheet-handle" aria-expanded="false"
+          aria-controls="mobileSheetPanel">Panel</button>
+        <div class="mobile-sheet-tabs" role="tablist" aria-label="Mobile panel tabs">
+          <button type="button" id="mobileInvestTabBtn" class="mobile-sheet-tab" data-mobile-tab="invest"
+            role="tab">Invest</button>
+          <button type="button" id="mobileOperateTabBtn" class="mobile-sheet-tab active" data-mobile-tab="statistics"
+            role="tab" aria-selected="true">Operate</button>
+        </div>
+      </div>
+    </section>
 
     <aside class="sidebar" aria-label="Statistics">
       <div class="sidebar-tabs" role="tablist">

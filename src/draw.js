@@ -366,6 +366,15 @@ function drawLifts(ctx, scaleX, scaleY) {
       const notHigher = my >= a.y;
       const insufficientFunds = state.budget < totalCost;
       const cannotBuild = tooLong || notHigher || insufficientFunds;
+      // Ghost top station marker while dragging/previewing a new lift.
+      drawLiftStationDot(
+        ctx,
+        scaleX,
+        scaleY,
+        mx,
+        my,
+        cannotBuild ? 'rgba(180, 0, 0, 0.9)' : liftColor
+      );
       ctx.save();
       ctx.strokeStyle = cannotBuild ? 'rgba(180, 0, 0, 0.9)' : 'rgba(26, 26, 26, 0.5)';
       ctx.lineWidth = LIFT_LINE_WIDTH;

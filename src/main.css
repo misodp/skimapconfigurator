@@ -197,7 +197,7 @@ body {
   .splash-overlay .splash-actions.splash-name-bar {
     padding-left: 0.65rem;
     padding-right: 0.65rem;
-    padding-bottom: 48px;
+    padding-bottom: 24px;
   }
 
   .splash-name-form {
@@ -222,6 +222,11 @@ body {
     padding: 0.45rem 0.7rem;
     font-size: 0.76rem;
   }
+}
+
+/* Mobile-first splash placement: keep controls close to bottom edge. */
+body.ui-mobile .splash-overlay .splash-actions.splash-name-bar {
+  padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
 }
 
 .splash-overlay .splash-action-btn {
@@ -817,7 +822,7 @@ body {
 }
 
 .tutorial-dialogue-close-btn {
-  align-self: flex-start;
+  align-self: flex-end;
   margin: 0;
   padding: 0.34rem 0.72rem;
   border-radius: 999px;
@@ -830,6 +835,14 @@ body {
 
 .tutorial-dialogue-close-btn:hover {
   background: #fff;
+}
+
+.tutorial-dialogue.is-hans .tutorial-dialogue-close-btn {
+  align-self: flex-start;
+}
+
+body.ui-mobile .tutorial-dialogue {
+  bottom: calc(14px + env(safe-area-inset-bottom, 0px));
 }
 
 #app {
@@ -3215,5 +3228,294 @@ button:hover {
 .lift-dialog-btn.primary {
   background: var(--accent);
   border-color: var(--accent);
+  color: #fff;
+}
+
+.mobile-shell {
+  display: none;
+}
+
+body.ui-mobile #app {
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  grid-template-areas: "canvas";
+  height: 100vh;
+}
+
+body.ui-mobile .status-bar {
+  display: none;
+}
+
+body.ui-mobile .header-brand,
+body.ui-mobile .header-news,
+body.ui-mobile .header-badges,
+body.ui-mobile .header,
+body.ui-mobile .sidebar {
+  display: none;
+}
+
+body.ui-mobile .canvas-area {
+  padding: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+body.ui-mobile .canvas-wrapper {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  overflow: visible;
+}
+
+body.ui-mobile .mobile-shell {
+  display: none;
+}
+
+body.ui-mobile .mobile-shell-top {
+  display: none;
+}
+
+body.ui-mobile .mobile-shell-icon-btn {
+  margin: 0;
+  padding: 0.26rem 0.45rem;
+  font-size: 0.68rem;
+  border-radius: 999px;
+}
+
+body.ui-mobile .mobile-speed-group {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.18rem;
+}
+
+body.ui-mobile .mobile-speed-btn {
+  margin: 0;
+  padding: 0.2rem 0.32rem;
+  font-size: 0.68rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+}
+
+body.ui-mobile .mobile-speed-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+body.ui-mobile .mobile-shell-rail {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0;
+}
+
+body.ui-mobile .mobile-rail-btn {
+  margin: 0;
+  padding: 0.3rem 0.22rem;
+  font-size: 0.68rem;
+  border-radius: 8px;
+  white-space: nowrap;
+}
+
+body.ui-mobile .mobile-rail-btn-build::before {
+  content: "☰ ";
+  font-size: 0.72rem;
+}
+
+body.ui-mobile .mobile-rail-btn-build {
+  min-width: 3.1rem;
+  min-height: 3.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(38, 35, 52, 0.24);
+  background: rgba(255, 249, 240, 0.96);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+body.ui-mobile .mobile-rail-btn[data-mobile-mode="lift"],
+body.ui-mobile .mobile-rail-btn[data-mobile-mode="slope"],
+body.ui-mobile .mobile-rail-btn[data-mobile-mode="groomer"],
+body.ui-mobile .mobile-rail-btn[data-mobile-mode="operate"],
+body.ui-mobile #mobileFinishSlopeBtn,
+body.ui-mobile #mobileCancelBuildBtn {
+  display: none;
+}
+
+body.ui-mobile .mobile-rail-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+
+body.ui-mobile .mobile-rail-btn-muted {
+  color: var(--text-muted);
+}
+
+body.ui-mobile .mobile-shell-sheet-controls {
+  display: none;
+}
+
+body.ui-mobile .invest-inventory-popup {
+  right: 4.5rem;
+  left: auto;
+  width: min(56vw, 300px);
+  top: 18vh;
+  bottom: auto;
+  transform: none;
+  max-height: min(44vh, 300px);
+  border-radius: 10px;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  z-index: 140;
+}
+
+body.ui-mobile .invest-inventory-header {
+  padding: 0.4rem 0.5rem;
+}
+
+body.ui-mobile .invest-inventory-title {
+  font-size: 0.78rem;
+}
+
+body.ui-mobile .invest-inventory-hint {
+  padding: 0.28rem 0.5rem 0.32rem;
+  font-size: 0.62rem;
+  line-height: 1.25;
+}
+
+body.ui-mobile .invest-inventory-list {
+  display: flex;
+  flex-direction: row;
+  gap: 0.32rem;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x proximity;
+  padding: 0.35rem 0.45rem 0.45rem;
+}
+
+body.ui-mobile .invest-inventory-list .lift-type-btn,
+body.ui-mobile .invest-inventory-list .groomer-type-btn {
+  flex: 0 0 min(120px, 46vw);
+  max-width: min(120px, 46vw);
+  scroll-snap-align: start;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.24rem;
+  min-height: 104px;
+  padding: 0.3rem 0.25rem;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+body.ui-mobile .invest-inventory-list .lift-type-icon,
+body.ui-mobile .invest-inventory-list .groomer-type-icon {
+  width: 56px;
+  height: 56px;
+}
+
+body.ui-mobile .invest-inventory-list .lift-type-label,
+body.ui-mobile .invest-inventory-list .groomer-type-label {
+  font-size: 0.64rem;
+  text-align: center;
+  white-space: normal;
+  line-height: 1.15;
+}
+
+body.ui-mobile .invest-compact-sidebar {
+  position: fixed;
+  right: 0.7rem;
+  left: auto;
+  top: calc(0.8rem + env(safe-area-inset-top, 0px));
+  bottom: auto;
+  z-index: 240;
+  height: auto;
+  width: 58px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0) scale(1);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+body.ui-mobile.mobile-build-open .invest-compact-sidebar {
+  display: block;
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateX(0) scale(1);
+}
+
+body.ui-mobile .invest-compact-buttons {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.42rem;
+  padding: 0;
+  height: auto;
+}
+
+body.ui-mobile .invest-compact-btn {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  border: none;
+  background-color: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+body.ui-mobile .invest-compact-btn:hover {
+  border: none;
+  transform: translateY(-1px);
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.22));
+}
+
+body.ui-mobile .invest-compact-cancel-btn {
+  width: 56px;
+  min-width: 56px;
+  height: 56px;
+  padding: 0;
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+}
+
+body.ui-mobile .invest-compact-cancel-icon {
+  font-size: 1rem;
+}
+
+body.ui-mobile .mobile-lift-confirm {
+  position: fixed;
+  z-index: 260;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem;
+  border-radius: 10px;
+  border: 1px solid rgba(38, 35, 52, 0.22);
+  background: rgba(255, 249, 240, 0.96);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+body.ui-mobile .mobile-lift-confirm-btn {
+  margin: 0;
+  padding: 0.26rem 0.55rem;
+  font-size: 0.7rem;
+  border-radius: 8px;
+  border: 1px solid rgba(38, 35, 52, 0.22);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--text);
+}
+
+body.ui-mobile .mobile-lift-confirm-build {
+  background: rgba(255, 138, 92, 0.95);
+  border-color: rgba(255, 138, 92, 0.95);
   color: #fff;
 }

@@ -1,4 +1,5 @@
 import { attachMobileCanvasInput } from './canvas-input-mobile.js';
+import { initMobileShellController } from './mobile-shell-controller.js';
 
 /**
  * Mobile-specific UI bootstrap.
@@ -9,6 +10,7 @@ export function initMobileUI(ctx) {
     document.body.classList.add('ui-mobile');
     document.body.classList.remove('ui-desktop');
   }
+  initMobileShellController(ctx);
   attachMobileCanvasInput(ctx);
 }
 

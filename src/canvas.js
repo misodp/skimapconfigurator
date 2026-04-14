@@ -21,7 +21,9 @@ import skidollarg2mUrl from '../assets/images/Skidollar_gold.webp';
 import { isBuildableAtImagePoint } from './build-mask';
 
 const PEN_SMOOTH_SAMPLES = 24;
+const PEN_SMOOTH_SAMPLES_PEN = 20;
 const PEN_MIN_DIST_SQ = 16;
+const PEN_SIMPLIFY_MIN_DIST_SQ = 22 * 22;
 // Snapping distance to connect to nearby lifts/slopes (image px).
 // Keep this fairly small so connections look intentional and clean.
 const SNAP_DIST_SQ = 28 * 28;
@@ -303,6 +305,24 @@ export function resamplePolylineByPathLength(points, numSamples) {
   }
   if (result.length === 0) return points;
   return result;
+}
+
+function simplifyPolylineByDistance(points, minDistSq) {
+  if (!Array.isArray(points) || points.length <= 2) return points.slice();
+  const simplified = [points[0]];
+  let last = points[0];
+  for (let i = 1; i < points.length - 1; i++) {
+    const p = points[i];
+    if (!p) continue;
+    const dx = p.x - last.x;
+    const dy = p.y - last.y;
+    if (dx * dx + dy * dy >= minDistSq) {
+      simplified.push(p);
+      last = p;
+    }
+  }
+  simplified.push(points[points.length - 1]);
+  return simplified;
 }
 
 export function closestPointOnSegment(px, py, ax, ay, bx, by) {
@@ -1454,7 +1474,9 @@ export function onCanvasMouseUp() {
     const rawPrev = state.slopePoints[state.slopePoints.length - 2];
     const snapStart = rawFirst ? findSlopeConnectionSnap(rawFirst.x, rawFirst.y) : null;
     const snapEndAny = rawLast ? findSlopeConnectionSnap(rawLast.x, rawLast.y) : null;
-    const snapEnd = (rawLast && rawPrev) ? findSlopeConnectionSnapForEnd(rawLast.x, rawLast.y, rawPrev.y) : snapEndAny;
+    const snapEnd = (rawLast && rawPrev)
+      ? findSlopeConnectionSnapForEnd(rawLast.x, rawLast.y, rawPrev.y - SLOPE_UPHILL_TOLERANCE_PX)
+      : snapEndAny;
     if (!snapStart || !snapEnd) {
       if (rawPrev && snapEndAny && snapEndAny.y < rawPrev.y - SLOPE_UPHILL_TOLERANCE_PX) {
         window.alert('Slope end point must not be higher than the previous point.');
@@ -1467,7 +1489,8 @@ export function onCanvasMouseUp() {
       return;
     }
 
-    let pts = resamplePolylineByPathLength(state.slopePoints, PEN_SMOOTH_SAMPLES);
+    const simplifiedPen = simplifyPolylineByDistance(state.slopePoints, PEN_SIMPLIFY_MIN_DIST_SQ);
+    let pts = resamplePolylineByPathLength(simplifiedPen, PEN_SMOOTH_SAMPLES_PEN);
     const first = pts[0];
     const last = pts[pts.length - 1];
     first.x = snapStart.x;
@@ -1686,7 +1709,9 @@ export function onCanvasDblClick(e) {
     const prev = state.slopePoints[state.slopePoints.length - 2];
     const snapStart = findSlopeConnectionSnap(first.x, first.y);
     const snapEndAny = findSlopeConnectionSnap(last.x, last.y);
-    const snapEnd = prev ? findSlopeConnectionSnapForEnd(last.x, last.y, prev.y) : snapEndAny;
+    const snapEnd = prev
+      ? findSlopeConnectionSnapForEnd(last.x, last.y, prev.y - SLOPE_UPHILL_TOLERANCE_PX)
+      : snapEndAny;
     if (!snapStart || !snapEnd) {
       if (prev && snapEndAny && snapEndAny.y < prev.y - SLOPE_UPHILL_TOLERANCE_PX) {
         state.slopePlaceError = 'Slope end point must not be higher than the previous point.';
@@ -1696,16 +1721,19 @@ export function onCanvasDblClick(e) {
       return;
     }
     state.slopePlaceError = null;
-    first.x = snapStart.x;
-    first.y = snapStart.y;
-    last.x = snapEnd.x;
-    last.y = snapEnd.y;
-    if (!isSlopeNonUphill(state.slopePoints)) {
+    let pts = resamplePolylineByPathLength(state.slopePoints, PEN_SMOOTH_SAMPLES);
+    const smoothFirst = pts[0];
+    const smoothLast = pts[pts.length - 1];
+    smoothFirst.x = snapStart.x;
+    smoothFirst.y = snapStart.y;
+    smoothLast.x = snapEnd.x;
+    smoothLast.y = snapEnd.y;
+    if (!isSlopeNonUphill(pts)) {
       window.alert('Slope cannot go uphill. Each point must be same height or lower than the previous one.');
       refresh();
       return;
     }
-    const lengthM = getSlopePathLengthM(state.slopePoints);
+    const lengthM = getSlopePathLengthM(pts);
     const totalCost = getSlopeCost(lengthM);
     if (state.budget < totalCost) {
       window.alert(`Not enough budget to build this slope. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`);
@@ -1715,7 +1743,7 @@ export function onCanvasDblClick(e) {
     state.budget -= totalCost;
     state.slopes.push({
       slopeTypeId: state.difficulty,
-      points: state.slopePoints.map((p) => toNormalized(p.x, p.y)),
+      points: pts.map((p) => toNormalized(p.x, p.y)),
     });
     state.slopePoints = [];
     state.slopeDrawing = false;
