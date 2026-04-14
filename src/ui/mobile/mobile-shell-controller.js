@@ -114,6 +114,61 @@ export function initMobileShellController(ctx) {
   if (loadBtn) loadBtn.addEventListener('click', () => clickIfExists(DOM?.loadBtn));
   if (soundBtn) soundBtn.addEventListener('click', () => clickIfExists(document.getElementById('soundToggleBtn')));
 
+  const mobileOperatePanel = document.getElementById('mobileOperateCompact');
+  const mobileResortToggleBtn = document.getElementById('mobileResortToggleBtn');
+  const mobileTicketMinusBtn = document.getElementById('mobileTicketMinusBtn');
+  const mobileTicketPlusBtn = document.getElementById('mobileTicketPlusBtn');
+  const mobileTicketValue = document.getElementById('mobileTicketPriceValue');
+  const mobileOperateDate = document.getElementById('mobileOperateDate');
+  const mobileOperateWeatherIcon = document.getElementById('mobileOperateWeatherIcon');
+  const mobileOperateWeather = document.getElementById('mobileOperateWeather');
+  const currentDateDisplay = document.getElementById('currentDateDisplay');
+  const weatherDisplay = document.getElementById('weatherDisplay');
+  const resortOpenBtn = document.getElementById('resortOpenBtn');
+  const resortClosedBtn = document.getElementById('resortClosedBtn');
+  const ticketSlider = document.getElementById('ticketPriceSlider');
+  const ticketValue = document.getElementById('ticketPriceValue');
+  const snowDepthDisplay = document.getElementById('snowDepthDisplay');
+  const liftExperienceDisplay = document.getElementById('liftExperienceDisplay');
+  const slopeExperienceDisplay = document.getElementById('slopeExperienceDisplay');
+  const slopeQualityDisplay = document.getElementById('slopeQualityDisplay');
+  const satisfactionDisplay = document.getElementById('satisfactionDisplay');
+  const reputationDescription = document.getElementById('reputationDescription');
+  const mobileSnowDepthValue = document.getElementById('mobileSnowDepthValue');
+  const mobileLiftWaitValue = document.getElementById('mobileLiftWaitValue');
+  const mobileSlopeCrowdsValue = document.getElementById('mobileSlopeCrowdsValue');
+  const mobileSlopeQualityValue = document.getElementById('mobileSlopeQualityValue');
+  const mobileReputationValue = document.getElementById('mobileReputationValue');
+  const mobileLiftWaitFill = document.getElementById('mobileLiftWaitFill');
+  const mobileSlopeCrowdsFill = document.getElementById('mobileSlopeCrowdsFill');
+  const mobileSlopeQualityFill = document.getElementById('mobileSlopeQualityFill');
+  const mobileReputationFill = document.getElementById('mobileReputationFill');
+  if (mobileOperatePanel) {
+    mobileOperatePanel.hidden = false;
+    mobileOperatePanel.setAttribute('aria-hidden', 'false');
+  }
+  if (mobileResortToggleBtn) {
+    mobileResortToggleBtn.addEventListener('click', () => {
+      const openActive = !!resortOpenBtn?.classList.contains('active');
+      if (openActive) clickIfExists(resortClosedBtn);
+      else clickIfExists(resortOpenBtn);
+    });
+  }
+  if (ticketSlider) {
+    const stepTicket = (delta) => {
+      const min = Number(ticketSlider.min || '0');
+      const max = Number(ticketSlider.max || '0');
+      const current = Number(ticketSlider.value || min);
+      const next = Math.max(min, Math.min(max, current + delta));
+      if (next === current) return;
+      ticketSlider.value = String(next);
+      ticketSlider.dispatchEvent(new Event('input', { bubbles: true }));
+      ticketSlider.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+    if (mobileTicketMinusBtn) mobileTicketMinusBtn.addEventListener('click', () => stepTicket(-1));
+    if (mobileTicketPlusBtn) mobileTicketPlusBtn.addEventListener('click', () => stepTicket(1));
+  }
+
   const mobileSpeedButtons = document.querySelectorAll('.mobile-speed-btn');
   const syncMobileSpeedButtons = () => {
     const speed = String(Number.isFinite(state.simulationSpeed) ? state.simulationSpeed : 1);
@@ -198,8 +253,71 @@ export function initMobileShellController(ctx) {
     if (cancelBtn) cancelBtn.classList.toggle('hidden', !(state.buildArmed));
   };
 
+  const syncOperateCompact = () => {
+    const openActive = !!resortOpenBtn?.classList.contains('active');
+    if (mobileResortToggleBtn) {
+      mobileResortToggleBtn.classList.toggle('active', openActive);
+      mobileResortToggleBtn.classList.toggle('mobile-operate-open', openActive);
+      mobileResortToggleBtn.classList.toggle('mobile-operate-closed', !openActive);
+      mobileResortToggleBtn.textContent = openActive ? 'Open' : 'Closed';
+      mobileResortToggleBtn.setAttribute('aria-pressed', openActive ? 'true' : 'false');
+    }
+    if (currentDateDisplay && mobileOperateDate) {
+      mobileOperateDate.textContent = currentDateDisplay.textContent || mobileOperateDate.textContent;
+    }
+    if (weatherDisplay && mobileOperateWeather) {
+      const weatherLabel = weatherDisplay.querySelector('.header-weather-label')?.textContent?.trim() || weatherDisplay.textContent || '';
+      mobileOperateWeather.textContent = weatherLabel || mobileOperateWeather.textContent;
+      if (mobileOperateWeatherIcon) {
+        const weatherSvg = weatherDisplay.querySelector('.header-weather-icon svg');
+        mobileOperateWeatherIcon.innerHTML = weatherSvg ? weatherSvg.outerHTML : '';
+      }
+    }
+    if (ticketValue && mobileTicketValue) {
+      mobileTicketValue.textContent = ticketValue.textContent || mobileTicketValue.textContent;
+    }
+    if (snowDepthDisplay && mobileSnowDepthValue) {
+      mobileSnowDepthValue.textContent = snowDepthDisplay.textContent || mobileSnowDepthValue.textContent;
+    }
+    if (mobileLiftWaitValue) {
+      mobileLiftWaitValue.textContent = '';
+    }
+    if (mobileSlopeCrowdsValue) {
+      mobileSlopeCrowdsValue.textContent = '';
+    }
+    if (mobileSlopeQualityValue) {
+      mobileSlopeQualityValue.textContent = '';
+    }
+    const syncMetricFill = (sourceMetricEl, targetFillEl) => {
+      if (!sourceMetricEl || !targetFillEl) return;
+      const sourceFill = sourceMetricEl.querySelector('.experience-fill');
+      if (!sourceFill) return;
+      targetFillEl.style.width = sourceFill.style.width || targetFillEl.style.width;
+      targetFillEl.classList.remove('experience-fill-low', 'experience-fill-mid', 'experience-fill-high');
+      if (sourceFill.classList.contains('experience-fill-low')) targetFillEl.classList.add('experience-fill-low');
+      else if (sourceFill.classList.contains('experience-fill-high')) targetFillEl.classList.add('experience-fill-high');
+      else targetFillEl.classList.add('experience-fill-mid');
+    };
+    syncMetricFill(liftExperienceDisplay, mobileLiftWaitFill);
+    syncMetricFill(slopeExperienceDisplay, mobileSlopeCrowdsFill);
+    syncMetricFill(slopeQualityDisplay, mobileSlopeQualityFill);
+    if (mobileReputationValue && satisfactionDisplay) {
+      const repValue = satisfactionDisplay.querySelector('.satisfaction-value')?.textContent?.trim() || '';
+      if (repValue) mobileReputationValue.textContent = repValue;
+      const sourceRepFill = satisfactionDisplay.querySelector('.satisfaction-fill');
+      if (mobileReputationFill && sourceRepFill) {
+        mobileReputationFill.style.width = sourceRepFill.style.width || mobileReputationFill.style.width;
+        mobileReputationFill.classList.remove('satisfaction-fill-low', 'satisfaction-fill-mid', 'satisfaction-fill-high');
+        if (sourceRepFill.classList.contains('satisfaction-fill-high')) mobileReputationFill.classList.add('satisfaction-fill-high');
+        else if (sourceRepFill.classList.contains('satisfaction-fill-mid')) mobileReputationFill.classList.add('satisfaction-fill-mid');
+        else mobileReputationFill.classList.add('satisfaction-fill-low');
+      }
+    }
+  };
+
   syncMobileSpeedButtons();
   syncModeButtons();
+  syncOperateCompact();
   setSheetExpanded(false);
   showTab('statistics');
   setBuildMenuOpen(true);
@@ -207,5 +325,6 @@ export function initMobileShellController(ctx) {
   window.setInterval(() => {
     syncMobileSpeedButtons();
     syncModeButtons();
+    syncOperateCompact();
   }, 250);
 }

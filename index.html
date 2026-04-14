@@ -433,6 +433,50 @@
       </div>
     </aside>
 
+    <aside id="mobileOperateCompact" class="mobile-operate-compact" aria-label="Quick operate" hidden aria-hidden="true">
+      <div class="mobile-operate-card">
+        <div class="mobile-operate-title">Operate</div>
+        <div class="mobile-operate-meta" aria-label="Date and weather">
+          <div id="mobileOperateDate" class="mobile-operate-meta-line mobile-operate-meta-date">Jan 1, 1967</div>
+          <div class="mobile-operate-meta-line mobile-operate-meta-weather">
+            <span id="mobileOperateWeatherIcon" class="mobile-operate-weather-icon" aria-hidden="true"></span>
+            <span id="mobileOperateWeather" class="mobile-operate-weather-text">Weather</span>
+          </div>
+        </div>
+        <button type="button" id="mobileResortToggleBtn" class="mobile-operate-btn active" aria-pressed="true">Open</button>
+        <div class="mobile-operate-ticket-label">
+          <span>Ticket price:</span>
+          <span class="mobile-operate-ticket-value">
+            <img class="stat-skidollar-icon" alt="" aria-hidden="true" />
+            <span id="mobileTicketPriceValue">1.00</span>
+          </span>
+        </div>
+        <div class="mobile-operate-ticket-stepper">
+          <button type="button" id="mobileTicketMinusBtn" class="mobile-ticket-step-btn" aria-label="Decrease ticket price">−</button>
+          <button type="button" id="mobileTicketPlusBtn" class="mobile-ticket-step-btn" aria-label="Increase ticket price">+</button>
+        </div>
+        <div class="mobile-operate-stats" aria-label="Operate statistics">
+          <div class="mobile-operate-stat-row"><span>Snow</span><span id="mobileSnowDepthValue">0 cm</span></div>
+          <div class="mobile-operate-stat-row">
+            <span>Lift wait</span><span id="mobileLiftWaitValue"></span>
+            <span class="mobile-operate-stat-bar"><span id="mobileLiftWaitFill" class="mobile-operate-stat-fill experience-fill-mid" style="width:50%"></span></span>
+          </div>
+          <div class="mobile-operate-stat-row">
+            <span>Slope crowds</span><span id="mobileSlopeCrowdsValue"></span>
+            <span class="mobile-operate-stat-bar"><span id="mobileSlopeCrowdsFill" class="mobile-operate-stat-fill experience-fill-mid" style="width:50%"></span></span>
+          </div>
+          <div class="mobile-operate-stat-row">
+            <span>Slope quality</span><span id="mobileSlopeQualityValue"></span>
+            <span class="mobile-operate-stat-bar"><span id="mobileSlopeQualityFill" class="mobile-operate-stat-fill experience-fill-mid" style="width:50%"></span></span>
+          </div>
+          <div class="mobile-operate-stat-row mobile-operate-stat-row-reputation">
+            <span>Reputation</span><span id="mobileReputationValue">20% Local hill</span>
+            <span id="mobileReputationBar" class="mobile-operate-stat-bar"><span id="mobileReputationFill" class="mobile-operate-stat-fill satisfaction-fill-low" style="width:20%"></span></span>
+          </div>
+        </div>
+      </div>
+    </aside>
+
     <main class="canvas-area">
       <div class="canvas-wrapper">
         <div class="mountain-image-wrap" role="img" aria-label="Mountain map">

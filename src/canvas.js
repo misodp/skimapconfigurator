@@ -217,6 +217,13 @@ export function syncCanvasSize() {
     top: imgRect.top + offsetY,
   };
   const rectRight = rect.left + rect.width;
+  const leftBandWidth = Math.max(0, rect.left - (wrapperRect ? wrapperRect.left : rect.left));
+  const rightBandWidth = Math.max(0, (wrapperRect ? wrapperRect.right : rectRight) - rectRight);
+
+  if (typeof document !== 'undefined' && document.body) {
+    document.body.style.setProperty('--mobile-band-left', `${leftBandWidth}px`);
+    document.body.style.setProperty('--mobile-band-right', `${rightBandWidth}px`);
+  }
 
   DOM.canvas.width = rect.width * dpr;
   DOM.canvas.height = rect.height * dpr;

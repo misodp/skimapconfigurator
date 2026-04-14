@@ -3254,10 +3254,23 @@ body.ui-mobile .sidebar {
   display: none;
 }
 
+body.ui-mobile {
+  --mobile-right-panel-width: 56px;
+  --mobile-left-panel-width: calc(var(--mobile-right-panel-width) * 2.03);
+  --mobile-left-gap: 6px;
+  --mobile-right-gap: 6px;
+  --mobile-image-gap-left: 4px;
+}
+
 body.ui-mobile .canvas-area {
-  padding: 0;
+  padding:
+    0
+    calc(var(--mobile-right-panel-width, 56px) + var(--mobile-right-gap, 6px))
+    0
+    calc(var(--mobile-left-panel-width, 168px) + var(--mobile-left-gap, 6px) + var(--mobile-image-gap-left, 4px));
   width: 100vw;
   height: 100vh;
+  box-sizing: border-box;
 }
 
 body.ui-mobile .canvas-wrapper {
@@ -3426,13 +3439,13 @@ body.ui-mobile .invest-inventory-list .groomer-type-label {
 
 body.ui-mobile .invest-compact-sidebar {
   position: fixed;
-  right: 0.7rem;
+  right: var(--mobile-right-gap, 6px);
   left: auto;
   top: calc(0.8rem + env(safe-area-inset-top, 0px));
   bottom: auto;
   z-index: 240;
   height: auto;
-  width: 58px;
+  width: var(--mobile-right-panel-width, 56px);
   border: none;
   background: transparent;
   box-shadow: none;
@@ -3489,6 +3502,232 @@ body.ui-mobile .invest-compact-cancel-btn {
 
 body.ui-mobile .invest-compact-cancel-icon {
   font-size: 1rem;
+}
+
+body.ui-mobile .mobile-operate-compact {
+  position: fixed;
+  left: var(--mobile-left-gap, 6px);
+  right: auto;
+  top: calc(0.8rem + env(safe-area-inset-top, 0px));
+  z-index: 238;
+  width: var(--mobile-left-panel-width, 168px);
+  min-width: 0;
+}
+
+body.ui-mobile .mobile-operate-card {
+  border-radius: 14px;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
+  display: grid;
+  gap: 0.28rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body.ui-mobile .mobile-operate-title {
+  display: none;
+}
+
+body.ui-mobile .mobile-operate-card > * {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+body.ui-mobile .mobile-operate-meta {
+  display: grid;
+  gap: 0.06rem;
+  width: 100%;
+}
+
+body.ui-mobile .mobile-operate-meta-line {
+  font: 700 0.5rem "DM Sans", system-ui, sans-serif;
+  color: var(--text);
+  line-height: 1.1;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.ui-mobile .mobile-operate-meta-date {
+  font-size: 0.66rem;
+  font-weight: 800;
+  text-align: center;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.05;
+}
+
+body.ui-mobile .mobile-operate-meta-weather {
+  display: grid;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1rem;
+}
+
+body.ui-mobile .mobile-operate-weather-icon {
+  display: inline-flex;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 18px;
+}
+
+body.ui-mobile .mobile-operate-weather-icon svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+body.ui-mobile .mobile-operate-weather-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
+}
+
+body.ui-mobile .mobile-operate-btn {
+  margin: 0;
+  width: 100%;
+  padding: 0.2rem 0;
+  border-radius: 8px;
+  border: 1px solid rgba(38, 35, 52, 0.2);
+  background: rgba(255, 255, 255, 0.8);
+  font: 700 0.4rem "DM Sans", system-ui, sans-serif;
+  color: var(--text);
+  line-height: 1;
+}
+
+body.ui-mobile .mobile-operate-btn.active {
+  background: rgba(255, 138, 92, 0.95);
+  border-color: rgba(255, 138, 92, 0.95);
+  color: #fff;
+}
+
+body.ui-mobile .mobile-operate-btn.mobile-operate-open {
+  background: linear-gradient(135deg, #4fbf90, #7ed6ae);
+  border-color: rgba(79, 191, 144, 0.95);
+  color: #10251b;
+}
+
+body.ui-mobile .mobile-operate-btn.mobile-operate-closed {
+  background: linear-gradient(135deg, #f26666, #ff9a9a);
+  border-color: rgba(242, 102, 102, 0.95);
+  color: #3d1212;
+}
+
+body.ui-mobile .mobile-operate-ticket-label {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font: 600 0.54rem "DM Sans", system-ui, sans-serif;
+  color: var(--text);
+  gap: 0.2rem;
+  width: 100%;
+}
+
+body.ui-mobile .mobile-operate-ticket-stepper {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 0.2rem;
+}
+
+body.ui-mobile .mobile-ticket-step-btn {
+  margin: 0;
+  width: 100%;
+  min-width: 0;
+  padding: 0.2rem 0;
+  border-radius: 8px;
+  border: 1px solid rgba(38, 35, 52, 0.2);
+  background: rgba(255, 255, 255, 0.82);
+  font: 700 0.58rem "DM Sans", system-ui, sans-serif;
+  color: var(--text);
+  line-height: 1;
+}
+
+body.ui-mobile .mobile-operate-ticket-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.16rem;
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+body.ui-mobile .mobile-operate-ticket-value .stat-skidollar-icon {
+  width: 11px;
+  height: 11px;
+  min-width: 11px;
+  min-height: 11px;
+  object-fit: contain;
+}
+
+body.ui-mobile .mobile-operate-stats {
+  display: grid;
+  gap: 0.22rem;
+  width: 100%;
+}
+
+body.ui-mobile .mobile-operate-stat-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: baseline;
+  justify-items: stretch;
+  column-gap: 0.28rem;
+  row-gap: 0.08rem;
+  font: 600 0.46rem "DM Sans", system-ui, sans-serif;
+  color: var(--text);
+  text-align: left;
+}
+
+body.ui-mobile .mobile-operate-stat-row span:first-child {
+  color: var(--text);
+  opacity: 0.92;
+  text-align: left;
+  white-space: nowrap;
+}
+
+body.ui-mobile .mobile-operate-stat-row span:last-child {
+  font-weight: 700;
+  text-align: right;
+  color: var(--text-muted);
+  font-size: 0.43rem;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+body.ui-mobile .mobile-operate-stat-bar {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 3px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(203, 213, 225, 0.55);
+}
+
+body.ui-mobile .mobile-operate-stat-fill {
+  display: block;
+  height: 100%;
+  width: 50%;
+  border-radius: 999px;
+}
+
+body.ui-mobile .mobile-operate-stat-row-reputation span:first-child,
+body.ui-mobile .mobile-operate-stat-row-reputation span:last-child {
+  font-weight: 800;
+  font-size: 0.54rem;
+}
+
+body.ui-mobile #mobileReputationBar {
+  height: 6px;
 }
 
 body.ui-mobile .mobile-lift-confirm {
