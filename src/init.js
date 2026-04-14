@@ -555,11 +555,6 @@ export async function init() {
     btn.addEventListener('click', () => setSlopeDrawMode(btn.dataset.slopeMode));
   });
 
-  DOM.canvas.addEventListener('click', onCanvasClick);
-  DOM.canvas.addEventListener('dblclick', onCanvasDblClick);
-  DOM.canvas.addEventListener('mousedown', onCanvasMouseDown);
-  DOM.canvas.addEventListener('mousemove', onCanvasMouseMove);
-  DOM.canvas.addEventListener('mouseup', onCanvasMouseUp);
   // Commit 2 mobile refactor seam: initialize platform-specific UI bindings.
   initPlatformUI({
     state,
@@ -578,6 +573,10 @@ export async function init() {
     renderSlopeTypeButtons,
     updateDateDisplay,
     updateWeatherDisplay,
+    onCanvasClick,
+    onCanvasDblClick,
+    onCanvasMouseDown,
+    onCanvasMouseMove,
     onCanvasMouseUp,
     hideLiftHoverPopup,
     hideGroomerHoverPopup,
