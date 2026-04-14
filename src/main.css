@@ -1504,6 +1504,14 @@ body.ui-mobile .tutorial-dialogue {
   display: none;
 }
 
+.mobile-right-sound-btn.is-muted .sound-wave {
+  display: none;
+}
+
+.mobile-right-sound-btn:not(.is-muted) .sound-mute {
+  display: none;
+}
+
 /* Combined left sidebar with Invest / Statistics tabs */
 .sidebar {
   grid-area: sidebar;
@@ -1571,6 +1579,14 @@ body.ui-mobile .tutorial-dialogue {
   flex-direction: column;
   gap: 0.35rem;
   padding: 0 0.35rem;
+}
+
+.invest-compact-speed {
+  display: none;
+}
+
+.mobile-right-sound-btn {
+  display: none;
 }
 
 .invest-compact-btn {
@@ -3475,9 +3491,9 @@ body.ui-mobile .invest-compact-buttons {
 }
 
 body.ui-mobile .invest-compact-speed {
+  display: grid;
   margin-top: auto;
   margin-bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
-  display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.18rem;
   width: 56px;
@@ -3497,6 +3513,27 @@ body.ui-mobile .mobile-right-speed-btn {
 
 body.ui-mobile .mobile-right-speed-btn[data-speed="0"] {
   grid-column: 1 / -1;
+}
+
+body.ui-mobile .mobile-right-sound-btn {
+  display: inline-flex;
+  grid-column: 1 / -1;
+  margin: 0;
+  min-width: 0;
+  padding: 0.16rem 0;
+  border-radius: 7px;
+  border: 1px solid rgba(38, 35, 52, 0.28);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--text);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+body.ui-mobile .mobile-right-sound-btn .status-bar-icon-btn-svg {
+  width: 12px;
+  height: 12px;
 }
 
 body.ui-mobile .mobile-right-speed-btn.active {

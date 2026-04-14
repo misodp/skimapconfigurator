@@ -864,7 +864,15 @@ function initIntroVideo() {
   let finished = false;
   let autoplayBlocked = false;
   let tutorialMode = false;
+  const isMobilePlayback = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+    || (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || ''));
+  let mobileBufferingHits = 0;
+  let mobileTriedMutedFallback = false;
   video.src = introVideoUrl;
+  video.playsInline = true;
+  video.muted = false;
+  video.removeAttribute('muted');
+  video.preload = isMobilePlayback ? 'metadata' : 'auto';
 
   function updateToggleButton() {
     if (!toggleBtn) return;
@@ -913,11 +921,27 @@ function initIntroVideo() {
     if (finished) return;
     void video.play().then(() => {
       autoplayBlocked = false;
+      mobileBufferingHits = 0;
       updateToggleButton();
     }).catch(() => {
-      // Keep overlay visible; retry on next user gesture.
-      autoplayBlocked = true;
-      updateToggleButton();
+      if (isMobilePlayback && !mobileTriedMutedFallback) {
+        // Some mobile contexts block autoplay with sound; retry once muted.
+        mobileTriedMutedFallback = true;
+        video.muted = true;
+        video.setAttribute('muted', '');
+        void video.play().then(() => {
+          autoplayBlocked = false;
+          mobileBufferingHits = 0;
+          updateToggleButton();
+        }).catch(() => {
+          autoplayBlocked = true;
+          updateToggleButton();
+        });
+      } else {
+        // Keep overlay visible; retry on next user gesture.
+        autoplayBlocked = true;
+        updateToggleButton();
+      }
     });
   }
 
@@ -927,6 +951,9 @@ function initIntroVideo() {
     tutorialMode = true;
     finished = false;
     autoplayBlocked = false;
+    mobileTriedMutedFallback = false;
+    video.muted = false;
+    video.removeAttribute('muted');
     video.currentTime = 0;
     overlay.hidden = false;
     overlay.setAttribute('aria-hidden', 'false');
@@ -958,10 +985,12 @@ function initIntroVideo() {
     }
   }
 
-  video.addEventListener('click', (e) => {
-    e.stopPropagation();
-    toggleIntroVideoPlayPause();
-  });
+  if (!isMobilePlayback) {
+    video.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleIntroVideoPlayPause();
+    });
+  }
 
   if (skipBtn) {
     skipBtn.addEventListener('click', (e) => {
@@ -981,6 +1010,16 @@ function initIntroVideo() {
 
   video.addEventListener('play', updateToggleButton);
   video.addEventListener('pause', updateToggleButton);
+  if (isMobilePlayback) {
+    const onBuffering = () => {
+      if (finished) return;
+      mobileBufferingHits += 1;
+      // On mobile emulator/slow network, repeated stalls feel glitchy; skip intro to keep UX smooth.
+      if (mobileBufferingHits >= 2) finishIntro();
+    };
+    video.addEventListener('waiting', onBuffering);
+    video.addEventListener('stalled', onBuffering);
+  }
 }
 
 function initGameOver() {
@@ -1066,6 +1105,28 @@ function initSplash() {
   }
 
   let splashStartCommitted = false;
+  async function requestMobileFullscreenLandscape() {
+    const isMobileLike = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
+      || (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || ''));
+    if (!isMobileLike) return;
+    try {
+      const docEl = document.documentElement;
+      const inFullscreen = !!document.fullscreenElement;
+      if (!inFullscreen && docEl && typeof docEl.requestFullscreen === 'function') {
+        await docEl.requestFullscreen();
+      }
+    } catch {
+      // Ignore fullscreen rejections (browser policy/user setting).
+    }
+    try {
+      if (screen.orientation && typeof screen.orientation.lock === 'function') {
+        await screen.orientation.lock('landscape');
+      }
+    } catch {
+      // Ignore orientation-lock failures (unsupported or policy-restricted).
+    }
+  }
+
   function startAdventure() {
     if (splashStartCommitted) return;
     splashStartCommitted = true;
@@ -1080,6 +1141,8 @@ function initSplash() {
     state.sessionGameId = randomSessionGameId();
     saveSplashPlayerName(state.playerName);
     state.peakDailyVisitors = 0;
+    // Best effort: on mobile, enter fullscreen and lock landscape from this user gesture.
+    void requestMobileFullscreenLandscape();
     dissolve(true);
   }
 

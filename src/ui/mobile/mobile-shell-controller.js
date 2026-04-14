@@ -94,7 +94,8 @@ export function initMobileShellController(ctx) {
         return;
       }
       setMode(mode);
-      showTab(fallbackTab);
+      // Keep operate context active on mobile map so status/popup interactions remain available.
+      showTab('statistics');
       setSheetExpanded(true);
       state.buildArmed = true;
       const cancelBuildBtn = document.getElementById('cancelBuildBtn');
@@ -110,9 +111,19 @@ export function initMobileShellController(ctx) {
   const saveBtn = document.getElementById('mobileSaveBtn');
   const loadBtn = document.getElementById('mobileLoadBtn');
   const soundBtn = document.getElementById('mobileSoundBtn');
+  const rightSoundBtn = document.getElementById('mobileRightSoundBtn');
+  const desktopSoundBtn = document.getElementById('soundToggleBtn');
   if (saveBtn) saveBtn.addEventListener('click', () => clickIfExists(DOM?.saveBtn));
   if (loadBtn) loadBtn.addEventListener('click', () => clickIfExists(DOM?.loadBtn));
   if (soundBtn) soundBtn.addEventListener('click', () => clickIfExists(document.getElementById('soundToggleBtn')));
+  if (rightSoundBtn) rightSoundBtn.addEventListener('click', () => clickIfExists(document.getElementById('soundToggleBtn')));
+  const syncRightSoundButton = () => {
+    if (!rightSoundBtn || !desktopSoundBtn) return;
+    rightSoundBtn.classList.toggle('is-muted', desktopSoundBtn.classList.contains('is-muted'));
+    rightSoundBtn.setAttribute('aria-pressed', desktopSoundBtn.getAttribute('aria-pressed') || 'true');
+    rightSoundBtn.setAttribute('title', desktopSoundBtn.getAttribute('title') || 'Toggle sound');
+    rightSoundBtn.setAttribute('aria-label', desktopSoundBtn.getAttribute('aria-label') || 'Toggle sound');
+  };
 
   const mobileOperatePanel = document.getElementById('mobileOperateCompact');
   const mobileResortToggleBtn = document.getElementById('mobileResortToggleBtn');
@@ -239,7 +250,7 @@ export function initMobileShellController(ctx) {
       e.preventDefault();
       e.stopPropagation();
       setBuildMenuOpen(true);
-      showTab('invest');
+      showTab('statistics');
     };
     mobileBuildBtn.addEventListener('click', openBuildMenu);
     mobileBuildBtn.addEventListener('pointerup', openBuildMenu);
@@ -249,7 +260,7 @@ export function initMobileShellController(ctx) {
   document.querySelectorAll('.invest-compact-btn').forEach((btn) => {
     btn.addEventListener('click', () => {
       setBuildMenuOpen(true);
-      showTab('invest');
+      showTab('statistics');
       setSheetExpanded(true);
     });
   });
@@ -376,6 +387,7 @@ export function initMobileShellController(ctx) {
   syncMobileSpeedButtons();
   syncModeButtons();
   syncOperateCompact();
+  syncRightSoundButton();
   setSheetExpanded(false);
   showTab('statistics');
   setBuildMenuOpen(true);
@@ -384,5 +396,6 @@ export function initMobileShellController(ctx) {
     syncMobileSpeedButtons();
     syncModeButtons();
     syncOperateCompact();
+    syncRightSoundButton();
   }, 250);
 }
