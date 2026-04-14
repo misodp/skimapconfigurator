@@ -514,13 +514,6 @@ export async function init() {
   DOM.slopeQualityDisplay = document.getElementById('slopeQualityDisplay');
   DOM.satisfactionDisplay = document.getElementById('satisfactionDisplay');
 
-  // Commit 1 mobile refactor seam: select platform UI module.
-  // Existing UI behavior still remains in this file until follow-up extraction commits.
-  initPlatformUI({
-    state,
-    DOM,
-  });
-
   DOM.imageInput.addEventListener('change', onImageSelected);
   if (DOM.saveBtn) DOM.saveBtn.addEventListener('click', exportConfig);
   if (DOM.loadBtn && DOM.importInput) DOM.loadBtn.addEventListener('click', () => DOM.importInput.click());
@@ -582,16 +575,6 @@ export async function init() {
     });
   }
 
-  if (DOM.simSpeedButtons) {
-    DOM.simSpeedButtons.forEach((btn) => {
-      btn.addEventListener('click', () => {
-        const speed = Number(btn.dataset.speed ?? '1') || 0;
-        state.simulationSpeed = Math.max(0, Math.min(6, speed));
-        syncSimulationSpeedButtons();
-        applySimulationSpeed();
-      });
-    });
-  }
   syncSimulationSpeedButtons();
 
   initInvestCompactSidebar();
@@ -631,40 +614,6 @@ export async function init() {
     });
   }
 
-  const sidebarTabs = document.querySelectorAll('.sidebar-tab');
-  const investPanel = document.getElementById('investPanel');
-  const statisticsPanel = document.getElementById('statisticsPanel');
-  sidebarTabs.forEach((tab) => {
-    tab.addEventListener('click', () => {
-      const tabName = tab.dataset.tab;
-      sidebarTabs.forEach((t) => {
-        t.classList.remove('active');
-        t.setAttribute('aria-selected', 'false');
-      });
-      tab.classList.add('active');
-      tab.setAttribute('aria-selected', 'true');
-      if (investPanel) {
-        investPanel.classList.toggle('active', tabName === 'invest');
-      }
-      if (statisticsPanel) {
-        statisticsPanel.classList.toggle('active', tabName === 'statistics');
-      }
-      if (tabName === 'invest') {
-        hideLiftHoverPopup();
-      }
-      if (tabName === 'statistics') {
-        if (typeof window.liftDetailSetBlank === 'function') window.liftDetailSetBlank();
-        if (typeof window.groomerDetailSetBlank === 'function') window.groomerDetailSetBlank();
-        if (typeof window.slopeDetailSetBlank === 'function') window.slopeDetailSetBlank();
-        const fp = document.getElementById('liftDetailFloating');
-        if (fp) {
-          fp.hidden = true;
-          fp.setAttribute('aria-hidden', 'true');
-        }
-      }
-    });
-  });
-
   document.querySelectorAll('.slope-mode-btn').forEach((btn) => {
     btn.addEventListener('click', () => setSlopeDrawMode(btn.dataset.slopeMode));
   });
@@ -688,9 +637,19 @@ export async function init() {
     if (!slopePopup || !slopePopup.contains(e.relatedTarget)) hideSlopeHoverPopup();
     onCanvasMouseUp(e);
   });
-  document.addEventListener('click', handleLiftPopupClick);
-  document.addEventListener('click', handleGroomerPopupClick);
-  document.addEventListener('click', handleSlopePopupClick);
+  // Commit 2 mobile refactor seam: initialize platform-specific UI bindings.
+  initPlatformUI({
+    state,
+    DOM,
+    syncSimulationSpeedButtons,
+    applySimulationSpeed,
+    hideLiftHoverPopup,
+    hideGroomerHoverPopup,
+    hideSlopeHoverPopup,
+    handleLiftPopupClick,
+    handleGroomerPopupClick,
+    handleSlopePopupClick,
+  });
 
   document.getElementById('cancelSlopeBtn').addEventListener('click', cancelSlope);
   document.getElementById('cancelLiftBtn').addEventListener('click', cancelLift);
