@@ -19,6 +19,7 @@ import { COLS, ROWS } from './constants';
 import { getLiftHealthZone, getLiftServiceCost, getLiftEffectiveCapacityMultiplier, getGroomerHealthZone, getGroomerServiceCost, getGroomerEffectiveCapacityMultiplier } from './maintenance_simulator';
 import skidollarg2mUrl from '../assets/images/Skidollar_gold.webp';
 import { isBuildableAtImagePoint } from './build-mask';
+import { showAlertDialog, showConfirmDialog, showPromptDialog } from './ui/dialogs.js';
 
 const PEN_SMOOTH_SAMPLES = 24;
 const PEN_SMOOTH_SAMPLES_PEN = 20;
@@ -886,7 +887,7 @@ export function hideSlopeHoverPopup() {
 /**
  * Handle click on lift popup (close button, pin, or Service button). Use event delegation from document.
  */
-export function handleLiftPopupClick(e) {
+export async function handleLiftPopupClick(e) {
   const popup = document.getElementById('liftHoverPopup');
   const groomerPopup = document.getElementById('groomerHoverPopup');
   const slopePopup = document.getElementById('slopeHoverPopup');
@@ -929,7 +930,7 @@ export function handleLiftPopupClick(e) {
     if (!Number.isNaN(idx) && idx >= 0 && idx < state.lifts.length) {
       const lift = state.lifts[idx];
       const current = (lift && (lift.name || `Lift ${idx + 1}`)) || `Lift ${idx + 1}`;
-      const newName = window.prompt('Lift name', current);
+      const newName = await showPromptDialog('Lift name', current, { title: 'Rename lift', okText: 'Save' });
       if (newName !== null && lift) {
         lift.name = newName.trim() || `Lift ${idx + 1}`;
         refresh();
@@ -964,7 +965,7 @@ export function handleLiftPopupClick(e) {
       const initialInvestment = baseCost + costPerMeter * lengthM;
       const health = Math.max(0, Math.min(100, lift.health ?? 100));
       const saleValue = Math.round(0.15 * initialInvestment * (health / 100));
-      if (!window.confirm(`Sell this lift for ${formatCurrency(saleValue)}?`)) return;
+      if (!(await showConfirmDialog(`Sell this lift for ${formatCurrency(saleValue)}?`, { title: 'Sell lift', okText: 'Sell' }))) return;
       state.budget += saleValue;
       state.lifts.splice(idx, 1);
       updateBudgetDisplay();
@@ -994,10 +995,10 @@ export function handleLiftPopupClick(e) {
       const initialInvestment = baseCost + costPerMeter * lengthM;
       const scrapCost = Math.round(0.1 * initialInvestment);
       if (state.budget < scrapCost) {
-        window.alert(`Not enough budget to scrap this lift. Disposal cost: ${formatCurrency(scrapCost)}. Available: ${formatCurrency(state.budget)}.`);
+        await showAlertDialog(`Not enough budget to scrap this lift. Disposal cost: ${formatCurrency(scrapCost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
         return;
       }
-      if (!window.confirm(`Scrap this broken lift? You will pay ${formatCurrency(scrapCost)} for disposal.`)) return;
+      if (!(await showConfirmDialog(`Scrap this broken lift? You will pay ${formatCurrency(scrapCost)} for disposal.`, { title: 'Scrap lift', okText: 'Scrap' }))) return;
       state.budget -= scrapCost;
       state.lifts.splice(idx, 1);
       updateBudgetDisplay();
@@ -1022,7 +1023,7 @@ export function handleLiftPopupClick(e) {
     cost = (lift.repairCost != null) ? Number(lift.repairCost) : 0;
     if (cost <= 0) return;
     if (state.budget < cost) {
-      window.alert(`Not enough budget to repair this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      await showAlertDialog(`Not enough budget to repair this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
       return;
     }
     state.budget -= cost;
@@ -1042,7 +1043,7 @@ export function handleLiftPopupClick(e) {
     cost = getLiftServiceCost(health, initialInvestment, reliability);
     if (cost <= 0) return;
     if (state.budget < cost) {
-      window.alert(`Not enough budget to service this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      await showAlertDialog(`Not enough budget to service this lift. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
       return;
     }
     state.budget -= cost;
@@ -1060,7 +1061,7 @@ export function handleLiftPopupClick(e) {
 /**
  * Handle click on groomer popup (close, rename, service, repair). Use event delegation from document.
  */
-export function handleGroomerPopupClick(e) {
+export async function handleGroomerPopupClick(e) {
   const popup = document.getElementById('groomerHoverPopup');
   const liftPopup = document.getElementById('liftHoverPopup');
   if (!isOperateTabActive()) return;
@@ -1103,7 +1104,7 @@ export function handleGroomerPopupClick(e) {
       const groomer = state.groomers[idx];
       const typeLabel = state.groomerTypes.find((t) => t.id === groomer.groomerTypeId)?.name || 'Groomer';
       const current = groomer.name || typeLabel + ' ' + (idx + 1);
-      const newName = window.prompt('Groomer name', current);
+      const newName = await showPromptDialog('Groomer name', current, { title: 'Rename groomer', okText: 'Save' });
       if (newName !== null && groomer) {
         groomer.name = newName.trim() || (typeLabel + ' ' + (idx + 1));
         refresh();
@@ -1133,7 +1134,7 @@ export function handleGroomerPopupClick(e) {
       const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
       const health = Math.max(0, Math.min(100, groomer.health ?? 100));
       const saleValue = Math.round(0.15 * purchaseCost * (health / 100));
-      if (!window.confirm(`Sell this groomer for ${formatCurrency(saleValue)}?`)) return;
+      if (!(await showConfirmDialog(`Sell this groomer for ${formatCurrency(saleValue)}?`, { title: 'Sell groomer', okText: 'Sell' }))) return;
       state.budget += saleValue;
       state.groomers.splice(idx, 1);
       updateBudgetDisplay();
@@ -1158,10 +1159,10 @@ export function handleGroomerPopupClick(e) {
       const purchaseCost = (groomerType && groomerType.purchase_cost != null) ? Number(groomerType.purchase_cost) : 0;
       const scrapCost = Math.round(0.1 * purchaseCost);
       if (state.budget < scrapCost) {
-        window.alert(`Not enough budget to scrap this groomer. Disposal cost: ${formatCurrency(scrapCost)}. Available: ${formatCurrency(state.budget)}.`);
+        await showAlertDialog(`Not enough budget to scrap this groomer. Disposal cost: ${formatCurrency(scrapCost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
         return;
       }
-      if (!window.confirm(`Scrap this broken groomer? You will pay ${formatCurrency(scrapCost)} for disposal.`)) return;
+      if (!(await showConfirmDialog(`Scrap this broken groomer? You will pay ${formatCurrency(scrapCost)} for disposal.`, { title: 'Scrap groomer', okText: 'Scrap' }))) return;
       state.budget -= scrapCost;
       state.groomers.splice(idx, 1);
       updateBudgetDisplay();
@@ -1188,7 +1189,7 @@ export function handleGroomerPopupClick(e) {
     cost = (groomer.repairCost != null) ? Number(groomer.repairCost) : 0;
     if (cost <= 0) return;
     if (state.budget < cost) {
-      window.alert(`Not enough budget to repair this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      await showAlertDialog(`Not enough budget to repair this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
       return;
     }
     state.budget -= cost;
@@ -1201,7 +1202,7 @@ export function handleGroomerPopupClick(e) {
     cost = getGroomerServiceCost(health, purchaseCost, reliability);
     if (cost <= 0) return;
     if (state.budget < cost) {
-      window.alert(`Not enough budget to service this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      await showAlertDialog(`Not enough budget to service this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
       return;
     }
     state.budget -= cost;
@@ -1219,7 +1220,7 @@ export function handleGroomerPopupClick(e) {
 /**
  * Handle click on slope popup (close button or pin). Use event delegation from document.
  */
-export function handleSlopePopupClick(e) {
+export async function handleSlopePopupClick(e) {
   const popup = document.getElementById('slopeHoverPopup');
   if (!popup || popup.hidden) return;
   if (!isOperateTabActive()) return;
@@ -1259,10 +1260,10 @@ export function handleSlopePopupClick(e) {
       const buildCost = (lengthM != null && lengthM > 0) ? Math.round(lengthM * costPerMeter) : 0;
       const scrapCost = Math.round(0.1 * buildCost);
       if (state.budget < scrapCost) {
-        window.alert('Not enough budget to scrap this slope. Disposal cost: ' + formatCurrency(scrapCost) + '. Available: ' + formatCurrency(state.budget) + '.');
+        await showAlertDialog('Not enough budget to scrap this slope. Disposal cost: ' + formatCurrency(scrapCost) + '. Available: ' + formatCurrency(state.budget) + '.', { title: 'Insufficient budget' });
         return;
       }
-      if (!window.confirm('Scrap this slope? You will pay ' + formatCurrency(scrapCost) + ' for disposal (10% of build cost).')) return;
+      if (!(await showConfirmDialog('Scrap this slope? You will pay ' + formatCurrency(scrapCost) + ' for disposal (10% of build cost).', { title: 'Scrap slope', okText: 'Scrap' }))) return;
       state.budget -= scrapCost;
       state.slopes.splice(idx, 1);
       updateBudgetDisplay();
@@ -1479,7 +1480,7 @@ export function onCanvasMouseMove(e) {
   }
 }
 
-export function onCanvasMouseUp() {
+export async function onCanvasMouseUp() {
   if (!state.penDrawing || !state.image) return;
   state.penDrawing = false;
   if (state.slopePoints.length >= 2) {
@@ -1494,9 +1495,9 @@ export function onCanvasMouseUp() {
       : snapEndAny;
     if (!snapStart || !snapEnd) {
       if (rawPrev && snapEndAny && snapEndAny.y < rawPrev.y - SLOPE_UPHILL_TOLERANCE_PX) {
-        window.alert('Slope end point must not be higher than the previous point.');
+        await showAlertDialog('Slope end point must not be higher than the previous point.', { title: 'Invalid slope' });
       } else {
-        window.alert('Slope must start/end at a lift station or on an existing slope.');
+        await showAlertDialog('Slope must start/end at a lift station or on an existing slope.', { title: 'Invalid slope' });
       }
       state.slopePoints = [];
       document.getElementById('cancelSlopeBtn').classList.add('hidden');
@@ -1513,7 +1514,7 @@ export function onCanvasMouseUp() {
     last.x = snapEnd.x;
     last.y = snapEnd.y;
     if (!isSlopeNonUphill(pts)) {
-      window.alert('Slope cannot go uphill. Each point must be same height or lower than the previous one.');
+      await showAlertDialog('Slope cannot go uphill. Each point must be same height or lower than the previous one.', { title: 'Invalid slope' });
       state.slopePoints = [];
       document.getElementById('cancelSlopeBtn').classList.add('hidden');
       refresh();
@@ -1522,7 +1523,7 @@ export function onCanvasMouseUp() {
     const lengthM = getSlopePathLengthM(pts);
     const totalCost = getSlopeCost(lengthM);
     if (state.budget < totalCost) {
-      window.alert(`Not enough budget to build this slope. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`);
+      await showAlertDialog(`Not enough budget to build this slope. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
       state.slopePoints = [];
       document.getElementById('cancelSlopeBtn').classList.add('hidden');
       refresh();
@@ -1547,7 +1548,7 @@ export function onCanvasMouseUp() {
   refresh();
 }
 
-export function onCanvasClick(e) {
+export async function onCanvasClick(e) {
   if (!state.image) return;
   const { x, y } = getCanvasPoint(e);
 
@@ -1617,7 +1618,7 @@ export function onCanvasClick(e) {
       updateCancelLiftButton();
     } else if (!state.liftTop) {
       if (pt.y >= state.liftBottom.y) {
-        window.alert('Top station must be higher than bottom station.');
+        await showAlertDialog('Top station must be higher than bottom station.', { title: 'Invalid lift placement' });
         refresh();
         return;
       }
@@ -1626,7 +1627,7 @@ export function onCanvasClick(e) {
       const liftDef = state.liftTypes.find((l) => l.id === typeId);
       const maxLength = (liftDef && liftDef.max_length != null) ? liftDef.max_length : Infinity;
       if (lengthM > maxLength) {
-        window.alert(`Line is too long for this lift type. Maximum length: ${maxLength} m. Calculated: ${lengthM} m.`);
+        await showAlertDialog(`Line is too long for this lift type. Maximum length: ${maxLength} m. Calculated: ${lengthM} m.`, { title: 'Invalid lift placement' });
         refresh();
         return;
       }
@@ -1634,7 +1635,7 @@ export function onCanvasClick(e) {
       const costPerMeter = (liftDef && liftDef.cost_per_meter != null) ? Number(liftDef.cost_per_meter) : 0;
       const totalCost = Math.round(baseCost + lengthM * costPerMeter);
       if (state.budget < totalCost) {
-        window.alert(`Not enough budget to build this lift. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`);
+        await showAlertDialog(`Not enough budget to build this lift. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
         refresh();
         return;
       }
@@ -1661,7 +1662,8 @@ export function onCanvasClick(e) {
     const pt = canvasToImage(x, y);
     const norm = toNormalized(pt.x, pt.y);
     const nextNum = state.cottages.length + 1;
-    const name = window.prompt('Cottage name (optional)', `Cottage ${nextNum}`) || `Cottage ${nextNum}`;
+    const enteredName = await showPromptDialog('Cottage name (optional)', `Cottage ${nextNum}`, { title: 'Add cottage', okText: 'Add' });
+    const name = enteredName || `Cottage ${nextNum}`;
     state.cottages.push({ position: norm, name: name.trim() || `Cottage ${nextNum}` });
     state.buildArmed = false;
     state.mouseImage = null;
@@ -1672,7 +1674,7 @@ export function onCanvasClick(e) {
     const groomerDef = state.groomerTypes.find((g) => g.id === typeId);
     const cost = (groomerDef && groomerDef.purchase_cost != null) ? Number(groomerDef.purchase_cost) : 0;
     if (state.budget < cost) {
-      window.alert(`Not enough budget to buy this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`);
+      await showAlertDialog(`Not enough budget to buy this groomer. Cost: ${formatCurrency(cost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
       refresh();
       return;
     }
@@ -1715,7 +1717,7 @@ export function onCanvasClick(e) {
   refresh();
 }
 
-export function onCanvasDblClick(e) {
+export async function onCanvasDblClick(e) {
   if (state.mode !== 'slope' || state.slopeDrawMode !== 'points' || !state.image) return;
   e.preventDefault();
   if (state.slopePoints.length >= 2) {
@@ -1744,14 +1746,14 @@ export function onCanvasDblClick(e) {
     smoothLast.x = snapEnd.x;
     smoothLast.y = snapEnd.y;
     if (!isSlopeNonUphill(pts)) {
-      window.alert('Slope cannot go uphill. Each point must be same height or lower than the previous one.');
+      await showAlertDialog('Slope cannot go uphill. Each point must be same height or lower than the previous one.', { title: 'Invalid slope' });
       refresh();
       return;
     }
     const lengthM = getSlopePathLengthM(pts);
     const totalCost = getSlopeCost(lengthM);
     if (state.budget < totalCost) {
-      window.alert(`Not enough budget to build this slope. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`);
+      await showAlertDialog(`Not enough budget to build this slope. Cost: ${formatCurrency(totalCost)}. Available: ${formatCurrency(state.budget)}.`, { title: 'Insufficient budget' });
       refresh();
       return;
     }

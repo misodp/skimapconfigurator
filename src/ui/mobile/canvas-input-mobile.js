@@ -50,6 +50,7 @@ export function attachMobileCanvasInput(ctx) {
   let viewTranslateY = 0;
   const LABEL_VERTICAL_GAP = 6;
   const SLOPE_SNAP_DIST_SQ = 28 * 28;
+  const SLOPE_START_ASSIST_SNAP_DIST_SQ = 48 * 48;
   const SLOPE_DRAG_START_SQ = 12 * 12;
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
@@ -238,6 +239,45 @@ export function attachMobileCanvasInput(ctx) {
     const apy = py - ay;
     const t = Math.max(0, Math.min(1, (apx * abx + apy * aby) / abLenSq));
     return { x: ax + abx * t, y: ay + aby * t };
+  }
+
+  function getPointModeSlopeStartSnap(pt) {
+    if (!pt) return null;
+    let best = null;
+    let bestDistSq = SLOPE_START_ASSIST_SNAP_DIST_SQ;
+
+    for (const lift of state?.lifts || []) {
+      const bottom = fromNormalized(lift.bottomStation.x, lift.bottomStation.y);
+      const top = fromNormalized(lift.topStation.x, lift.topStation.y);
+      for (const station of [bottom, top]) {
+        const dx = pt.x - station.x;
+        const dy = pt.y - station.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < bestDistSq) {
+          bestDistSq = d2;
+          best = { x: station.x, y: station.y };
+        }
+      }
+    }
+
+    for (const slope of state?.slopes || []) {
+      const points = Array.isArray(slope.points) ? slope.points.map((p) => fromNormalized(p.x, p.y)) : [];
+      for (let i = 0; i < points.length - 1; i += 1) {
+        const a = points[i];
+        const b = points[i + 1];
+        if (!a || !b) continue;
+        const q = closestPointOnSegment(pt.x, pt.y, a.x, a.y, b.x, b.y);
+        const dx = pt.x - q.x;
+        const dy = pt.y - q.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < bestDistSq) {
+          bestDistSq = d2;
+          best = { x: q.x, y: q.y };
+        }
+      }
+    }
+
+    return best;
   }
 
   function isSlopeEndpointSnappable(pt) {
@@ -460,7 +500,21 @@ export function attachMobileCanvasInput(ctx) {
     } else if (isSlopeBuild && !moved && typeof onCanvasClick === 'function') {
       // Tap-to-add slope points (desktop-like points mode on mobile).
       if (state) state.slopeDrawMode = 'points';
-      onCanvasClick(e);
+      const hasNoSlopePoints = !state?.slopePoints || state.slopePoints.length === 0;
+      if (hasNoSlopePoints) {
+        const candidate = getLiftCandidateFromEvent(e);
+        const snap = getPointModeSlopeStartSnap(candidate);
+        if (snap && DOM?.canvas && state?.imageWidth && state?.imageHeight) {
+          const rect = DOM.canvas.getBoundingClientRect();
+          const snapClientX = rect.left + ((snap.x / state.imageWidth) * rect.width);
+          const snapClientY = rect.top + ((snap.y / state.imageHeight) * rect.height);
+          onCanvasClick(makeSyntheticPointerEvent({ clientX: snapClientX, clientY: snapClientY }));
+        } else {
+          onCanvasClick(e);
+        }
+      } else {
+        onCanvasClick(e);
+      }
       const points = state?.slopePoints || [];
       const lastPoint = points.length ? points[points.length - 1] : null;
       const canFinalize = points.length >= 2 && isSlopeEndpointSnappable(lastPoint);

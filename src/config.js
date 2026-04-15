@@ -12,6 +12,7 @@ import { updateAchievementBadges, getEffectiveSatisfaction } from './achievement
 import { openHallOfFameAfterSave } from './ui/hall-of-fame.js';
 import { encryptSaveFileUtf8, parseSaveOrLegacyJson } from './save-crypto.js';
 import { getEffectiveLiftCapacity } from './maintenance_simulator';
+import { showAlertDialog, showPromptDialog } from './ui/dialogs.js';
 
 export function updateBudgetDisplay() {
   const el = document.getElementById('budgetAmount');
@@ -372,11 +373,11 @@ export function renderLists() {
   }
 
   DOM.liftList.querySelectorAll('.editable-lift-name').forEach((el) => {
-    el.addEventListener('click', () => {
+    el.addEventListener('click', async () => {
       const idx = Number(el.dataset.idx);
       const lift = state.lifts[idx];
       const current = (lift && (lift.name || `Lift ${idx + 1}`)) || `Lift ${idx + 1}`;
-      const newName = window.prompt('Lift name', current);
+      const newName = await showPromptDialog('Lift name', current, { title: 'Rename lift', okText: 'Save' });
       if (newName !== null && lift) {
         lift.name = newName.trim() || `Lift ${idx + 1}`;
         refresh();
@@ -468,7 +469,7 @@ export async function exportConfig() {
     URL.revokeObjectURL(a.href);
   } catch (err) {
     console.warn('[Save] encryption failed', err);
-    alert('Could not encrypt save. Use a secure context (https or localhost).');
+    await showAlertDialog('Could not encrypt save. Use a secure context (https or localhost).', { title: 'Save failed' });
     return;
   }
 
@@ -488,7 +489,7 @@ export function onConfigImported(e) {
         const config = await parseSaveOrLegacyJson(text);
         applyImportedConfig(config);
       } catch (err) {
-        alert('Invalid save file: ' + (err && err.message ? err.message : String(err)));
+        await showAlertDialog('Invalid save file: ' + (err && err.message ? err.message : String(err)), { title: 'Import failed' });
       }
     })();
   };

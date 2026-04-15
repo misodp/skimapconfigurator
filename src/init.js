@@ -38,6 +38,7 @@ import { initNewsFeed, setNewsFeedCopy } from './news-feed.js';
 import { initBuildMask } from './build-mask';
 import { pickRandomSixtiesName } from './splash-names.js';
 import { initPlatformUI } from './ui/platform-init.js';
+import { showAlertDialog } from './ui/dialogs.js';
 import buildMaskUrl from '../assets/images/mountain/mountain1_buildmask.webp';
 import introVideoUrl from '../assets/video/Intro.mp4';
 import tutorialS67Url from '../assets/data/tutorial.s67?url';
@@ -903,7 +904,7 @@ function initIntroVideo() {
             startRepairInstructionStep();
           }, 1000);
         } catch (err) {
-          window.alert('Failed to load tutorial map: ' + (err?.message || String(err)));
+          await showAlertDialog('Failed to load tutorial map: ' + (err?.message || String(err)), { title: 'Tutorial load failed' });
         }
       })();
     }
