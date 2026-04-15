@@ -517,12 +517,14 @@ function drawGroomers(ctx, scaleX, scaleY) {
 
 export function draw() {
   const ctx = DOM.ctx;
-  const rect = DOM.canvas.getBoundingClientRect();
-  ctx.clearRect(0, 0, rect.width, rect.height);
+  // Use logical canvas CSS size, not transformed bounding rect size.
+  const width = DOM.canvas.clientWidth || DOM.canvas.width;
+  const height = DOM.canvas.clientHeight || DOM.canvas.height;
+  ctx.clearRect(0, 0, width, height);
   if (!state.image || !state.imageWidth || !state.imageHeight) return;
 
-  const scaleX = rect.width / state.imageWidth;
-  const scaleY = rect.height / state.imageHeight;
+  const scaleX = width / state.imageWidth;
+  const scaleY = height / state.imageHeight;
 
   drawSlopes(ctx, scaleX, scaleY);
   drawLifts(ctx, scaleX, scaleY);

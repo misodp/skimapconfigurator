@@ -2531,7 +2531,7 @@ button:hover {
 
 .lift-hover-popup {
   position: fixed;
-  z-index: 20;
+  z-index: 1200;
   min-width: 140px;
   width: max-content;
   max-width: 200px;
@@ -3287,6 +3287,7 @@ body.ui-mobile .canvas-area {
   width: 100vw;
   height: 100vh;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 body.ui-mobile .canvas-wrapper {
@@ -3614,7 +3615,7 @@ body.ui-mobile .mobile-operate-meta {
 }
 
 body.ui-mobile .mobile-operate-meta-line {
-  font: 700 0.5rem "DM Sans", system-ui, sans-serif;
+  font: 700 0.58rem "DM Sans", system-ui, sans-serif;
   color: var(--text);
   line-height: 1.1;
   text-align: center;
@@ -3624,7 +3625,7 @@ body.ui-mobile .mobile-operate-meta-line {
 }
 
 body.ui-mobile .mobile-operate-meta-date {
-  font-size: 0.66rem;
+  font-size: 0.74rem;
   font-weight: 800;
   text-align: center;
   white-space: normal;
@@ -3647,7 +3648,7 @@ body.ui-mobile .mobile-operate-meta-visitors {
   align-items: baseline;
   justify-content: space-between;
   gap: 0.28rem;
-  font: 600 0.46rem "DM Sans", system-ui, sans-serif;
+  font: 600 0.6rem "DM Sans", system-ui, sans-serif;
   text-align: left;
 }
 
@@ -3724,11 +3725,11 @@ body.ui-mobile .mobile-operate-weather-text {
 body.ui-mobile .mobile-operate-btn {
   margin: 0;
   width: 100%;
-  padding: 0.2rem 0;
+  padding: 0.24rem 0;
   border-radius: 8px;
   border: 1px solid rgba(38, 35, 52, 0.2);
   background: rgba(255, 255, 255, 0.8);
-  font: 700 0.4rem "DM Sans", system-ui, sans-serif;
+  font: 700 0.6rem "DM Sans", system-ui, sans-serif;
   color: var(--text);
   line-height: 1;
 }
@@ -3764,7 +3765,7 @@ body.ui-mobile .mobile-operate-ticket-label {
   flex-direction: row;
   align-items: center;
   justify-content: space-between;
-  font: 600 0.54rem "DM Sans", system-ui, sans-serif;
+  font: 600 0.6rem "DM Sans", system-ui, sans-serif;
   color: var(--text);
   gap: 0.2rem;
   width: 100%;
@@ -3786,7 +3787,7 @@ body.ui-mobile .mobile-ticket-step-btn {
   border-radius: 8px;
   border: 1px solid rgba(38, 35, 52, 0.2);
   background: rgba(255, 255, 255, 0.82);
-  font: 700 0.58rem "DM Sans", system-ui, sans-serif;
+  font: 700 0.6rem "DM Sans", system-ui, sans-serif;
   color: var(--text);
   line-height: 1;
 }
@@ -3821,7 +3822,7 @@ body.ui-mobile .mobile-operate-stat-row {
   justify-items: stretch;
   column-gap: 0.28rem;
   row-gap: 0.08rem;
-  font: 600 0.46rem "DM Sans", system-ui, sans-serif;
+  font: 600 0.6rem "DM Sans", system-ui, sans-serif;
   color: var(--text);
   text-align: left;
 }
@@ -3856,7 +3857,7 @@ body.ui-mobile .mobile-operate-stat-row span:last-child {
   font-weight: 700;
   text-align: right;
   color: var(--text-muted);
-  font-size: 0.43rem;
+  font-size: 0.6rem;
   line-height: 1.1;
   white-space: nowrap;
 }
@@ -3880,7 +3881,7 @@ body.ui-mobile .mobile-operate-stat-fill {
 body.ui-mobile .mobile-operate-stat-row-reputation span:first-child,
 body.ui-mobile .mobile-operate-stat-row-reputation span:last-child {
   font-weight: 800;
-  font-size: 0.54rem;
+  font-size: 0.66rem;
 }
 
 body.ui-mobile #mobileReputationBar {

@@ -37,9 +37,80 @@ export function attachMobileCanvasInput(ctx) {
   let pendingSlopeMode = null;
   let slopePenGestureArmed = false;
   let slopeDownClientPoint = null;
+  const activePointers = new Map();
+  let pinchActive = false;
+  let pinchStartDistance = 0;
+  let pinchStartMidX = 0;
+  let pinchStartMidY = 0;
+  let pinchStartScale = 1;
+  let pinchStartTranslateX = 0;
+  let pinchStartTranslateY = 0;
+  let viewScale = 1;
+  let viewTranslateX = 0;
+  let viewTranslateY = 0;
   const LABEL_VERTICAL_GAP = 6;
   const SLOPE_SNAP_DIST_SQ = 28 * 28;
   const SLOPE_DRAG_START_SQ = 12 * 12;
+  const MIN_ZOOM = 1;
+  const MAX_ZOOM = 3;
+
+  function getCanvasWrapper() {
+    return DOM?.canvas?.closest?.('.canvas-wrapper') || null;
+  }
+
+  function clampViewTransform() {
+    const wrapper = getCanvasWrapper();
+    if (!wrapper) return;
+    const w = wrapper.clientWidth || 0;
+    const h = wrapper.clientHeight || 0;
+    const maxX = Math.max(0, ((viewScale - 1) * w) / 2);
+    const maxY = Math.max(0, ((viewScale - 1) * h) / 2);
+    viewTranslateX = Math.max(-maxX, Math.min(maxX, viewTranslateX));
+    viewTranslateY = Math.max(-maxY, Math.min(maxY, viewTranslateY));
+  }
+
+  function applyViewTransform() {
+    const wrapper = getCanvasWrapper();
+    if (!wrapper) return;
+    clampViewTransform();
+    if (Math.abs(viewScale - 1) < 0.001 && Math.abs(viewTranslateX) < 0.5 && Math.abs(viewTranslateY) < 0.5) {
+      wrapper.style.transform = 'none';
+      return;
+    }
+    wrapper.style.transformOrigin = 'center center';
+    wrapper.style.transform = `translate(${viewTranslateX}px, ${viewTranslateY}px) scale(${viewScale})`;
+  }
+
+  function getPinchPair() {
+    const vals = [...activePointers.values()];
+    if (vals.length < 2) return null;
+    return [vals[0], vals[1]];
+  }
+
+  function getDistance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.hypot(dx, dy);
+  }
+
+  function beginPinch() {
+    const pair = getPinchPair();
+    if (!pair) return;
+    const [a, b] = pair;
+    pinchStartDistance = Math.max(1, getDistance(a, b));
+    pinchStartMidX = (a.x + b.x) / 2;
+    pinchStartMidY = (a.y + b.y) / 2;
+    pinchStartScale = viewScale;
+    pinchStartTranslateX = viewTranslateX;
+    pinchStartTranslateY = viewTranslateY;
+    pinchActive = true;
+    pointerDown = false;
+    moved = false;
+    liftDragSession = false;
+    slopePenGestureArmed = false;
+    slopeDownClientPoint = null;
+    hideLiftConfirm();
+  }
 
   function getOrCreateLiftConfirm() {
     let el = document.getElementById('mobileLiftConfirm');
@@ -270,6 +341,13 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointerdown', (e) => {
     if (!allowPointer(e)) return;
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (activePointers.size >= 2) {
+      beginPinch();
+      DOM.canvas.setPointerCapture?.(e.pointerId);
+      e.preventDefault();
+      return;
+    }
     pointerDown = true;
     moved = false;
     placedBottomThisGesture = false;
@@ -305,6 +383,25 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointermove', (e) => {
     if (!allowPointer(e)) return;
+    if (activePointers.has(e.pointerId)) {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
+    if (pinchActive) {
+      const pair = getPinchPair();
+      if (pair) {
+        const [a, b] = pair;
+        const dist = Math.max(1, getDistance(a, b));
+        const midX = (a.x + b.x) / 2;
+        const midY = (a.y + b.y) / 2;
+        const zoomFactor = dist / pinchStartDistance;
+        viewScale = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, pinchStartScale * zoomFactor));
+        viewTranslateX = pinchStartTranslateX + (midX - pinchStartMidX);
+        viewTranslateY = pinchStartTranslateY + (midY - pinchStartMidY);
+        applyViewTransform();
+      }
+      e.preventDefault();
+      return;
+    }
     if (!pointerDown) return;
     if (state?.mode === 'slope' && state?.buildArmed === true && slopePenGestureArmed && slopeDownClientPoint) {
       const dx = e.clientX - slopeDownClientPoint.clientX;
@@ -324,6 +421,12 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointerup', (e) => {
     if (!allowPointer(e)) return;
+    activePointers.delete(e.pointerId);
+    if (pinchActive) {
+      if (activePointers.size < 2) pinchActive = false;
+      e.preventDefault();
+      return;
+    }
     if (!pointerDown) return;
     pointerDown = false;
     forwardMove(e);
@@ -398,6 +501,8 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointercancel', (e) => {
     if (!allowPointer(e)) return;
+    activePointers.delete(e.pointerId);
+    if (activePointers.size < 2) pinchActive = false;
     pointerDown = false;
     liftDragSession = false;
     placedBottomThisGesture = false;

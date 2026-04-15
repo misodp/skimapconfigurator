@@ -684,6 +684,36 @@ function otherMenusBlockGroomerHover(groomerIdx) {
   return false;
 }
 
+function placeOperatePopupWithinViewport(popup, clientX, clientY) {
+  if (!popup) return;
+  const offsetX = 4;
+  const offsetY = 16;
+  const pad = 8;
+  const vw = window.innerWidth || 0;
+  const vh = window.innerHeight || 0;
+
+  let left = clientX + offsetX;
+  let top = clientY + offsetY;
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+
+  let rect = popup.getBoundingClientRect();
+  if (rect.right > vw - pad) left = clientX - rect.width - offsetX;
+  if (rect.bottom > vh - pad) top = clientY - rect.height - offsetY;
+
+  popup.style.left = left + 'px';
+  popup.style.top = top + 'px';
+  rect = popup.getBoundingClientRect();
+
+  if (rect.left < pad) left += (pad - rect.left);
+  if (rect.top < pad) top += (pad - rect.top);
+  if (rect.right > vw - pad) left -= (rect.right - (vw - pad));
+  if (rect.bottom > vh - pad) top -= (rect.bottom - (vh - pad));
+
+  popup.style.left = Math.round(left) + 'px';
+  popup.style.top = Math.round(top) + 'px';
+}
+
 function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   const popup = document.getElementById('liftHoverPopup');
   if (!popup) return;
@@ -722,17 +752,7 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   popup.hidden = false;
   popup.removeAttribute('aria-hidden');
   if (!isPopupPinned) {
-    const offsetX = 4;
-    const offsetY = 16;
-    popup.style.left = (clientX + offsetX) + 'px';
-    popup.style.top = (clientY + offsetY) + 'px';
-    const rect = popup.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    if (rect.right > vw) popup.style.left = (clientX - rect.width - offsetX) + 'px';
-    if (rect.bottom > vh) popup.style.top = (clientY - rect.height - offsetY) + 'px';
-    if (rect.left < 0) popup.style.left = offsetX + 'px';
-    if (rect.top < 0) popup.style.top = offsetY + 'px';
+    placeOperatePopupWithinViewport(popup, clientX, clientY);
   }
 }
 
@@ -773,17 +793,7 @@ function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
   popup.hidden = false;
   popup.removeAttribute('aria-hidden');
   if (!isGroomerPopupPinned) {
-    const offsetX = 4;
-    const offsetY = 16;
-    popup.style.left = (clientX + offsetX) + 'px';
-    popup.style.top = (clientY + offsetY) + 'px';
-    const rect = popup.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    if (rect.right > vw) popup.style.left = (clientX - rect.width - offsetX) + 'px';
-    if (rect.bottom > vh) popup.style.top = (clientY - rect.height - offsetY) + 'px';
-    if (rect.left < 0) popup.style.left = offsetX + 'px';
-    if (rect.top < 0) popup.style.top = offsetY + 'px';
+    placeOperatePopupWithinViewport(popup, clientX, clientY);
   }
 }
 
@@ -830,17 +840,7 @@ function updateSlopeHoverPopup(slopeIndex, clientX, clientY) {
   popup.hidden = false;
   popup.removeAttribute('aria-hidden');
   if (!isSlopePopupPinned) {
-    const offsetX = 4;
-    const offsetY = 16;
-    popup.style.left = (clientX + offsetX) + 'px';
-    popup.style.top = (clientY + offsetY) + 'px';
-    const rect = popup.getBoundingClientRect();
-    const vw = window.innerWidth;
-    const vh = window.innerHeight;
-    if (rect.right > vw) popup.style.left = (clientX - rect.width - offsetX) + 'px';
-    if (rect.bottom > vh) popup.style.top = (clientY - rect.height - offsetY) + 'px';
-    if (rect.left < 0) popup.style.left = offsetX + 'px';
-    if (rect.top < 0) popup.style.top = offsetY + 'px';
+    placeOperatePopupWithinViewport(popup, clientX, clientY);
   }
 }
 
