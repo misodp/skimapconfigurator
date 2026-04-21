@@ -257,23 +257,37 @@ export function syncCanvasSize() {
 
 /** (x, y) are in canvas-relative CSS pixels. Returns image pixel coords. */
 export function canvasToImage(x, y) {
-  const rect = DOM.canvas.getBoundingClientRect();
-  const scaleX = state.imageWidth / rect.width;
-  const scaleY = state.imageHeight / rect.height;
+  const logicalW = DOM.canvas.clientWidth || DOM.canvas.width || 1;
+  const logicalH = DOM.canvas.clientHeight || DOM.canvas.height || 1;
+  const scaleX = state.imageWidth / logicalW;
+  const scaleY = state.imageHeight / logicalH;
   return { x: x * scaleX, y: y * scaleY };
 }
 
 /** Image pixel (px, py) to canvas-relative CSS pixels. */
 export function imageToCanvas(px, py) {
-  const rect = DOM.canvas.getBoundingClientRect();
-  const scaleX = rect.width / state.imageWidth;
-  const scaleY = rect.height / state.imageHeight;
+  const logicalW = DOM.canvas.clientWidth || DOM.canvas.width || 1;
+  const logicalH = DOM.canvas.clientHeight || DOM.canvas.height || 1;
+  const scaleX = logicalW / state.imageWidth;
+  const scaleY = logicalH / state.imageHeight;
   return { x: px * scaleX, y: py * scaleY };
 }
 
 export function getCanvasPoint(e) {
+  const logicalW = DOM.canvas.clientWidth || DOM.canvas.width || 1;
+  const logicalH = DOM.canvas.clientHeight || DOM.canvas.height || 1;
+  // Always map from viewport (clientX/Y) through the canvas's transformed bounds.
+  // offsetX/offsetY are relative to the canvas layout box and do not follow an ancestor
+  // pinch-zoom (CSS transform on .canvas-wrapper), which breaks operate-mode hit tests.
   const rect = DOM.canvas.getBoundingClientRect();
-  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  const rectW = rect.width || logicalW;
+  const rectH = rect.height || logicalH;
+  const rx = (e.clientX - rect.left) / rectW;
+  const ry = (e.clientY - rect.top) / rectH;
+  return {
+    x: Math.max(0, Math.min(logicalW, rx * logicalW)),
+    y: Math.max(0, Math.min(logicalH, ry * logicalH)),
+  };
 }
 
 /** Resample polyline to numSamples points evenly spaced by path length. Smooths jagged pen input. */
