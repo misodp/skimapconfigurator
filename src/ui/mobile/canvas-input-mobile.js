@@ -130,6 +130,14 @@ export function attachMobileCanvasInput(ctx) {
   function hideLiftConfirm() {
     const el = document.getElementById('mobileLiftConfirm');
     if (!el) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && el.contains(active)) {
+      try {
+        active.blur();
+      } catch {
+        /* ignore */
+      }
+    }
     el.classList.add('hidden');
     el.setAttribute('aria-hidden', 'true');
     pendingLiftReleasePoint = null;

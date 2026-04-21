@@ -682,6 +682,20 @@ function isOperatePopupVisible(id) {
   return !!(el && !el.hidden);
 }
 
+function hideOperatePopupElement(el) {
+  if (!el) return;
+  const active = document.activeElement;
+  if (active instanceof HTMLElement && el.contains(active)) {
+    try {
+      active.blur();
+    } catch {
+      /* ignore */
+    }
+  }
+  el.hidden = true;
+  el.setAttribute('aria-hidden', 'true');
+}
+
 /**
  * After dismissing unpinned lift/slope, still block groomer if a pinned lift/slope menu is open,
  * another groomer's menu is open, or hover is over a different groomer than the visible menu.
@@ -735,8 +749,7 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   if (!isOperateTabActive()) return;
   if (liftIndex == null || liftIndex < 0 || liftIndex >= state.lifts.length) {
     if (!isPopupPinned) {
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredLiftIndex = null;
     }
     return;
@@ -744,14 +757,12 @@ function updateLiftHoverPopup(liftIndex, clientX, clientY) {
   const groomerPopupEl = document.getElementById('groomerHoverPopup');
   const slopePopupEl = document.getElementById('slopeHoverPopup');
   if (groomerPopupEl) {
-    groomerPopupEl.hidden = true;
-    groomerPopupEl.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(groomerPopupEl);
     lastHoveredGroomerIndex = null;
     isGroomerPopupPinned = false;
   }
   if (slopePopupEl) {
-    slopePopupEl.hidden = true;
-    slopePopupEl.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(slopePopupEl);
     lastHoveredSlopeIndex = null;
     isSlopePopupPinned = false;
   }
@@ -777,8 +788,7 @@ function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
   if (!isOperateTabActive()) return;
   if (groomerIndex == null || groomerIndex < 0 || groomerIndex >= state.groomers.length) {
     if (!isGroomerPopupPinned) {
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredGroomerIndex = null;
     }
     return;
@@ -788,14 +798,12 @@ function updateGroomerHoverPopup(groomerIndex, clientX, clientY) {
   if (liftPopupEl) {
     // Keep the lift popup visible when user pinned it.
     if (!isPopupPinned) {
-      liftPopupEl.hidden = true;
-      liftPopupEl.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(liftPopupEl);
       lastHoveredLiftIndex = null;
     }
   }
   if (slopePopupEl) {
-    slopePopupEl.hidden = true;
-    slopePopupEl.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(slopePopupEl);
     lastHoveredSlopeIndex = null;
     isSlopePopupPinned = false;
   }
@@ -818,8 +826,7 @@ function updateSlopeHoverPopup(slopeIndex, clientX, clientY) {
   if (!isOperateTabActive()) return;
   if (slopeIndex == null || slopeIndex < 0 || slopeIndex >= state.slopes.length) {
     if (!isSlopePopupPinned) {
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredSlopeIndex = null;
     }
     return;
@@ -829,14 +836,12 @@ function updateSlopeHoverPopup(slopeIndex, clientX, clientY) {
   if (liftPopupEl) {
     // Keep the lift popup visible when user pinned it.
     if (!isPopupPinned) {
-      liftPopupEl.hidden = true;
-      liftPopupEl.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(liftPopupEl);
       lastHoveredLiftIndex = null;
     }
   }
   if (groomerPopupEl) {
-    groomerPopupEl.hidden = true;
-    groomerPopupEl.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(groomerPopupEl);
     lastHoveredGroomerIndex = null;
     isGroomerPopupPinned = false;
   }
@@ -914,9 +919,9 @@ export async function handleLiftPopupClick(e) {
     isPopupPinned = false;
     isGroomerPopupPinned = false;
     isSlopePopupPinned = false;
-    if (popup) { popup.removeAttribute('data-pinned'); popup.hidden = true; popup.setAttribute('aria-hidden', 'true'); }
-    if (groomerPopup) { groomerPopup.removeAttribute('data-pinned'); groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); }
-    if (slopePopup) { slopePopup.removeAttribute('data-pinned'); slopePopup.hidden = true; slopePopup.setAttribute('aria-hidden', 'true'); }
+    if (popup) { popup.removeAttribute('data-pinned'); hideOperatePopupElement(popup); }
+    if (groomerPopup) { groomerPopup.removeAttribute('data-pinned'); hideOperatePopupElement(groomerPopup); }
+    if (slopePopup) { slopePopup.removeAttribute('data-pinned'); hideOperatePopupElement(slopePopup); }
     lastHoveredLiftIndex = null;
     lastHoveredGroomerIndex = null;
     lastHoveredSlopeIndex = null;
@@ -930,8 +935,7 @@ export async function handleLiftPopupClick(e) {
     e.stopPropagation();
     isPopupPinned = false;
     popup.removeAttribute('data-pinned');
-    popup.hidden = true;
-    popup.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(popup);
     lastHoveredLiftIndex = null;
     return;
   }
@@ -985,8 +989,7 @@ export async function handleLiftPopupClick(e) {
       updateBudgetDisplay();
       isPopupPinned = false;
       popup.removeAttribute('data-pinned');
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredLiftIndex = null;
       refresh();
     }
@@ -1018,8 +1021,7 @@ export async function handleLiftPopupClick(e) {
       updateBudgetDisplay();
       isPopupPinned = false;
       popup.removeAttribute('data-pinned');
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredLiftIndex = null;
       refresh();
     }
@@ -1066,8 +1068,7 @@ export async function handleLiftPopupClick(e) {
   updateBudgetDisplay();
   isPopupPinned = false;
   popup.removeAttribute('data-pinned');
-  popup.hidden = true;
-  popup.setAttribute('aria-hidden', 'true');
+  hideOperatePopupElement(popup);
   lastHoveredLiftIndex = null;
   refresh();
 }
@@ -1088,9 +1089,9 @@ export async function handleGroomerPopupClick(e) {
     isPopupPinned = false;
     isGroomerPopupPinned = false;
     isSlopePopupPinned = false;
-    if (liftPopup) { liftPopup.removeAttribute('data-pinned'); liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); }
-    if (popup) { popup.removeAttribute('data-pinned'); popup.hidden = true; popup.setAttribute('aria-hidden', 'true'); }
-    if (slopePopup) { slopePopup.removeAttribute('data-pinned'); slopePopup.hidden = true; slopePopup.setAttribute('aria-hidden', 'true'); }
+    if (liftPopup) { liftPopup.removeAttribute('data-pinned'); hideOperatePopupElement(liftPopup); }
+    if (popup) { popup.removeAttribute('data-pinned'); hideOperatePopupElement(popup); }
+    if (slopePopup) { slopePopup.removeAttribute('data-pinned'); hideOperatePopupElement(slopePopup); }
     lastHoveredLiftIndex = null;
     lastHoveredGroomerIndex = null;
     lastHoveredSlopeIndex = null;
@@ -1103,8 +1104,7 @@ export async function handleGroomerPopupClick(e) {
     e.stopPropagation();
     isGroomerPopupPinned = false;
     popup.removeAttribute('data-pinned');
-    popup.hidden = true;
-    popup.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(popup);
     lastHoveredGroomerIndex = null;
     return;
   }
@@ -1154,8 +1154,7 @@ export async function handleGroomerPopupClick(e) {
       updateBudgetDisplay();
       isGroomerPopupPinned = false;
       popup.removeAttribute('data-pinned');
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredGroomerIndex = null;
       refresh();
     }
@@ -1182,8 +1181,7 @@ export async function handleGroomerPopupClick(e) {
       updateBudgetDisplay();
       isGroomerPopupPinned = false;
       popup.removeAttribute('data-pinned');
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredGroomerIndex = null;
       refresh();
     }
@@ -1225,8 +1223,7 @@ export async function handleGroomerPopupClick(e) {
   updateBudgetDisplay();
   isGroomerPopupPinned = false;
   popup.removeAttribute('data-pinned');
-  popup.hidden = true;
-  popup.setAttribute('aria-hidden', 'true');
+  hideOperatePopupElement(popup);
   lastHoveredGroomerIndex = null;
   refresh();
 }
@@ -1243,8 +1240,7 @@ export async function handleSlopePopupClick(e) {
   if (!insideSlopePopup && !clickOnMapArea) {
     isSlopePopupPinned = false;
     popup.removeAttribute('data-pinned');
-    popup.hidden = true;
-    popup.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(popup);
     lastHoveredSlopeIndex = null;
     return;
   }
@@ -1283,8 +1279,7 @@ export async function handleSlopePopupClick(e) {
       updateBudgetDisplay();
       isSlopePopupPinned = false;
       popup.removeAttribute('data-pinned');
-      popup.hidden = true;
-      popup.setAttribute('aria-hidden', 'true');
+      hideOperatePopupElement(popup);
       lastHoveredSlopeIndex = null;
       refresh();
     }
@@ -1317,8 +1312,7 @@ export function hideLiftHoverPopup() {
   if (!isOperateTabActive() || !isPopupPinned) {
     isPopupPinned = false;
     popup.removeAttribute('data-pinned');
-    popup.hidden = true;
-    popup.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(popup);
     lastHoveredLiftIndex = null;
   }
 }
@@ -1329,8 +1323,7 @@ export function hideGroomerHoverPopup() {
   if (!isOperateTabActive() || !isGroomerPopupPinned) {
     isGroomerPopupPinned = false;
     popup.removeAttribute('data-pinned');
-    popup.hidden = true;
-    popup.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(popup);
     lastHoveredGroomerIndex = null;
   }
 }
@@ -1419,16 +1412,14 @@ export function onCanvasMouseMove(e) {
     if (!isPopupPinned) {
       const liftPopup = document.getElementById('liftHoverPopup');
       if (liftPopup && !liftPopup.hidden) {
-        liftPopup.hidden = true;
-        liftPopup.setAttribute('aria-hidden', 'true');
+        hideOperatePopupElement(liftPopup);
         lastHoveredLiftIndex = null;
       }
     }
     if (!isSlopePopupPinned) {
       const slopePopupEl = document.getElementById('slopeHoverPopup');
       if (slopePopupEl && !slopePopupEl.hidden) {
-        slopePopupEl.hidden = true;
-        slopePopupEl.setAttribute('aria-hidden', 'true');
+        hideOperatePopupElement(slopePopupEl);
         lastHoveredSlopeIndex = null;
       }
     }
@@ -1457,7 +1448,7 @@ export function onCanvasMouseMove(e) {
     }
     updateSlopeHoverPopup(slopeIdx, e.clientX, e.clientY);
     const liftPopup = document.getElementById('liftHoverPopup');
-    if (liftPopup) { liftPopup.hidden = true; liftPopup.setAttribute('aria-hidden', 'true'); lastHoveredLiftIndex = null; }
+    if (liftPopup) { hideOperatePopupElement(liftPopup); lastHoveredLiftIndex = null; }
     return;
   }
   if (isSlopePopupPinned) return;
@@ -1484,13 +1475,12 @@ export function onCanvasMouseMove(e) {
   if (!isPopupPinned && slopePopupEl) {
     isSlopePopupPinned = false;
     slopePopupEl.removeAttribute('data-pinned');
-    slopePopupEl.hidden = true;
-    slopePopupEl.setAttribute('aria-hidden', 'true');
+    hideOperatePopupElement(slopePopupEl);
     lastHoveredSlopeIndex = null;
   }
   if (liftIdx < 0 && !isPopupPinned) {
     const groomerPopup = document.getElementById('groomerHoverPopup');
-    if (groomerPopup) { groomerPopup.hidden = true; groomerPopup.setAttribute('aria-hidden', 'true'); lastHoveredGroomerIndex = null; }
+    if (groomerPopup) { hideOperatePopupElement(groomerPopup); lastHoveredGroomerIndex = null; }
   }
 }
 

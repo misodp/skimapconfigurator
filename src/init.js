@@ -127,6 +127,8 @@ function endTutorialSkipped() {
 function hideTutorialDialogue() {
   const el = /** @type {HTMLDivElement | null} */ (document.getElementById('tutorialDialogue'));
   if (!el) return;
+  moveFocusOutside(el);
+  el.inert = true;
   el.classList.remove('visible');
   el.setAttribute('aria-hidden', 'true');
   const onDone = () => {
@@ -186,6 +188,7 @@ function showTutorialDialogue(message, imageUrl = tutorialCharacterUrl, closable
     }
     // Ensure first render animates too: paint once in non-visible state, then transition in.
     el.classList.remove('visible');
+    el.inert = false;
     el.hidden = false;
     el.setAttribute('aria-hidden', 'false');
     // Force style flush so the browser commits the pre-animation state.
@@ -343,6 +346,24 @@ function ensureSimulationStarted() {
   if (simulationStarted) return;
   simulationStarted = true;
   startSimulation();
+}
+
+function moveFocusOutside(container) {
+  if (!container) return;
+  const active = document.activeElement;
+  if (!(active instanceof HTMLElement) || !container.contains(active)) return;
+  try {
+    active.blur();
+  } catch {
+    /* ignore */
+  }
+  const fallback = document.getElementById('app') || document.body;
+  if (fallback instanceof HTMLElement) {
+    const hadTabIndex = fallback.hasAttribute('tabindex');
+    if (!hadTabIndex) fallback.setAttribute('tabindex', '-1');
+    fallback.focus({ preventScroll: true });
+    if (!hadTabIndex) fallback.removeAttribute('tabindex');
+  }
 }
 
 function setMode(mode) {
@@ -910,6 +931,8 @@ function initIntroVideo() {
     }
     ensureSimulationStarted();
     window.dispatchEvent(new CustomEvent('introfinished'));
+    moveFocusOutside(overlay);
+    overlay.inert = true;
     overlay.classList.add('intro-video-dissolve');
     overlay.setAttribute('aria-hidden', 'true');
     overlay.addEventListener('transitionend', () => {
@@ -957,6 +980,7 @@ function initIntroVideo() {
     video.removeAttribute('muted');
     video.currentTime = 0;
     overlay.hidden = false;
+    overlay.inert = false;
     overlay.setAttribute('aria-hidden', 'false');
     requestAnimationFrame(() => overlay.classList.add('visible'));
     updateToggleButton();
@@ -1041,6 +1065,7 @@ function initGameOver() {
 function initSplash() {
   const overlay = document.getElementById('splashOverlay');
   if (!overlay) return;
+  overlay.inert = false;
 
   const stopBgmIfPlaying = () => {
     const a = window.__bgm;
@@ -1063,6 +1088,8 @@ function initSplash() {
   }
 
   function dissolve(playIntro = true) {
+    moveFocusOutside(overlay);
+    overlay.inert = true;
     overlay.classList.add('splash-dissolve');
     overlay.setAttribute('aria-hidden', 'true');
     window.dispatchEvent(new CustomEvent('splashdissolve', { detail: { playIntro } }));
