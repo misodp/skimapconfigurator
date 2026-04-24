@@ -3353,6 +3353,24 @@ body.ui-mobile .mobile-speed-btn.active {
   color: #fff;
 }
 
+body.ui-mobile .mobile-speed-btn[data-speed="0"],
+body.ui-mobile .mobile-right-speed-btn[data-speed="0"] {
+  position: relative;
+  font-size: 0;
+}
+
+body.ui-mobile .mobile-speed-btn[data-speed="0"]::before,
+body.ui-mobile .mobile-right-speed-btn[data-speed="0"]::before {
+  content: "";
+  display: block;
+  width: 0.42rem;
+  height: 0.56rem;
+  margin: 0 auto;
+  border-left: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  box-sizing: border-box;
+}
+
 body.ui-mobile .mobile-shell-rail {
   display: flex;
   align-items: center;

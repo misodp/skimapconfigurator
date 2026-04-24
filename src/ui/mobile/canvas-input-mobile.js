@@ -54,6 +54,8 @@ export function attachMobileCanvasInput(ctx) {
   const MIN_ZOOM = 1;
   const MAX_ZOOM = 3;
 
+  const isTouchPointer = (e) => e?.pointerType === 'touch';
+
   function getCanvasWrapper() {
     return DOM?.canvas?.closest?.('.canvas-wrapper') || null;
   }
@@ -394,7 +396,9 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointerdown', (e) => {
     if (!allowPointer(e)) return;
-    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (isTouchPointer(e)) {
+      activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    }
     if (activePointers.size >= 2) {
       beginPinch();
       DOM.canvas.setPointerCapture?.(e.pointerId);
@@ -436,7 +440,7 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointermove', (e) => {
     if (!allowPointer(e)) return;
-    if (activePointers.has(e.pointerId)) {
+    if (isTouchPointer(e) && activePointers.has(e.pointerId)) {
       activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     }
     if (pinchActive) {
@@ -474,7 +478,7 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointerup', (e) => {
     if (!allowPointer(e)) return;
-    activePointers.delete(e.pointerId);
+    if (isTouchPointer(e)) activePointers.delete(e.pointerId);
     if (pinchActive) {
       if (activePointers.size < 2) pinchActive = false;
       e.preventDefault();
@@ -568,7 +572,7 @@ export function attachMobileCanvasInput(ctx) {
 
   DOM.canvas.addEventListener('pointercancel', (e) => {
     if (!allowPointer(e)) return;
-    activePointers.delete(e.pointerId);
+    if (isTouchPointer(e)) activePointers.delete(e.pointerId);
     if (activePointers.size < 2) pinchActive = false;
     pointerDown = false;
     liftDragSession = false;

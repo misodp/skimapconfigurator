@@ -23,22 +23,32 @@ export function attachDesktopCanvasInput(ctx) {
   DOM.canvas.style.touchAction = 'none';
   const TOUCH_MOUSE_SUPPRESS_MS = 550;
   let lastTouchInteractionAt = 0;
+  let lastPenInteractionAt = 0;
 
   function markTouchInteraction() {
     lastTouchInteractionAt = Date.now();
   }
 
+  function markPenInteraction() {
+    lastPenInteractionAt = Date.now();
+  }
+
   function isLikelyCompatMouseEvent() {
-    return (Date.now() - lastTouchInteractionAt) < TOUCH_MOUSE_SUPPRESS_MS;
+    return ((Date.now() - lastTouchInteractionAt) < TOUCH_MOUSE_SUPPRESS_MS)
+      || ((Date.now() - lastPenInteractionAt) < TOUCH_MOUSE_SUPPRESS_MS);
   }
 
   let mouseDown = false;
   let mouseSlopePenGestureArmed = false;
   let mouseSlopeDownPoint = null;
+  let penActive = false;
+  let penMoved = false;
+  let penDownPoint = null;
+  let penLiftDragSession = false;
   const leftMouseButtonMask = 1;
 
-  const forwardMouseDown = (e) => {
-    if (isLikelyCompatMouseEvent()) return;
+  const forwardMouseDown = (e, skipCompatCheck = false) => {
+    if (!skipCompatCheck && isLikelyCompatMouseEvent()) return;
     if (pendingBuildKind && pendingBuildPoint) return;
     mouseDown = true;
     if (state?.buildArmed === true && state?.mode === 'slope') {
@@ -50,8 +60,8 @@ export function attachDesktopCanvasInput(ctx) {
     }
     if (typeof onCanvasMouseDown === 'function') onCanvasMouseDown(e);
   };
-  const forwardMouseMove = (e) => {
-    if (isLikelyCompatMouseEvent()) return;
+  const forwardMouseMove = (e, skipCompatCheck = false) => {
+    if (!skipCompatCheck && isLikelyCompatMouseEvent()) return;
     if (pendingBuildKind && pendingBuildPoint) return;
     if (mouseDown && (e.buttons & leftMouseButtonMask) !== leftMouseButtonMask) {
       // Some browsers miss mouseup when leaving/re-entering canvas; recover gracefully.
@@ -71,8 +81,8 @@ export function attachDesktopCanvasInput(ctx) {
     }
     if (typeof onCanvasMouseMove === 'function') onCanvasMouseMove(e);
   };
-  const forwardMouseUp = (e) => {
-    if (isLikelyCompatMouseEvent()) return;
+  const forwardMouseUp = (e, skipCompatCheck = false) => {
+    if (!skipCompatCheck && isLikelyCompatMouseEvent()) return;
     if (!mouseDown && !(state?.buildArmed === true && state?.mode === 'slope' && state?.penDrawing === true)) return;
     mouseDown = false;
     mouseSlopePenGestureArmed = false;
@@ -99,6 +109,75 @@ export function attachDesktopCanvasInput(ctx) {
   DOM.canvas.addEventListener('mousemove', forwardMouseMove);
   DOM.canvas.addEventListener('mouseup', forwardMouseUp);
   window.addEventListener('mouseup', forwardMouseUp);
+  DOM.canvas.addEventListener('pointerdown', (e) => {
+    if (e.pointerType !== 'pen') return;
+    markPenInteraction();
+    if (pendingBuildKind === 'lift' && pendingBuildPoint) hideDesktopBuildConfirm();
+    penActive = true;
+    penMoved = false;
+    penDownPoint = { clientX: e.clientX, clientY: e.clientY };
+    penLiftDragSession = false;
+    DOM.canvas.setPointerCapture?.(e.pointerId);
+    const isLiftBuild = state?.buildArmed === true && state?.mode === 'lift';
+    if (isLiftBuild) {
+      if (!state?.liftBottom && typeof onCanvasClick === 'function') {
+        onCanvasClick(e);
+      }
+      penLiftDragSession = !!state?.liftBottom;
+      if (typeof onCanvasMouseMove === 'function') onCanvasMouseMove(e);
+      mouseDown = true;
+      e.preventDefault();
+      return;
+    }
+    forwardMouseDown(e, true);
+    e.preventDefault();
+  });
+  DOM.canvas.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'pen') return;
+    markPenInteraction();
+    if (penActive && penDownPoint) {
+      const dx = e.clientX - penDownPoint.clientX;
+      const dy = e.clientY - penDownPoint.clientY;
+      if ((dx * dx + dy * dy) > 14 * 14) penMoved = true;
+    }
+    forwardMouseMove(e, true);
+    e.preventDefault();
+  });
+  DOM.canvas.addEventListener('pointerup', (e) => {
+    if (e.pointerType !== 'pen') return;
+    markPenInteraction();
+    const isLiftBuild = state?.buildArmed === true && state?.mode === 'lift';
+    if (isLiftBuild && penMoved && (penLiftDragSession || state?.liftBottom)) {
+      openLiftConfirmAtPoint(e.clientX, e.clientY);
+      if (typeof onCanvasMouseUp === 'function') onCanvasMouseUp(e);
+      penActive = false;
+      penMoved = false;
+      penDownPoint = null;
+      penLiftDragSession = false;
+      mouseDown = false;
+      e.preventDefault();
+      return;
+    }
+    forwardMouseUp(e, true);
+    if (penActive && !penMoved && !isAnyConfirmActive()) {
+      handlePlacementTap(e);
+    }
+    penActive = false;
+    penMoved = false;
+    penDownPoint = null;
+    penLiftDragSession = false;
+    e.preventDefault();
+  });
+  DOM.canvas.addEventListener('pointercancel', (e) => {
+    if (e.pointerType !== 'pen') return;
+    markPenInteraction();
+    forwardMouseUp(e, true);
+    penActive = false;
+    penMoved = false;
+    penDownPoint = null;
+    penLiftDragSession = false;
+    e.preventDefault();
+  });
 
   let pendingBuildKind = null;
   let pendingBuildPoint = null;
@@ -404,6 +483,7 @@ export function attachDesktopCanvasInput(ctx) {
   DOM.canvas.addEventListener('pointerdown', (e) => {
     if (e.pointerType !== 'touch') return;
     markTouchInteraction();
+    if (pendingBuildKind === 'lift' && pendingBuildPoint) hideDesktopBuildConfirm();
     touchActive = true;
     touchDownX = e.clientX;
     touchDownY = e.clientY;

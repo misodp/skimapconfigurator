@@ -1155,8 +1155,11 @@ function initSplash() {
 
   let splashStartCommitted = false;
   async function requestMobileFullscreenLandscape() {
-    const isMobileLike = (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches)
-      || (typeof navigator !== 'undefined' && /Android|iPhone|iPad|iPod/i.test(navigator.userAgent || ''));
+    const viewportW = Math.max(0, Number(window.innerWidth) || 0);
+    const viewportH = Math.max(0, Number(window.innerHeight) || 0);
+    const shortSide = Math.min(viewportW, viewportH);
+    const isLandscape = viewportW >= viewportH;
+    const isMobileLike = Boolean(viewportW && viewportH && isLandscape && shortSide <= 600);
     if (!isMobileLike) return;
     try {
       const docEl = document.documentElement;
