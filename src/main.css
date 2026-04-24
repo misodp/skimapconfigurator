@@ -1319,6 +1319,25 @@ body.ui-mobile .tutorial-dialogue {
   cursor: pointer;
 }
 
+.sim-speed-btn[data-speed="0"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.55rem;
+  min-height: calc(1em + 0.3rem + 2px);
+}
+
+.sim-speed-btn[data-speed="0"]::before {
+  content: "";
+  display: inline-block;
+  width: 0.42rem;
+  height: 0.56rem;
+  border-left: 2px solid currentColor;
+  border-right: 2px solid currentColor;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
 .sim-speed-btn.active {
   background: var(--accent);
   border-color: var(--accent);
@@ -3295,10 +3314,7 @@ body.ui-mobile {
 
 body.ui-mobile .canvas-area {
   padding:
-    0
-    calc(var(--mobile-right-panel-width, 56px) + var(--mobile-right-gap, 6px))
-    0
-    calc(var(--mobile-left-panel-width, 168px) + var(--mobile-left-gap, 6px) + var(--mobile-image-gap-left, 4px));
+    0 calc(var(--mobile-right-panel-width, 56px) + var(--mobile-right-gap, 6px)) 0 calc(var(--mobile-left-panel-width, 168px) + var(--mobile-left-gap, 6px) + var(--mobile-image-gap-left, 4px));
   width: 100vw;
   height: var(--app-vh);
   box-sizing: border-box;
@@ -3660,7 +3676,7 @@ body.ui-mobile .mobile-operate-title {
   display: none;
 }
 
-body.ui-mobile .mobile-operate-card > * {
+body.ui-mobile .mobile-operate-card>* {
   width: 100%;
   box-sizing: border-box;
 }
