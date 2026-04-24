@@ -28,6 +28,17 @@ const HINTS = {
 /** @type {HTMLElement | null} */
 let lastFocusBeforePopup = null;
 
+function isTextEntryElement(el) {
+  if (!el || !(el instanceof HTMLElement)) return false;
+  if (el instanceof HTMLTextAreaElement) return true;
+  if (el instanceof HTMLSelectElement) return true;
+  if (el instanceof HTMLInputElement) {
+    const type = String(el.type || 'text').toLowerCase();
+    return !['button', 'submit', 'reset', 'checkbox', 'radio', 'range', 'file', 'color'].includes(type);
+  }
+  return el.isContentEditable === true;
+}
+
 /**
  * Fill the popup list with items for the given mode and attach click handlers.
  * @param {'lift'|'slope'|'groomer'} mode
@@ -189,12 +200,12 @@ export function closeInventoryPopup() {
   // If focus is inside the popup, move it out BEFORE hiding/aria-hidden.
   const active = document.activeElement;
   if (popup && active && popup.contains(active)) {
-    if (lastFocusBeforePopup && document.contains(lastFocusBeforePopup)) {
-      lastFocusBeforePopup.focus();
-    } else {
-      /** @type {HTMLElement | null} */ (document.getElementById('drawCanvas'))?.focus?.();
-      /** @type {HTMLElement} */ (document.body).focus?.();
-    }
+    const inFullscreen = !!document.fullscreenElement;
+    const canRestoreFocus =
+      lastFocusBeforePopup &&
+      document.contains(lastFocusBeforePopup) &&
+      !(inFullscreen && isTextEntryElement(lastFocusBeforePopup));
+    if (canRestoreFocus) lastFocusBeforePopup.focus({ preventScroll: true });
   }
 
   if (overlay) {

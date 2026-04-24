@@ -366,6 +366,36 @@ function moveFocusOutside(container) {
   }
 }
 
+function setupDynamicViewportSizing() {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return;
+  let rafId = 0;
+  const apply = () => {
+    const vv = window.visualViewport;
+    const height = Math.max(1, Math.round((vv && Number(vv.height)) || window.innerHeight || 0));
+    document.documentElement.style.setProperty('--app-vh', `${height}px`);
+    // Keep canvas/image coordinate mapping in sync when visual viewport changes
+    // without a full window resize event (common on iPad/fullscreen transitions).
+    if (state.image) syncCanvasSize();
+  };
+  const scheduleApply = () => {
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      apply();
+      // iPad/Safari fullscreen and chrome transitions may settle one frame later.
+      requestAnimationFrame(apply);
+    });
+  };
+
+  apply();
+  window.addEventListener('resize', scheduleApply);
+  window.addEventListener('orientationchange', scheduleApply);
+  window.addEventListener('fullscreenchange', scheduleApply);
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', scheduleApply);
+    window.visualViewport.addEventListener('scroll', scheduleApply);
+  }
+}
+
 function setMode(mode) {
   state.mode = mode;
   state.liftBottom = null;
@@ -535,6 +565,8 @@ export async function init() {
   DOM.slopeExperienceDisplay = document.getElementById('slopeExperienceDisplay');
   DOM.slopeQualityDisplay = document.getElementById('slopeQualityDisplay');
   DOM.satisfactionDisplay = document.getElementById('satisfactionDisplay');
+
+  setupDynamicViewportSizing();
 
   initInvestCompactSidebar();
   document.addEventListener('invest-inventory-select', (e) => {
@@ -1102,6 +1134,7 @@ function initSplash() {
   const splashForm = /** @type {HTMLFormElement | null} */ (document.getElementById('splashStartForm'));
   const nameInput = /** @type {HTMLInputElement | null} */ (document.getElementById('splashPlayerName'));
   const difficultyInput = /** @type {HTMLSelectElement | null} */ (document.getElementById('splashDifficulty'));
+  const startBtn = /** @type {HTMLButtonElement | null} */ (document.getElementById('splashStartAdventureBtn'));
 
   if (difficultyInput) {
     difficultyInput.value = state.gameDifficulty === 'easy' || state.gameDifficulty === 'hard' ? state.gameDifficulty : 'medium';
@@ -1109,27 +1142,15 @@ function initSplash() {
 
   if (nameInput) {
     const savedName = readSavedSplashPlayerName();
-    const useRandom = !savedName;
     nameInput.value = savedName || pickRandomSixtiesName();
     requestAnimationFrame(() => {
       try {
-        nameInput.focus();
-        if (useRandom) nameInput.select();
+        // Keep keyboard closed on mobile/tablet splash by focusing Start instead of text input.
+        startBtn?.focus({ preventScroll: true });
       } catch {
         /* ignore */
       }
     });
-    // If focus was blocked until user gesture, select all on first focus so typing replaces the random name.
-    if (useRandom) {
-      nameInput.addEventListener(
-        'focus',
-        function splashNameSelectOnce() {
-          nameInput.select();
-          nameInput.removeEventListener('focus', splashNameSelectOnce);
-        },
-        { once: true },
-      );
-    }
   }
 
   let splashStartCommitted = false;
@@ -1169,6 +1190,12 @@ function initSplash() {
     state.sessionGameId = randomSessionGameId();
     saveSplashPlayerName(state.playerName);
     state.peakDailyVisitors = 0;
+    // Avoid iPad/Safari fullscreen warnings by ensuring no text input retains focus.
+    try {
+      if (nameInput && document.activeElement === nameInput) nameInput.blur();
+    } catch {
+      /* ignore */
+    }
     // Best effort: on mobile, enter fullscreen and lock landscape from this user gesture.
     void requestMobileFullscreenLandscape();
     dissolve(true);

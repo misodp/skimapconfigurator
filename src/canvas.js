@@ -251,6 +251,8 @@ export function syncCanvasSize() {
     badges.style.maxWidth = rect.width * 0.92 + 'px';
   }
 
+  // Prevent transform accumulation across repeated resize/sync calls.
+  DOM.ctx.setTransform(1, 0, 0, 1, 0, 0);
   DOM.ctx.scale(dpr, dpr);
   refresh();
 }
