@@ -3,10 +3,13 @@ import { initMobileUI } from './mobile/init-mobile-ui.js';
 import { initSharedUI } from './shared/init-shared-ui.js';
 
 function isMobileLikeUi() {
-  if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return false;
-  const coarse = window.matchMedia('(pointer: coarse)').matches;
-  const narrow = window.matchMedia('(max-width: 900px)').matches;
-  return coarse || narrow;
+  if (typeof window === 'undefined') return false;
+  const w = Math.max(0, Number(window.innerWidth) || 0);
+  const h = Math.max(0, Number(window.innerHeight) || 0);
+  if (!w || !h) return false;
+  const shortSide = Math.min(w, h);
+  const isLandscape = w >= h;
+  return isLandscape && shortSide <= 600;
 }
 
 /**

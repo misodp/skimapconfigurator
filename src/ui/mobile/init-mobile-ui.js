@@ -1,5 +1,5 @@
-import { attachMobileCanvasInput } from './canvas-input-mobile.js';
 import { initMobileShellController } from './mobile-shell-controller.js';
+import { attachUnifiedCanvasInput } from '../shared/canvas-input-unified.js';
 
 /**
  * Operate tooltips use position:fixed with left/top from viewport client coordinates.
@@ -28,7 +28,7 @@ export function initMobileUI(ctx) {
   }
   initMobileShellController(ctx);
   reparentOperatePopupsToBody();
-  attachMobileCanvasInput(ctx);
+  attachUnifiedCanvasInput(ctx);
 
   const {
     handleLiftPopupClick,

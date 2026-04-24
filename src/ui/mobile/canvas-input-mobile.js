@@ -21,11 +21,10 @@ export function attachMobileCanvasInput(ctx) {
   } = ctx || {};
   if (!DOM?.canvas) return;
 
-  const allowPointer = (e) => {
-    // Chrome device emulator may still report mouse pointerType.
-    if (e.pointerType !== 'mouse') return true;
-    return typeof document !== 'undefined' && document.body?.classList.contains('ui-mobile');
-  };
+  const canHover = typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia('(hover: hover)').matches;
+  const allowPointer = () => true;
 
   let pointerDown = false;
   let moved = false;
@@ -573,6 +572,25 @@ export function attachMobileCanvasInput(ctx) {
   });
 
   DOM.canvas.addEventListener('pointerleave', () => {
-    // On mobile, pointerleave is noisy; avoid auto-hiding popups so action buttons remain tappable.
+    // Keep mobile behavior on touch-only layouts, but restore desktop-like hover cleanup where available.
+    if (!canHover) return;
+    if (state.mode === 'lift') state.mouseImage = null;
+    state.buildBlocked = false;
+    const hint = document.getElementById('buildMaskHint');
+    if (hint) {
+      hint.classList.add('hidden');
+      hint.setAttribute('aria-hidden', 'true');
+    }
+    DOM.canvas.style.cursor = '';
+    hideLiftHoverPopup();
+    hideGroomerHoverPopup();
+    hideSlopeHoverPopup();
+    if (typeof onCanvasMouseUp === 'function') onCanvasMouseUp();
   });
+
+  if (typeof onCanvasDblClick === 'function') {
+    DOM.canvas.addEventListener('dblclick', (e) => {
+      onCanvasDblClick(e);
+    });
+  }
 }
