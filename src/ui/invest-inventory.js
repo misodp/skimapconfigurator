@@ -20,9 +20,9 @@ const TITLES = {
 };
 
 const HINTS = {
-  lift: 'Select type, then click on the map to place the bottom and the top station. Escape to cancel.',
-  slope: 'Select difficulty, then draw the slope by clicking on the map. Double-click to place, Escape to cancel.',
-  groomer: 'Select type, then click on the map to place the groomer.',
+  lift: 'Select type, then point on the map to place the bottom and the top station. Escape to cancel.',
+  slope: 'Select difficulty, then draw the slope by pointing on the map. Slopes have to start and end at the lift stations or existing slopes. Escape to cancel.',
+  groomer: 'Select type, then point on the map to place the groomer.',
 };
 
 /** @type {HTMLElement | null} */

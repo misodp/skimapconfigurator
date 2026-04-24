@@ -349,14 +349,20 @@ export function attachMobileCanvasInput(ctx) {
       e.preventDefault();
       if (pendingBuildKind === 'slope') {
         const rightSlopeCancelBtn = document.getElementById('cancelSlopeBtn');
-        if (rightSlopeCancelBtn) rightSlopeCancelBtn.click();
+        if (rightSlopeCancelBtn && typeof rightSlopeCancelBtn.click === 'function') rightSlopeCancelBtn.click();
         else if (typeof cancelSlope === 'function') cancelSlope();
       } else {
         const rightLiftCancelBtn = document.getElementById('cancelLiftBtn');
-        if (rightLiftCancelBtn) rightLiftCancelBtn.click();
+        if (rightLiftCancelBtn && typeof rightLiftCancelBtn.click === 'function') rightLiftCancelBtn.click();
         else if (typeof cancelLift === 'function') cancelLift();
       }
-      hideBuildConfirmUi();
+      // Keep build mode active and keep mobile menu cancel controls visible.
+      if (state) state.buildArmed = true;
+      const cancelBuildBtn = document.getElementById('cancelBuildBtn');
+      if (cancelBuildBtn) cancelBuildBtn.classList.remove('hidden');
+      hideLiftConfirm();
+      pendingBuildKind = null;
+      pendingSlopeMode = null;
     });
   }
 

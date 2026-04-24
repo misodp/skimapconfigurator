@@ -3509,7 +3509,7 @@ body.ui-mobile .mobile-right-speed-btn {
   margin: 0;
   min-width: 0;
   padding: 0.16rem 0;
-  border-radius: 7px;
+  border-radius: 14px;
   border: 1px solid rgba(38, 35, 52, 0.28);
   background: rgba(255, 255, 255, 0.86);
   color: var(--text);
@@ -3569,15 +3569,36 @@ body.ui-mobile .invest-compact-cancel-btn {
   width: 56px;
   min-width: 56px;
   height: 56px;
+  margin: 0;
   padding: 0;
-  border-radius: 14px;
-  border: none;
-  background: transparent;
-  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: center;
+  box-sizing: border-box;
+  gap: 0;
+  border-radius: 7px;
+  border: 1px solid rgba(38, 35, 52, 0.28);
+  color: var(--text);
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.18);
+}
+
+body.ui-mobile .invest-compact-cancel-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 138, 92, 0.96);
+  border-color: rgba(255, 138, 92, 0.96);
+  color: #fff;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.24);
 }
 
 body.ui-mobile .invest-compact-cancel-icon {
-  font-size: 1rem;
+  font-size: 1.08rem;
+  line-height: 1;
+}
+
+body.ui-mobile .invest-compact-cancel-label {
+  display: none;
 }
 
 body.ui-mobile .mobile-operate-compact {
@@ -3989,6 +4010,36 @@ body.ui-mobile .mobile-lift-confirm-btn {
 }
 
 body.ui-mobile .mobile-lift-confirm-build {
+  background: rgba(255, 138, 92, 0.95);
+  border-color: rgba(255, 138, 92, 0.95);
+  color: #fff;
+}
+
+body.ui-desktop .desktop-build-confirm {
+  position: fixed;
+  z-index: 280;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.32rem;
+  border-radius: 10px;
+  border: 1px solid rgba(38, 35, 52, 0.24);
+  background: rgba(255, 249, 240, 0.98);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+body.ui-desktop .desktop-build-confirm-btn {
+  margin: 0;
+  padding: 0.28rem 0.62rem;
+  font-size: 0.74rem;
+  border-radius: 8px;
+  border: 1px solid rgba(38, 35, 52, 0.22);
+  background: rgba(255, 255, 255, 0.86);
+  color: var(--text);
+  cursor: pointer;
+}
+
+body.ui-desktop .desktop-build-confirm-build {
   background: rgba(255, 138, 92, 0.95);
   border-color: rgba(255, 138, 92, 0.95);
   color: #fff;

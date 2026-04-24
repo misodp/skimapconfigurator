@@ -1,4 +1,4 @@
-import { attachUnifiedCanvasInput } from '../shared/canvas-input-unified.js';
+import { attachDesktopCanvasInput } from './canvas-input-desktop.js';
 
 /**
  * Desktop-specific UI bootstrap.
@@ -80,7 +80,7 @@ export function initDesktopUI(ctx) {
   document.addEventListener('click', handleGroomerPopupClick);
   document.addEventListener('click', handleSlopePopupClick);
 
-  attachUnifiedCanvasInput({
+  attachDesktopCanvasInput({
     DOM,
     state,
     onCanvasClick,
